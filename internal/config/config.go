@@ -24,10 +24,12 @@ func New() (*Application, error) {
 
 // MongoDB holds the MongoDB configuration
 type MongoDB struct {
-	Host     string
-	Port     string
-	Username string
-	Password string
+	Host       string
+	Port       string
+	Username   string
+	Password   string
+	Name       string
+	Collection string
 }
 
 // URI returns the mongoDB connection string
