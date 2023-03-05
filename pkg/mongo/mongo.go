@@ -47,8 +47,7 @@ func New(ctx context.Context, cfg config.MongoDB) (*MongoDB, error) {
 		return nil, err
 	}
 
-	err = client.Ping(ctx, nil)
-	if err != nil {
+	if err = client.Ping(ctx, nil); err != nil {
 		return nil, err
 	}
 
@@ -62,13 +61,7 @@ func New(ctx context.Context, cfg config.MongoDB) (*MongoDB, error) {
 
 // Close closes the database connection.
 func (db *MongoDB) Close(ctx context.Context) error {
-	err := db.client.Disconnect(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	return err
+	return db.client.Disconnect(ctx)
 }
 
 // Ping pings the database to check the connection.
