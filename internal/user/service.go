@@ -62,14 +62,13 @@ func (s *service) FindOneByID(ctx context.Context, id string) (User, error) {
 
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return user, err
+		return User{}, err
 	}
 
 	query := bson.D{{Key: "_id", Value: objID}}
 
-	err = s.collection.FindOne(ctx, query).Decode(&user)
-	if err != nil {
-		return user, err
+	if err := s.collection.FindOne(ctx, query).Decode(&user); err != nil {
+		return User{}, err
 	}
 
 	return user, nil
