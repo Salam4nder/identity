@@ -98,3 +98,42 @@ func TestFindOneByID(t *testing.T) {
 		assert.IsType(t, user, User{})
 	})
 }
+
+func TestFindOneByEmail(t *testing.T) {
+	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
+	defer mt.Close()
+
+	mt.Run("success returns user and nil", func(mt *mtest.T) {
+		idObj := primitive.NewObjectID()
+		mt.AddMockResponses(
+			mtest.CreateCursorResponse(
+				1, "foo.bar", mtest.FirstBatch, bson.D{
+					{Key: "_id", Value: idObj},
+					{Key: "full_name", Value: "John Doe"},
+					{Key: "email", Value: "haha@gmail.com"},
+				}))
+
+		service := NewService(mt.Coll)
+
+		user, err := service.FindOneByEmail(context.TODO(), "haha@gmail.com")
+
+		assert.Nil(t, err)
+		assert.NotNil(t, user)
+		assert.IsType(t, user, User{})
+		assert.Equal(t, user.ID, idObj)
+		assert.Equal(t, user.FullName, "John Doe")
+		assert.Equal(t, user.Email, "haha@gmail.com")
+	})
+
+	mt.Run("error returns empty user and err", func(mt *mtest.T) {
+		mt.AddMockResponses(mtest.CreateWriteErrorsResponse())
+
+		service := NewService(mt.Coll)
+
+		user, err := service.FindOneByEmail(context.TODO(), "")
+
+		assert.NotNil(t, err)
+		assert.Empty(t, user)
+		assert.IsType(t, user, User{})
+	})
+}
