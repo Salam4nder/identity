@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"math/rand"
 	"strings"
 )
@@ -34,4 +35,13 @@ func RandomEmail() string {
 // RandomFullName returns a random full name
 func RandomFullName() string {
 	return RandomString(10) + " " + RandomString(10)
+}
+
+// RandomDate returns a random date before the current date
+func RandomDate() string {
+	year := RandomInt(2000, 2023)
+	month := RandomInt(1, 12)
+	day := RandomInt(1, 28)
+
+	return fmt.Sprintf("%d-%d-%d", year, month, day)
 }
