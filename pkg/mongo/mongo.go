@@ -1,4 +1,4 @@
-package db
+package mongo
 
 import (
 	"context"
@@ -17,20 +17,14 @@ const (
 	maxPoolSize       = 100
 )
 
-// Database represents a database interface.
-type Database interface {
-	Ping(ctx context.Context) error
-	Close(ctx context.Context) error
-}
-
-// MongoDB implements the Database interface.
-type MongoDB struct {
+// DB implements the mongo.Database interface.
+type DB struct {
 	client     *mongo.Client
 	collection *mongo.Collection
 }
 
 // New creates a new MongoDB instance.
-func New(ctx context.Context, cfg config.MongoDB) (*MongoDB, error) {
+func New(ctx context.Context, cfg config.MongoDB) (*DB, error) {
 	opts := options.Client().ApplyURI(cfg.URI()).
 		SetAuth(
 			options.Credential{
@@ -53,18 +47,23 @@ func New(ctx context.Context, cfg config.MongoDB) (*MongoDB, error) {
 
 	collection := client.Database(cfg.Name).Collection(cfg.Collection)
 
-	return &MongoDB{
+	return &DB{
 		client:     client,
 		collection: collection,
 	}, nil
 }
 
+// GetCollection returns the collection of the database.
+func (db *DB) GetCollection() *mongo.Collection {
+	return db.collection
+}
+
 // Close closes the database connection.
-func (db *MongoDB) Close(ctx context.Context) error {
+func (db *DB) Close(ctx context.Context) error {
 	return db.client.Disconnect(ctx)
 }
 
 // Ping pings the database to check the connection.
-func (db *MongoDB) Ping(ctx context.Context) error {
+func (db *DB) Ping(ctx context.Context) error {
 	return db.client.Ping(ctx, nil)
 }
