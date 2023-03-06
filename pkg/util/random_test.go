@@ -55,7 +55,6 @@ func TestRandomDate(t *testing.T) {
 
 		assert.NotEmpty(t, date)
 		assert.True(t, strings.Contains(date, "-"))
-		assert.True(
-			t, len(date) == 10 || len(date) == 9 || len(date) == 8)
+		assert.True(t, len(date) == 10)
 	}
 }

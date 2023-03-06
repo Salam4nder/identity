@@ -43,5 +43,21 @@ func RandomDate() string {
 	month := RandomInt(1, 12)
 	day := RandomInt(1, 28)
 
-	return fmt.Sprintf("%d-%d-%d", year, month, day)
+	var sb strings.Builder
+
+	sb.WriteString(fmt.Sprintf("%d-", year))
+
+	if month < 10 {
+		sb.WriteString("0")
+	}
+
+	sb.WriteString(fmt.Sprintf("%d-", month))
+
+	if day < 10 {
+		sb.WriteString("0")
+	}
+
+	sb.WriteString(fmt.Sprintf("%d", day))
+
+	return sb.String()
 }
