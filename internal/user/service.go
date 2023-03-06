@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"time"
 
 	"github.com/Salam4nder/user/pkg/util"
 
@@ -42,6 +43,7 @@ func (s *service) InsertOne(
 	}
 
 	param.Password = hasedPassword
+	param.CreatedAt = time.Now().Format(time.DateOnly)
 
 	createdUser, err := s.collection.InsertOne(ctx, param)
 	if err != nil {
