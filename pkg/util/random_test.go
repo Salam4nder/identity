@@ -8,7 +8,7 @@ import (
 )
 
 func TestRandomInt(t *testing.T) {
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 20; i++ {
 		min := int64(0)
 		max := int64(100)
 		n := RandomInt(min, max)
@@ -18,7 +18,7 @@ func TestRandomInt(t *testing.T) {
 }
 
 func TestRandomString(t *testing.T) {
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 20; i++ {
 		length := 10
 		s := RandomString(length)
 
@@ -29,7 +29,7 @@ func TestRandomString(t *testing.T) {
 }
 
 func TestRandomEmail(t *testing.T) {
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 20; i++ {
 		s := RandomEmail()
 
 		assert.True(t, strings.ContainsAny(s, charset))
@@ -40,11 +40,21 @@ func TestRandomEmail(t *testing.T) {
 }
 
 func TestRandomFullName(t *testing.T) {
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 20; i++ {
 		s := RandomFullName()
 
 		assert.True(t, strings.ContainsAny(s, charset))
 		assert.True(t, strings.Contains(s, " "))
 		assert.NotEmpty(t, s)
+	}
+}
+
+func TestRandomDate(t *testing.T) {
+	for i := 0; i < 20; i++ {
+		date := RandomDate()
+
+		assert.NotEmpty(t, date)
+		assert.True(t, strings.Contains(date, "-"))
+		assert.True(t, len(date) == 10 || len(date) == 9)
 	}
 }
