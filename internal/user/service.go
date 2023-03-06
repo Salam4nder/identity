@@ -81,9 +81,8 @@ func (s *service) FindOneByEmail(ctx context.Context, email string) (User, error
 
 	query := bson.D{{Key: "email", Value: email}}
 
-	err := s.collection.FindOne(ctx, query).Decode(&user)
-	if err != nil {
-		return user, err
+	if err := s.collection.FindOne(ctx, query).Decode(&user); err != nil {
+		return User{}, err
 	}
 
 	return user, nil
