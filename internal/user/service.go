@@ -22,7 +22,7 @@ type Service interface {
 	DeleteOne(ctx context.Context, id string) error
 }
 
-// service implements the service interface.
+// service implements the Service interface.
 type service struct {
 	collection *mongo.Collection
 }
