@@ -93,6 +93,10 @@ func (s *service) FindOneByEmail(ctx context.Context, email string) (User, error
 func (s *service) FindByFilter(ctx context.Context, filter Filter) ([]User, error) {
 	var users []User
 
+	if err := filter.Validate(); err != nil {
+		return []User{}, err
+	}
+
 	query := bson.D{
 		{Key: "full_name", Value: filter.FullName},
 		{Key: "email", Value: filter.Email},
@@ -115,6 +119,10 @@ func (s *service) FindByFilter(ctx context.Context, filter Filter) ([]User, erro
 // An empty user and an error is returned if the user could not be updated.
 func (s *service) UpdateOne(ctx context.Context, param UpdateParam) (User, error) {
 	var user User
+
+	if err := param.Validate(); err != nil {
+		return User{}, err
+	}
 
 	objID, err := primitive.ObjectIDFromHex(param.ID)
 	if err != nil {
