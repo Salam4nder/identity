@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func ValidateCreateParam(t *testing.T) {
+func ValidateInsertOneParam(t *testing.T) {
 	tests := []struct {
 		name    string
 		param   InsertOneParam
