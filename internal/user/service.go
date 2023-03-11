@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/Salam4nder/user/pkg/util"
@@ -13,7 +14,7 @@ import (
 
 // Service represents a user service.
 type Service interface {
-	InsertOne(ctx context.Context, param CreateParam) (string, error)
+	InsertOne(ctx context.Context, param InsertOneParam) (string, error)
 	FindOneByID(ctx context.Context, id string) (User, error)
 	FindOneByEmail(ctx context.Context, email string) (User, error)
 	FindByFilter(ctx context.Context, filter Filter) ([]User, error)
@@ -36,7 +37,7 @@ func NewService(c *mongo.Collection) Service {
 // InsertOne creates a new user. Returns the created ID as a string.
 // An empty string and an error is returned if the user could not be created.
 func (s *service) InsertOne(
-	ctx context.Context, param CreateParam) (string, error) {
+	ctx context.Context, param InsertOneParam) (string, error) {
 	hasedPassword, err := util.HashPassword(param.Password)
 	if err != nil {
 		return "", err
@@ -78,6 +79,10 @@ func (s *service) FindOneByID(ctx context.Context, id string) (User, error) {
 // An empty user and an error is returned if the user could not be found.
 func (s *service) FindOneByEmail(ctx context.Context, email string) (User, error) {
 	var user User
+
+	if email == "" {
+		return User{}, errors.New("email is required")
+	}
 
 	query := bson.D{{Key: "email", Value: email}}
 

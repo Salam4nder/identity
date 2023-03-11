@@ -19,7 +19,7 @@ func TestInsertOne(t *testing.T) {
 	mt.Run("success returns id as string and nil", func(mt *mtest.T) {
 		mt.AddMockResponses(mtest.CreateSuccessResponse())
 
-		params := CreateParam{
+		params := InsertOneParam{
 			FullName:  util.RandomFullName(),
 			Email:     util.RandomEmail(),
 			Password:  util.RandomString(10),
@@ -43,7 +43,7 @@ func TestInsertOne(t *testing.T) {
 				Message: "duplicate key error",
 			}))
 
-		params := CreateParam{
+		params := InsertOneParam{
 			FullName:  util.RandomFullName(),
 			Email:     util.RandomEmail(),
 			Password:  util.RandomString(10),
@@ -137,6 +137,17 @@ func TestFindOneByEmail(t *testing.T) {
 		assert.Equal(t, user.ID, idObj)
 		assert.Equal(t, user.FullName, "John Doe")
 		assert.Equal(t, user.Email, "haha@gmail.com")
+	})
+
+	mt.Run("empty email returns empty user and err", func(mt *mtest.T) {
+		service := NewService(mt.Coll)
+
+		user, err := service.FindOneByEmail(context.TODO(), "")
+
+		assert.Error(t, err)
+		assert.NotNil(t, err)
+		assert.Empty(t, user)
+		assert.IsType(t, user, User{})
 	})
 
 	mt.Run("error returns empty user and err", func(mt *mtest.T) {
