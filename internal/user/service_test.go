@@ -198,6 +198,19 @@ func TestFindByFilter(t *testing.T) {
 		assert.Equal(t, users[1].Email, "email2@email.com")
 	})
 
+	mt.Run("filter validation fails returns error", func(mt *mtest.T) {
+		service := NewService(mt.Coll)
+
+		filter := Filter{}
+
+		users, err := service.FindByFilter(context.TODO(), filter)
+
+		assert.Error(t, err)
+		assert.NotNil(t, err)
+		assert.Empty(t, users)
+		assert.IsType(t, users, []User{})
+	})
+
 	mt.Run("encoding error returns empty list and err", func(mt *mtest.T) {
 		mt.AddMockResponses(mtest.CreateWriteErrorsResponse())
 
@@ -251,6 +264,24 @@ func TestUpdateOne(t *testing.T) {
 		assert.Equal(t, user.FullName, "John Doe")
 		assert.Equal(t, user.Email, "email@veryhotmale.com")
 		assert.Equal(t, user.CreatedAt, randomDate)
+	})
+
+	mt.Run("invalid param returns empty user and err", func(mt *mtest.T) {
+		service := NewService(mt.Coll)
+
+		updateParam := UpdateParam{
+			ID:       "12341234",
+			FullName: "",
+			Email:    "",
+		}
+
+		user, err := service.UpdateOne(context.TODO(), updateParam)
+
+		assert.Error(t, err)
+		assert.NotNil(t, err)
+		assert.Empty(t, user)
+		assert.IsType(t, user, User{})
+
 	})
 
 	mt.Run("invalid object id returns empty user and err", func(mt *mtest.T) {
