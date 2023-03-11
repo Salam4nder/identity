@@ -287,3 +287,35 @@ func TestUpdateOne(t *testing.T) {
 		assert.IsType(t, user, User{})
 	})
 }
+
+func TestDeleteOne(t *testing.T) {
+	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
+	defer mt.Close()
+
+	mt.Run("success returns no error", func(mt *mtest.T) {
+		idObj := primitive.NewObjectID()
+
+		mt.AddMockResponses(bson.D{
+			{Key: "ok", Value: 1},
+			{Key: "value", Value: bson.D{
+				{Key: "_id", Value: idObj},
+			}},
+		})
+
+		service := NewService(mt.Coll)
+
+		err := service.DeleteOne(context.TODO(), idObj.Hex())
+
+		assert.Nil(t, err)
+		assert.NoError(t, err)
+	})
+
+	mt.Run("invalid object id returns err", func(mt *mtest.T) {
+		service := NewService(mt.Coll)
+
+		err := service.DeleteOne(context.TODO(), "123")
+
+		assert.NotNil(t, err)
+		assert.Error(t, err)
+	})
+}
