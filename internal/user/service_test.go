@@ -58,6 +58,18 @@ func TestInsertOne(t *testing.T) {
 		assert.Empty(t, id)
 		assert.IsType(t, id, "")
 	})
+
+	mt.Run("invalid params returns empty string and err", func(mt *mtest.T) {
+		params := InsertOneParam{}
+
+		service := NewService(mt.Coll)
+
+		id, err := service.InsertOne(context.TODO(), params)
+
+		assert.NotNil(t, err)
+		assert.Empty(t, id)
+		assert.IsType(t, id, "")
+	})
 }
 
 func TestFindOneByID(t *testing.T) {

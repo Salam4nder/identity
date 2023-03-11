@@ -38,6 +38,10 @@ func NewService(c *mongo.Collection) Service {
 // An empty string and an error is returned if the user could not be created.
 func (s *service) InsertOne(
 	ctx context.Context, param InsertOneParam) (string, error) {
+	if err := param.Validate(); err != nil {
+		return "", err
+	}
+
 	hasedPassword, err := util.HashPassword(param.Password)
 	if err != nil {
 		return "", err
