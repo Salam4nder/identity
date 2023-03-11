@@ -1,6 +1,8 @@
 package user
 
 import (
+	"errors"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -41,4 +43,16 @@ type FindOneResponse struct {
 	FullName  string             `bson:"full_name"`
 	Email     string             `bson:"email"`
 	CreatedAt string             `bson:"created_at"`
+}
+
+// Validate validates the create parameter.
+// Returns an error if the Filter parameteer is invalid.
+func (f *Filter) Validate() error {
+	if f.FullName == "" &&
+		f.Email == "" &&
+		f.CreatedAt == "" {
+		return errors.New("filter is empty")
+	}
+
+	return nil
 }
