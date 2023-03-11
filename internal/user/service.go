@@ -143,8 +143,8 @@ func (s *service) DeleteOne(ctx context.Context, id string) error {
 
 	query := bson.D{{Key: "_id", Value: objID}}
 
-	_, err = s.collection.DeleteOne(ctx, query)
-	if err != nil {
+	res, err := s.collection.DeleteOne(ctx, query)
+	if err != nil || res.DeletedCount < 1 {
 		return err
 	}
 
