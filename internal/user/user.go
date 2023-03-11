@@ -45,6 +45,57 @@ type FindOneResponse struct {
 	CreatedAt string             `bson:"created_at"`
 }
 
+// Validate validates the CreateParam parameter.
+// Returns an error if the CreateParam parameter is invalid.
+func (c *CreateParam) Validate() error {
+	var (
+		fullNameErr error
+		emailErr    error
+		passwordErr error
+	)
+
+	if c.FullName == "" {
+		fullNameErr = errors.New("full name is required")
+	}
+
+	if c.Email == "" {
+		emailErr = errors.New("email is required")
+	}
+
+	if c.Password == "" {
+		passwordErr = errors.New("password is required")
+	}
+
+	return errors.Join(fullNameErr, emailErr, passwordErr)
+}
+
+// Validate validates the UpdateParam parameter.
+// Returns an error if the UpdateParam parameter is invalid.
+func (u *UpdateParam) Validate() error {
+	if u.ID == "" {
+		return errors.New("id is empty")
+	}
+
+	var (
+		fullNameErr error
+		emailErr    error
+	)
+
+	if u.FullName == "" {
+		fullNameErr = errors.New("full name is empty")
+	}
+
+	if u.Email == "" {
+		emailErr = errors.New("email is empty")
+	}
+
+	if fullNameErr != nil && emailErr != nil {
+		return errors.Join(fullNameErr, emailErr)
+	}
+
+	return nil
+}
+
 // Validate validates the create parameter.
 // Returns an error if the Filter parameteer is invalid.
 func (f *Filter) Validate() error {
