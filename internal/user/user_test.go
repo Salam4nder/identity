@@ -8,6 +8,112 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func ValidateCreateParam(t *testing.T) {
+	tests := []struct {
+		name    string
+		param   CreateParam
+		wantErr bool
+	}{
+		{
+			name: "valid param returns no error",
+			param: CreateParam{
+				FullName: util.RandomFullName(),
+				Email:    util.RandomEmail(),
+				Password: "123456",
+			},
+		},
+		{
+			name: "empty full name returns error",
+			param: CreateParam{
+				FullName: "",
+				Email:    util.RandomEmail(),
+				Password: "123456",
+			},
+			wantErr: true,
+		},
+		{
+			name: "empty email returns error",
+			param: CreateParam{
+				FullName: util.RandomFullName(),
+				Email:    "",
+				Password: "123456",
+			},
+			wantErr: true,
+		},
+		{
+			name: "empty password returns error",
+			param: CreateParam{
+				FullName: util.RandomFullName(),
+				Email:    util.RandomEmail(),
+				Password: "",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.param.Validate()
+
+			if test.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateUpdateParam(t *testing.T) {
+	tests := []struct {
+		name    string
+		param   UpdateParam
+		wantErr bool
+	}{
+		{
+			name: "valid param 1 returns no error",
+			param: UpdateParam{
+				ID:       "456",
+				FullName: util.RandomFullName(),
+			},
+		},
+		{
+			name: "valid param 2 returns no error",
+			param: UpdateParam{
+				ID:    "123",
+				Email: util.RandomEmail(),
+			},
+		},
+		{
+			name: "empty ID returns error",
+			param: UpdateParam{
+				ID:    "",
+				Email: util.RandomEmail(),
+			},
+			wantErr: true,
+		},
+		{
+			name: "empty update fields returns error",
+			param: UpdateParam{
+				ID: "123",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := test.param.Validate()
+
+			if test.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+
+}
+
 func TestValidateFilter(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -17,13 +123,13 @@ func TestValidateFilter(t *testing.T) {
 		{
 			name: "valid filter 1 returns no error",
 			filter: Filter{
-				FullName: "John",
+				FullName: util.RandomFullName(),
 			},
 		},
 		{
 			name: "valid filter 2 returns no error",
 			filter: Filter{
-				Email: "lma@mail.com",
+				Email: util.RandomEmail(),
 			},
 		},
 		{
