@@ -93,14 +93,19 @@ func (s *service) FindOneByEmail(ctx context.Context, email string) (User, error
 func (s *service) FindByFilter(ctx context.Context, filter Filter) ([]User, error) {
 	var users []User
 
-	cursor, err := s.collection.Find(ctx, filter)
-	if err != nil {
-		return users, err
+	query := bson.D{
+		{Key: "full_name", Value: filter.FullName},
+		{Key: "email", Value: filter.Email},
+		{Key: "created_at", Value: filter.CreatedAt},
 	}
 
-	err = cursor.All(ctx, &users)
+	cursor, err := s.collection.Find(ctx, query)
 	if err != nil {
-		return users, err
+		return []User{}, err
+	}
+
+	if err = cursor.All(ctx, &users); err != nil {
+		return []User{}, err
 	}
 
 	return users, nil
