@@ -9,3 +9,9 @@ up:
 
 down:
 	docker-compose down
+	
+proto:
+	rm -rf internal/proto/pb/*.go
+	protoc --proto_path=internal/proto --go_out=internal/proto/pb --go_opt=paths=source_relative \
+    --go-grpc_out=internal/proto/pb --go-grpc_opt=paths=source_relative \
+    internal/proto/*.proto
