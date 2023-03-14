@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "github.com/Salam4nder/user/internal/proto/pb";
+
+service UserService {
+    rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {}
+}
+
+message User {
+    string full_name = 1;
+    string email = 2;
+    string created_at = 3;
+}
+
+message CreateUserRequest {
+    string full_name = 1;
+    string email = 2;
+    string password = 3;
+}
+
+message CreateUserResponse {
+    User user = 1;
+}
