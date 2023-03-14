@@ -6,7 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// User represents a user in the system
+// User represents a user in the database.
 type User struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty"`
 	FullName  string             `bson:"full_name"`
@@ -35,14 +35,6 @@ type UpdateParam struct {
 	ID       string `bson:"_id"`
 	FullName string `bson:"full_name"`
 	Email    string `bson:"email"`
-}
-
-// FindOneResponse represents a response for finding a user.
-type FindOneResponse struct {
-	ID        primitive.ObjectID `bson:"_id"`
-	FullName  string             `bson:"full_name"`
-	Email     string             `bson:"email"`
-	CreatedAt string             `bson:"created_at"`
 }
 
 // Validate validates the CreateParam parameter.
