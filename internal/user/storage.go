@@ -12,8 +12,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// Service represents a user service.
-type Service interface {
+// Storage defines the user storage interface.
+type Storage interface {
 	InsertOne(ctx context.Context, param InsertOneParam) (string, error)
 	FindOneByID(ctx context.Context, id string) (User, error)
 	FindOneByEmail(ctx context.Context, email string) (User, error)
@@ -22,21 +22,21 @@ type Service interface {
 	DeleteOne(ctx context.Context, id string) error
 }
 
-// service implements the Service interface.
-type service struct {
+// storage implements the Storage interface.
+type storage struct {
 	collection *mongo.Collection
 }
 
-// NewService creates a new user service.
-func NewService(c *mongo.Collection) Service {
-	return &service{
+// NewStorage creates a new user service.
+func NewStorage(c *mongo.Collection) Storage {
+	return &storage{
 		collection: c,
 	}
 }
 
 // InsertOne creates a new user. Returns the created ID as a string.
 // An empty string and an error is returned if the user could not be created.
-func (s *service) InsertOne(
+func (s *storage) InsertOne(
 	ctx context.Context, param InsertOneParam) (string, error) {
 	if err := param.Validate(); err != nil {
 		return "", err
@@ -62,7 +62,7 @@ func (s *service) InsertOne(
 
 // FindOneByID returns a user by its ID.
 // An empty user and an error is returned if the user could not be found.
-func (s *service) FindOneByID(ctx context.Context, id string) (User, error) {
+func (s *storage) FindOneByID(ctx context.Context, id string) (User, error) {
 	var user User
 
 	objID, err := primitive.ObjectIDFromHex(id)
@@ -81,7 +81,7 @@ func (s *service) FindOneByID(ctx context.Context, id string) (User, error) {
 
 // FindOneByEmail returns a user by its email.
 // An empty user and an error is returned if the user could not be found.
-func (s *service) FindOneByEmail(ctx context.Context, email string) (User, error) {
+func (s *storage) FindOneByEmail(ctx context.Context, email string) (User, error) {
 	var user User
 
 	if email == "" {
@@ -99,7 +99,7 @@ func (s *service) FindOneByEmail(ctx context.Context, email string) (User, error
 
 // FindByFilter returns a list of users by a filter.
 // An empty list and an error is returned if the users could not be found.
-func (s *service) FindByFilter(ctx context.Context, filter Filter) ([]User, error) {
+func (s *storage) FindByFilter(ctx context.Context, filter Filter) ([]User, error) {
 	var users []User
 
 	if err := filter.Validate(); err != nil {
@@ -126,7 +126,7 @@ func (s *service) FindByFilter(ctx context.Context, filter Filter) ([]User, erro
 
 // UpdateOne updates a user by its ID.
 // An empty user and an error is returned if the user could not be updated.
-func (s *service) UpdateOne(ctx context.Context, param UpdateParam) (User, error) {
+func (s *storage) UpdateOne(ctx context.Context, param UpdateParam) (User, error) {
 	var user User
 
 	if err := param.Validate(); err != nil {
@@ -152,7 +152,7 @@ func (s *service) UpdateOne(ctx context.Context, param UpdateParam) (User, error
 
 // DeleteOne deletes a user by its ID.
 // An error is returned if the user could not be deleted.
-func (s *service) DeleteOne(ctx context.Context, id string) error {
+func (s *storage) DeleteOne(ctx context.Context, id string) error {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return err
