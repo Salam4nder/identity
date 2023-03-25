@@ -7,8 +7,8 @@ import (
 
 	"github.com/Salam4nder/user/internal/proto/pb"
 	"github.com/Salam4nder/user/internal/storage"
-	"go.uber.org/zap"
 
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -21,8 +21,8 @@ type userService struct {
 }
 
 // NewUserService returns a new instance of UserService.
-func NewUserService(store storage.UserStorage) *userService {
-	return &userService{UserStorage: store}
+func NewUserService(store storage.UserStorage, log *zap.Logger) *userService {
+	return &userService{UserStorage: store, logger: log}
 }
 
 // CreateUser creates a new user. Returns an error if the user couldn't be created
@@ -39,7 +39,8 @@ func (s *userService) CreateUser(
 	createdUserID, err := s.UserStorage.InsertOne(ctx, insertOneParam)
 	if err != nil {
 		s.logger.Error("failed to insert user", zap.Error(err))
-		internalServerError()
+
+		return nil, internalServerError()
 	}
 
 	return &pb.CreateUserResponse{Id: createdUserID}, nil
