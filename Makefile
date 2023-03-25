@@ -9,6 +9,9 @@ up:
 
 down:
 	docker-compose down
+
+logs:
+	docker-compose logs -f
 	
 proto:
 	rm -rf internal/proto/pb/*.go
