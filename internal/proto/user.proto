@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package pb;
 
+import "google/protobuf/timestamp.proto";
+
 option go_package = "github.com/Salam4nder/user/internal/proto/pb";
 
 service UserService {
@@ -9,15 +11,16 @@ service UserService {
 }
 
 message User {
-    string full_name = 1;
+    string name = 1;
     string email = 2;
-    string created_at = 3;
 }
 
 message CreateUserRequest {
-    string full_name = 1;
-    string email = 2;
-    string password = 3;
+    optional string full_name = 1;
+    optional string email = 2;
+    optional string password = 3;
+    optional bool is_admin = 4;
+    google.protobuf.Timestamp created_at = 5;
 }
 
 message CreateUserResponse {
