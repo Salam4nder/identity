@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -12,22 +13,22 @@ type User struct {
 	FullName  string             `bson:"full_name"`
 	Email     string             `bson:"email"`
 	Password  string             `bson:"password"`
-	CreatedAt string             `bson:"created_at"`
+	CreatedAt time.Time          `bson:"created_at"`
 }
 
 // Filter represents a filter for users.
 type Filter struct {
-	FullName  string `bson:"full_name, omitempty"`
-	Email     string `bson:"email, omitempty"`
-	CreatedAt string `bson:"created_at, omitempty"`
+	FullName  string    `bson:"full_name, omitempty"`
+	Email     string    `bson:"email, omitempty"`
+	CreatedAt time.Time `bson:"created_at, omitempty"`
 }
 
 // InsertOneParam represents a parameter for creating a user.
 type InsertOneParam struct {
-	FullName  string `bson:"full_name"`
-	Email     string `bson:"email"`
-	Password  string `bson:"password"`
-	CreatedAt string `bson:"created_at"`
+	FullName  string    `bson:"full_name"`
+	Email     string    `bson:"email"`
+	Password  string    `bson:"password"`
+	CreatedAt time.Time `bson:"created_at"`
 }
 
 // UpdateParam represents a parameter for updating a user.
@@ -93,7 +94,7 @@ func (u *UpdateParam) Validate() error {
 func (f *Filter) Validate() error {
 	if f.FullName == "" &&
 		f.Email == "" &&
-		f.CreatedAt == "" {
+		f.CreatedAt.IsZero() {
 		return errors.New("filter is empty")
 	}
 
