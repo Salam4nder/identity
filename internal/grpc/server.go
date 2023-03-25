@@ -39,7 +39,7 @@ func (s *server) Serve() error {
 	}
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterUserServiceServer(grpcServer, s.srvc)
+	pb.RegisterUserServer(grpcServer, s.srvc)
 	reflection.Register(grpcServer)
 
 	s.logger.Info(

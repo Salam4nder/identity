@@ -6,7 +6,7 @@ import (
 )
 
 type userService struct {
-	pb.UserServiceServer
+	pb.UserServer
 	storage.UserStorage
 }
 
