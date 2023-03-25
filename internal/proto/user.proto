@@ -3,26 +3,74 @@ syntax = "proto3";
 package pb;
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
 option go_package = "github.com/Salam4nder/user/internal/proto/pb";
 
-service UserService {
+service User {
     rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {}
+    rpc GetUser (GetUserRequest) returns (GetUserResponse) {}
+    rpc GetByFilter (GetByFilterRequest) returns (GetByFilterResponse) {}
+    rpc GetByEmail (GetByEmailRequest) returns (GetByEmailResponse) {}
+    rpc UpdateUser (UpdateUserRequest) returns (UpdateUserResponse) {}
+    rpc DeleteUser (DeleteUserRequest) returns (google.protobuf.Empty) {}
 }
 
-message User {
-    string name = 1;
-    string email = 2;
+message UserResponse {
+    string id = 1;
+    string full_name = 2;
+    string email = 3;
+    google.protobuf.Timestamp created_at = 5;
 }
 
 message CreateUserRequest {
-    optional string full_name = 1;
-    optional string email = 2;
-    optional string password = 3;
-    optional bool is_admin = 4;
+    string full_name = 1;
+    string email = 2;
+    string password = 3;
     google.protobuf.Timestamp created_at = 5;
 }
 
 message CreateUserResponse {
-    User user = 1;
+    UserResponse user = 1;
+}
+
+message GetUserRequest {
+    int32 id = 1;
+}
+
+message GetUserResponse {
+    UserResponse user = 1;
+}
+
+message GetByFilterRequest {
+    optional string full_name = 1;
+    optional string email = 2;
+    google.protobuf.Timestamp created_at = 3;
+}
+
+message GetByFilterResponse {
+    repeated UserResponse users = 1;
+}
+
+message GetByEmailRequest {
+    string email = 1;
+}
+
+message GetByEmailResponse {
+    UserResponse user = 1;
+}
+
+message UpdateUserRequest {
+    int32 id = 1;
+    string full_name = 2;
+    string email = 3;
+    google.protobuf.Timestamp created_at = 4;
+}
+
+message UpdateUserResponse {
+    UserResponse user = 1;
+}
+
+message DeleteUserRequest {
+    int32 id = 1;
 }
