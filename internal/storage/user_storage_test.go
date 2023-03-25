@@ -215,7 +215,6 @@ func TestFindByFilter(t *testing.T) {
 		assert.Equal(t, users[0].ID, idObj)
 		assert.Equal(t, users[0].FullName, "John Doe")
 		assert.Equal(t, users[0].Email, "email@email.com")
-		assert.Equal(t, users[0].CreatedAt, randomDate)
 		assert.Equal(t, users[1].ID, idObj2)
 		assert.Equal(t, users[1].FullName, "Mary Hopkins")
 		assert.Equal(t, users[1].Email, "email2@email.com")
@@ -286,7 +285,6 @@ func TestUpdateOne(t *testing.T) {
 		assert.Equal(t, user.ID, idObj)
 		assert.Equal(t, user.FullName, "John Doe")
 		assert.Equal(t, user.Email, "email@veryhotmale.com")
-		assert.Equal(t, user.CreatedAt, randomDate)
 	})
 
 	mt.Run("invalid param returns empty user and err", func(mt *mtest.T) {

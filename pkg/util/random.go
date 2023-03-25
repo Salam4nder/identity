@@ -1,19 +1,19 @@
 package util
 
 import (
-	"fmt"
 	"math/rand"
 	"strings"
+	"time"
 )
 
 const charset = "abcdefghijklmnopqrstuvwxyz"
 
-// RandomInt returns a random integer between min and max
+// RandomInt returns a random integer between min and max.
 func RandomInt(min, max int64) int64 {
 	return min + rand.Int63n(max-min+1)
 }
 
-// RandomString returns a random string of length
+// RandomString returns a random string of length.
 func RandomString(length int) string {
 	var builder strings.Builder
 
@@ -27,37 +27,17 @@ func RandomString(length int) string {
 	return builder.String()
 }
 
-// RandomEmail returns a random email address
+// RandomEmail returns a random email address.
 func RandomEmail() string {
 	return RandomString(10) + "@" + RandomString(5) + ".com"
 }
 
-// RandomFullName returns a random full name
+// RandomFullName returns a random full name.
 func RandomFullName() string {
 	return RandomString(10) + " " + RandomString(10)
 }
 
-// RandomDate returns a random date before the current date
-func RandomDate() string {
-	year := RandomInt(2000, 2023)
-	month := RandomInt(1, 12)
-	day := RandomInt(1, 28)
-
-	var builder strings.Builder
-
-	builder.WriteString(fmt.Sprintf("%d-", year))
-
-	if month < 10 {
-		builder.WriteString("0")
-	}
-
-	builder.WriteString(fmt.Sprintf("%d-", month))
-
-	if day < 10 {
-		builder.WriteString("0")
-	}
-
-	builder.WriteString(fmt.Sprintf("%d", day))
-
-	return builder.String()
+// RandomDate returns a random date.
+func RandomDate() time.Time {
+	return time.Now().AddDate(0, 0, -int(RandomInt(0, 365)))
 }
