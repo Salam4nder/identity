@@ -6,13 +6,14 @@ import (
 	"github.com/plaid/go-envvar/envvar"
 )
 
-// Application is the application configuration
+// Application is the application configuration.
 type Application struct {
-	Mongo MongoDB
+	Mongo  MongoDB    `envvar:"MONGO_"`
+	Server GRPCServer `envvar:"GRPC_SERVER_"`
 }
 
 // New returns a new application configuration
-// Returns an error if any of the environment variables are missing
+// Returns an error if any of the environment variables are missing.
 func New() (*Application, error) {
 	var cfg Application
 	if err := envvar.Parse(&cfg); err != nil {
@@ -22,17 +23,23 @@ func New() (*Application, error) {
 	return &cfg, nil
 }
 
-// MongoDB holds the MongoDB configuration
+// MongoDB holds the MongoDB configuration.
 type MongoDB struct {
-	Host       string
-	Port       string
-	Username   string
-	Password   string
-	Name       string
-	Collection string
+	Host       string `envvar:"HOST" default:"localhost"`
+	Port       string `envvar:"PORT" default:"27017"`
+	Username   string `envvar:"USERNAME" default:"root"`
+	Password   string `envvar:"PASSWORD" default:"root"`
+	Name       string `envvar:"NAME" default:"user"`
+	Collection string `envvar:"COLLECTION" default:"users"`
 }
 
-// URI returns the mongoDB connection string
+// GRPCServer holds the gRPC server configuration.
+type GRPCServer struct {
+	Host string `envvar:"HOST" default:"localhost"`
+	Port string `envvar:"PORT" default:"8080"`
+}
+
+// URI returns the mongoDB connection string.
 func (m *MongoDB) URI() string {
 	return fmt.Sprintf(
 		"mongodb://%s:%s@%s:%s",
@@ -40,4 +47,9 @@ func (m *MongoDB) URI() string {
 		m.Password,
 		m.Host,
 		m.Port)
+}
+
+// Addr returns the gRPC server address.
+func (g *GRPCServer) Addr() string {
+	return fmt.Sprintf("%s:%s", g.Host, g.Port)
 }
