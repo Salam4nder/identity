@@ -48,7 +48,7 @@ func (s *userStorage) InsertOne(
 	}
 
 	param.Password = hasedPassword
-	param.CreatedAt = time.Now().Format(time.DateOnly)
+	param.CreatedAt = time.Now()
 
 	createdUser, err := s.collection.InsertOne(ctx, param)
 	if err != nil {
@@ -73,6 +73,9 @@ func (s *userStorage) FindOneByID(ctx context.Context, id string) (User, error) 
 	query := bson.D{{Key: "_id", Value: objID}}
 
 	if err := s.collection.FindOne(ctx, query).Decode(&user); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return User{}, UserNotFoundErr()
+		}
 		return User{}, err
 	}
 
