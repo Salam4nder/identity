@@ -4,13 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/Salam4nder/inventory/pkg/logger"
 	"github.com/Salam4nder/user/internal/config"
 	"github.com/Salam4nder/user/internal/grpc"
-
 	"github.com/Salam4nder/user/internal/storage"
 	"github.com/Salam4nder/user/pkg/mongo"
-
-	"github.com/Salam4nder/inventory/pkg/logger"
 )
 
 const bootTimeout = 20 * time.Second
@@ -33,7 +31,7 @@ func main() {
 
 	logger, err := logger.New("")
 
-	service := grpc.NewUserService(userStorage)
+	service := grpc.NewUserService(userStorage, logger)
 
 	server := grpc.NewServer(service, &cfg.Server, logger)
 
