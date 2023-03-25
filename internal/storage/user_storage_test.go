@@ -1,4 +1,4 @@
-package user
+package storage
 
 import (
 	"context"
@@ -26,7 +26,7 @@ func TestInsertOne(t *testing.T) {
 			CreatedAt: util.RandomDate(),
 		}
 
-		service := NewStorage(mt.Coll)
+		service := NewUserStorage(mt.Coll)
 
 		id, err := service.InsertOne(context.TODO(), params)
 
@@ -50,7 +50,7 @@ func TestInsertOne(t *testing.T) {
 			CreatedAt: util.RandomDate(),
 		}
 
-		service := NewStorage(mt.Coll)
+		service := NewUserStorage(mt.Coll)
 
 		id, err := service.InsertOne(context.TODO(), params)
 
@@ -62,7 +62,7 @@ func TestInsertOne(t *testing.T) {
 	mt.Run("invalid params returns empty string and err", func(mt *mtest.T) {
 		params := InsertOneParam{}
 
-		service := NewStorage(mt.Coll)
+		service := NewUserStorage(mt.Coll)
 
 		id, err := service.InsertOne(context.TODO(), params)
 
@@ -87,7 +87,7 @@ func TestFindOneByID(t *testing.T) {
 					{Key: "email", Value: "lmao@gmail.com"},
 				}))
 
-		service := NewStorage(mt.Coll)
+		service := NewUserStorage(mt.Coll)
 
 		user, err := service.FindOneByID(context.TODO(), idObj.Hex())
 
@@ -102,7 +102,7 @@ func TestFindOneByID(t *testing.T) {
 	mt.Run("error returns empty user and err", func(mt *mtest.T) {
 		mt.AddMockResponses(mtest.CreateWriteErrorsResponse())
 
-		service := NewStorage(mt.Coll)
+		service := NewUserStorage(mt.Coll)
 
 		user, err := service.FindOneByID(context.TODO(), "123")
 
@@ -113,7 +113,7 @@ func TestFindOneByID(t *testing.T) {
 	})
 
 	mt.Run("invalid id returns empty user and err", func(mt *mtest.T) {
-		service := NewStorage(mt.Coll)
+		service := NewUserStorage(mt.Coll)
 
 		user, err := service.FindOneByID(context.TODO(), "123")
 
@@ -139,7 +139,7 @@ func TestFindOneByEmail(t *testing.T) {
 					{Key: "email", Value: "haha@gmail.com"},
 				}))
 
-		service := NewStorage(mt.Coll)
+		service := NewUserStorage(mt.Coll)
 
 		user, err := service.FindOneByEmail(context.TODO(), "haha@gmail.com")
 
@@ -152,7 +152,7 @@ func TestFindOneByEmail(t *testing.T) {
 	})
 
 	mt.Run("empty email returns empty user and err", func(mt *mtest.T) {
-		service := NewStorage(mt.Coll)
+		service := NewUserStorage(mt.Coll)
 
 		user, err := service.FindOneByEmail(context.TODO(), "")
 
@@ -165,7 +165,7 @@ func TestFindOneByEmail(t *testing.T) {
 	mt.Run("error returns empty user and err", func(mt *mtest.T) {
 		mt.AddMockResponses(mtest.CreateWriteErrorsResponse())
 
-		service := NewStorage(mt.Coll)
+		service := NewUserStorage(mt.Coll)
 
 		user, err := service.FindOneByEmail(context.TODO(), "")
 
@@ -201,7 +201,7 @@ func TestFindByFilter(t *testing.T) {
 
 		mt.AddMockResponses(first, second, killCursors)
 
-		service := NewStorage(mt.Coll)
+		service := NewUserStorage(mt.Coll)
 
 		filter := Filter{
 			CreatedAt: randomDate,
@@ -222,7 +222,7 @@ func TestFindByFilter(t *testing.T) {
 	})
 
 	mt.Run("filter validation fails returns error", func(mt *mtest.T) {
-		service := NewStorage(mt.Coll)
+		service := NewUserStorage(mt.Coll)
 
 		filter := Filter{}
 
@@ -237,7 +237,7 @@ func TestFindByFilter(t *testing.T) {
 	mt.Run("encoding error returns empty list and err", func(mt *mtest.T) {
 		mt.AddMockResponses(mtest.CreateWriteErrorsResponse())
 
-		service := NewStorage(mt.Coll)
+		service := NewUserStorage(mt.Coll)
 
 		filter := Filter{
 			CreatedAt: util.RandomDate(),
@@ -270,7 +270,7 @@ func TestUpdateOne(t *testing.T) {
 			}},
 		})
 
-		service := NewStorage(mt.Coll)
+		service := NewUserStorage(mt.Coll)
 
 		updateParam := UpdateParam{
 			ID:       idObj.Hex(),
@@ -290,7 +290,7 @@ func TestUpdateOne(t *testing.T) {
 	})
 
 	mt.Run("invalid param returns empty user and err", func(mt *mtest.T) {
-		service := NewStorage(mt.Coll)
+		service := NewUserStorage(mt.Coll)
 
 		updateParam := UpdateParam{
 			ID:       "12341234",
@@ -308,7 +308,7 @@ func TestUpdateOne(t *testing.T) {
 	})
 
 	mt.Run("invalid object id returns empty user and err", func(mt *mtest.T) {
-		service := NewStorage(mt.Coll)
+		service := NewUserStorage(mt.Coll)
 
 		updateParam := UpdateParam{
 			ID:       "123",
@@ -326,7 +326,7 @@ func TestUpdateOne(t *testing.T) {
 	mt.Run("encoding error returns empty user and err", func(mt *mtest.T) {
 		mt.AddMockResponses(mtest.CreateWriteErrorsResponse())
 
-		service := NewStorage(mt.Coll)
+		service := NewUserStorage(mt.Coll)
 
 		updateParam := UpdateParam{
 			ID:       "123",
@@ -356,7 +356,7 @@ func TestDeleteOne(t *testing.T) {
 			}},
 		})
 
-		service := NewStorage(mt.Coll)
+		service := NewUserStorage(mt.Coll)
 
 		err := service.DeleteOne(context.TODO(), idObj.Hex())
 
@@ -365,7 +365,7 @@ func TestDeleteOne(t *testing.T) {
 	})
 
 	mt.Run("invalid object id returns err", func(mt *mtest.T) {
-		service := NewStorage(mt.Coll)
+		service := NewUserStorage(mt.Coll)
 
 		err := service.DeleteOne(context.TODO(), "123")
 
