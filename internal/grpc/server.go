@@ -6,10 +6,10 @@ import (
 
 	"github.com/Salam4nder/user/internal/config"
 	"github.com/Salam4nder/user/internal/proto/pb"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 type server struct {
