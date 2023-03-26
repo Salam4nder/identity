@@ -11,12 +11,12 @@ import (
 func ValidateInsertOneParam(t *testing.T) {
 	tests := []struct {
 		name    string
-		param   InsertOneParam
+		param   InsertParam
 		wantErr bool
 	}{
 		{
 			name: "valid param returns no error",
-			param: InsertOneParam{
+			param: InsertParam{
 				FullName: util.RandomFullName(),
 				Email:    util.RandomEmail(),
 				Password: "123456",
@@ -24,7 +24,7 @@ func ValidateInsertOneParam(t *testing.T) {
 		},
 		{
 			name: "empty full name returns error",
-			param: InsertOneParam{
+			param: InsertParam{
 				FullName: "",
 				Email:    util.RandomEmail(),
 				Password: "123456",
@@ -33,7 +33,7 @@ func ValidateInsertOneParam(t *testing.T) {
 		},
 		{
 			name: "empty email returns error",
-			param: InsertOneParam{
+			param: InsertParam{
 				FullName: util.RandomFullName(),
 				Email:    "",
 				Password: "123456",
@@ -42,7 +42,7 @@ func ValidateInsertOneParam(t *testing.T) {
 		},
 		{
 			name: "empty password returns error",
-			param: InsertOneParam{
+			param: InsertParam{
 				FullName: util.RandomFullName(),
 				Email:    util.RandomEmail(),
 				Password: "",

@@ -19,7 +19,7 @@ func TestInsertOne(t *testing.T) {
 	mt.Run("success returns id as string and nil", func(mt *mtest.T) {
 		mt.AddMockResponses(mtest.CreateSuccessResponse())
 
-		params := InsertOneParam{
+		params := InsertParam{
 			FullName:  util.RandomFullName(),
 			Email:     util.RandomEmail(),
 			Password:  util.RandomString(10),
@@ -43,7 +43,7 @@ func TestInsertOne(t *testing.T) {
 				Message: "duplicate key error",
 			}))
 
-		params := InsertOneParam{
+		params := InsertParam{
 			FullName:  util.RandomFullName(),
 			Email:     util.RandomEmail(),
 			Password:  util.RandomString(10),
@@ -60,7 +60,7 @@ func TestInsertOne(t *testing.T) {
 	})
 
 	mt.Run("invalid params returns empty string and err", func(mt *mtest.T) {
-		params := InsertOneParam{}
+		params := InsertParam{}
 
 		service := NewUserStorage(mt.Coll)
 

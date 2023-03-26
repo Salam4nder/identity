@@ -23,8 +23,8 @@ type Filter struct {
 	CreatedAt time.Time `bson:"created_at, omitempty"`
 }
 
-// InsertOneParam represents a parameter for creating a user.
-type InsertOneParam struct {
+// InsertParam represents a parameter for creating a user.
+type InsertParam struct {
 	FullName  string    `bson:"full_name"`
 	Email     string    `bson:"email"`
 	Password  string    `bson:"password"`
@@ -40,7 +40,7 @@ type UpdateParam struct {
 
 // Validate validates the CreateParam parameter.
 // Returns an error if the CreateParam parameter is invalid.
-func (c *InsertOneParam) Validate() error {
+func (c *InsertParam) Validate() error {
 	var (
 		fullNameErr error
 		emailErr    error

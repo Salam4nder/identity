@@ -14,7 +14,7 @@ import (
 
 // UserStorage defines the user storage interface.
 type UserStorage interface {
-	InsertOne(context.Context, InsertOneParam) (string, error)
+	InsertOne(context.Context, InsertParam) (string, error)
 	FindOneByID(context.Context, string) (User, error)
 	FindOneByEmail(context.Context, string) (User, error)
 	FindByFilter(context.Context, Filter) ([]User, error)
@@ -37,7 +37,7 @@ func NewUserStorage(c *mongo.Collection) UserStorage {
 // InsertOne creates a new user. Returns the created ID as a string.
 // An empty string and an error is returned if the user could not be created.
 func (s *userStorage) InsertOne(
-	ctx context.Context, param InsertOneParam) (string, error) {
+	ctx context.Context, param InsertParam) (string, error) {
 	if err := param.Validate(); err != nil {
 		return "", err
 	}
