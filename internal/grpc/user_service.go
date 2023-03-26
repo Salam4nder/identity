@@ -100,13 +100,14 @@ func (s *userService) GetByEmail(
 // or no users were found.
 func (s *userService) GetByFilter(
 	ctx context.Context, req *pb.GetByFilterRequest) (*pb.GetByFilterResponse, error) {
-	if req == nil {
-		return nil, requestIsNilError()
+	if err := validateGetByFilterRequest(req); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	filter := storage.Filter{
-		FullName: req.GetFullName(),
-		Email:    req.GetEmail(),
+		FullName:  req.GetFullName(),
+		Email:     req.GetEmail(),
+		CreatedAt: req.GetCreatedAt().AsTime(),
 	}
 
 	fetchedUsers, err := s.UserStorage.FindByFilter(ctx, filter)
@@ -167,6 +168,21 @@ func validateUpdateUserRequest(req *pb.UpdateUserRequest) error {
 
 	if req.GetFullName() == "" && req.GetEmail() == "" {
 		return errors.New("at least one field must be provided for an update")
+	}
+
+	return nil
+}
+
+// validateGetByFilterRequest returns nil if the request is valid.
+func validateGetByFilterRequest(req *pb.GetByFilterRequest) error {
+	if req == nil {
+		return errors.New("request can not be nil")
+	}
+
+	if req.GetFullName() == "" &&
+		req.GetEmail() == "" &&
+		req.CreatedAt.AsTime().IsZero() {
+		return errors.New("at least one field must be provided for a filter")
 	}
 
 	return nil
