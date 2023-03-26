@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -154,6 +155,31 @@ func (s *userService) UpdateUser(
 	}
 
 	return &pb.UpdateUserResponse{User: userToProto(updatedUser)}, nil
+}
+
+// DeleteUser deletes a user by id. Returns an error if the user couldn't be deleted,
+// if the user doesn't exist or if the request is invalid.
+func (s *userService) DeleteUser(
+	ctx context.Context, req *pb.DeleteUserRequest) (*emptypb.Empty, error) {
+	if req == nil {
+		return nil, requestIsNilError()
+	}
+
+	if req.GetId() == "" {
+		return nil, status.Error(codes.InvalidArgument, "ID can not be empty")
+	}
+
+	err := s.UserStorage.DeleteOne(ctx, req.GetId())
+	if err != nil {
+		if errors.Is(err, storage.UserNotFoundErr()) {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+		s.logger.Error("failed to delete user", zap.Error(err))
+
+		return nil, internalServerError()
+	}
+
+	return &emptypb.Empty{}, nil
 }
 
 // validateUpdateUserRequest returns nil if the request is valid.
