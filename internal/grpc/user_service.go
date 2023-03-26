@@ -55,7 +55,7 @@ func (s *userService) GetUser(
 	}
 
 	if req.GetId() == "" {
-		return nil, invalidIDError()
+		return nil, status.Error(codes.InvalidArgument, "ID can not be empty")
 	}
 
 	user, err := s.UserStorage.FindOneByID(ctx, req.GetId())
@@ -69,6 +69,31 @@ func (s *userService) GetUser(
 	}
 
 	return &pb.GetUserResponse{User: userToProto(user)}, nil
+}
+
+// GetByEmail returns a user by email. Returns an error if the user couldn't be not
+// found or if the request is invalid.
+func (s *userService) GetByEmail(
+	ctx context.Context, req *pb.GetByEmailRequest) (*pb.GetByEmailResponse, error) {
+	if req == nil {
+		return nil, requestIsNilError()
+	}
+
+	if req.GetEmail() == "" {
+		return nil, status.Error(codes.InvalidArgument, "email can not be empty")
+	}
+
+	user, err := s.UserStorage.FindOneByEmail(ctx, req.GetEmail())
+	if err != nil {
+		if errors.Is(err, storage.UserNotFoundErr()) {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+		s.logger.Error("failed to find user", zap.Error(err))
+
+		return nil, internalServerError()
+	}
+
+	return &pb.GetByEmailResponse{User: userToProto(user)}, nil
 }
 
 // UpdateUser updates a user by id. Returns an error if the user couldn't be updated
