@@ -127,7 +127,7 @@ func (s *userService) GetByFilter(
 		users = append(users, userToProto(user))
 	}
 
-	if len(users) < 0 {
+	if len(users) < 1 {
 		return nil, status.Error(codes.NotFound, "no users found")
 	}
 
