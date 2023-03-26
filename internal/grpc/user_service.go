@@ -71,6 +71,46 @@ func (s *userService) GetUser(
 	return &pb.GetUserResponse{User: userToProto(user)}, nil
 }
 
+// UpdateUser updates a user by id. Returns an error if the user couldn't be updated
+// or if the request is invalid.
+func (s *userService) UpdateUser(
+	ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
+	if err := validateUpdateUserRequest(req); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	updateOneParam := protoToUpdateParam(req)
+
+	updatedUser, err := s.UserStorage.UpdateOne(ctx, updateOneParam)
+	if err != nil {
+		if errors.Is(err, storage.UserNotFoundErr()) {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+		s.logger.Error("failed to update user", zap.Error(err))
+
+		return nil, internalServerError()
+	}
+
+	return &pb.UpdateUserResponse{User: userToProto(updatedUser)}, nil
+}
+
+// validateUpdateUserRequest returns nil if the request is valid.
+func validateUpdateUserRequest(req *pb.UpdateUserRequest) error {
+	if req == nil {
+		return errors.New("request can not be nil")
+	}
+
+	if req.Id == "" {
+		return errors.New("invalid id")
+	}
+
+	if req.GetFullName() == "" && req.GetEmail() == "" {
+		return errors.New("at least one field must be provided for an update")
+	}
+
+	return nil
+}
+
 // validateCreateUserRequest returns nil if the request is valid.
 func validateCreateUserRequest(req *pb.CreateUserRequest) error {
 	if req == nil {
@@ -98,8 +138,16 @@ func validateCreateUserRequest(req *pb.CreateUserRequest) error {
 	return errors.Join(fullNameErr, emailErr, passwordErr)
 }
 
-func protoToInsertOneParam(req *pb.CreateUserRequest) storage.InsertOneParam {
-	return storage.InsertOneParam{
+func protoToUpdateParam(req *pb.UpdateUserRequest) storage.UpdateParam {
+	return storage.UpdateParam{
+		ID:       req.GetId(),
+		FullName: req.GetFullName(),
+		Email:    req.GetEmail(),
+	}
+}
+
+func protoToInsertOneParam(req *pb.CreateUserRequest) storage.InsertParam {
+	return storage.InsertParam{
 		FullName: req.GetFullName(),
 		Email:    req.GetEmail(),
 		Password: req.GetPassword(),
