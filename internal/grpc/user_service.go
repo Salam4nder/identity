@@ -96,6 +96,42 @@ func (s *userService) GetByEmail(
 	return &pb.GetByEmailResponse{User: userToProto(user)}, nil
 }
 
+// GetByFilter returns a list of users by filter. Returns an error if the request is invalid
+// or no users were found.
+func (s *userService) GetByFilter(
+	ctx context.Context, req *pb.GetByFilterRequest) (*pb.GetByFilterResponse, error) {
+	if req == nil {
+		return nil, requestIsNilError()
+	}
+
+	filter := storage.Filter{
+		FullName: req.GetFullName(),
+		Email:    req.GetEmail(),
+	}
+
+	fetchedUsers, err := s.UserStorage.FindByFilter(ctx, filter)
+	if err != nil {
+		if errors.Is(err, storage.UserNotFoundErr()) {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+		s.logger.Error("failed to find users", zap.Error(err))
+
+		return nil, internalServerError()
+	}
+
+	var users []*pb.UserResponse
+
+	for _, user := range fetchedUsers {
+		users = append(users, userToProto(user))
+	}
+
+	if len(users) < 0 {
+		return nil, status.Error(codes.NotFound, "no users found")
+	}
+
+	return &pb.GetByFilterResponse{Users: users}, nil
+}
+
 // UpdateUser updates a user by id. Returns an error if the user couldn't be updated
 // or if the request is invalid.
 func (s *userService) UpdateUser(
