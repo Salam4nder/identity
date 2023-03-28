@@ -11,7 +11,9 @@ import (
 	"github.com/Salam4nder/user/pkg/mongo"
 )
 
-const bootTimeout = 20 * time.Second
+const (
+	timeout = 20 * time.Second
+)
 
 func main() {
 	cfg, err := config.New()
@@ -19,12 +21,13 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		bootTimeout,
+		timeout,
 	)
 	defer cancel()
 
 	mongoDB, err := mongo.New(ctx, cfg.Mongo)
 	panicOnErr(err)
+	defer mongoDB.Close(ctx)
 
 	userStorage := storage.NewUserStorage(
 		mongoDB.GetCollection())
