@@ -55,9 +55,9 @@ func (s *userStorage) InsertOne(
 		return "", err
 	}
 
-	id := createdUser.InsertedID.(primitive.ObjectID).Hex()
+	ID := createdUser.InsertedID.(primitive.ObjectID).Hex()
 
-	return id, nil
+	return ID, nil
 }
 
 // FindOneByID returns a user by its ID.
@@ -67,15 +67,16 @@ func (s *userStorage) FindOneByID(ctx context.Context, id string) (User, error) 
 
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return User{}, err
+		return User{}, ErrInvalidID
 	}
 
 	query := bson.D{{Key: "_id", Value: objID}}
 
 	if err := s.collection.FindOne(ctx, query).Decode(&user); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return User{}, UserNotFoundErr()
+			return User{}, ErrUserNotFound
 		}
+
 		return User{}, err
 	}
 
@@ -87,13 +88,13 @@ func (s *userStorage) FindOneByID(ctx context.Context, id string) (User, error) 
 func (s *userStorage) FindOneByEmail(ctx context.Context, email string) (User, error) {
 	var user User
 
-	if email == "" {
-		return User{}, errors.New("email is required")
-	}
-
 	query := bson.D{{Key: "email", Value: email}}
 
 	if err := s.collection.FindOne(ctx, query).Decode(&user); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return User{}, ErrUserNotFound
+		}
+
 		return User{}, err
 	}
 
@@ -117,6 +118,10 @@ func (s *userStorage) FindByFilter(ctx context.Context, filter Filter) ([]User, 
 
 	cursor, err := s.collection.Find(ctx, query)
 	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return []User{}, ErrUserNotFound
+		}
+
 		return []User{}, err
 	}
 
@@ -138,7 +143,7 @@ func (s *userStorage) UpdateOne(ctx context.Context, param UpdateParam) (User, e
 
 	objID, err := primitive.ObjectIDFromHex(param.ID)
 	if err != nil {
-		return user, err
+		return user, ErrInvalidID
 	}
 
 	query := bson.D{{Key: "_id", Value: objID}}
@@ -147,6 +152,10 @@ func (s *userStorage) UpdateOne(ctx context.Context, param UpdateParam) (User, e
 
 	err = s.collection.FindOneAndUpdate(ctx, query, update).Decode(&user)
 	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return User{}, ErrUserNotFound
+		}
+
 		return user, err
 	}
 
@@ -158,14 +167,22 @@ func (s *userStorage) UpdateOne(ctx context.Context, param UpdateParam) (User, e
 func (s *userStorage) DeleteOne(ctx context.Context, id string) error {
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return err
+		return ErrInvalidID
 	}
 
 	query := bson.D{{Key: "_id", Value: objID}}
 
 	res, err := s.collection.DeleteOne(ctx, query)
-	if err != nil || res.DeletedCount < 1 {
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return ErrUserNotFound
+		}
+
 		return err
+	}
+
+	if res.DeletedCount < 1 {
+		return errors.New("user found but not deleted")
 	}
 
 	return nil
