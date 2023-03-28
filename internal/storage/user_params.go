@@ -89,7 +89,7 @@ func (u *UpdateParam) Validate() error {
 	return nil
 }
 
-// Validate validates the create parameter.
+// Validate validates the Filter.
 // Returns an error if the Filter parameteer is invalid.
 func (f *Filter) Validate() error {
 	if f.FullName == "" &&
