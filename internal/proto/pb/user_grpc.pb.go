@@ -23,12 +23,12 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserClient interface {
-	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
-	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
+	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*UserResponse, error)
+	GetUser(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserResponse, error)
 	GetByFilter(ctx context.Context, in *GetByFilterRequest, opts ...grpc.CallOption) (*GetByFilterResponse, error)
-	GetByEmail(ctx context.Context, in *GetByEmailRequest, opts ...grpc.CallOption) (*GetByEmailResponse, error)
-	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
-	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	GetByEmail(ctx context.Context, in *GetByEmailRequest, opts ...grpc.CallOption) (*UserResponse, error)
+	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UserResponse, error)
+	DeleteUser(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type userClient struct {
@@ -39,8 +39,8 @@ func NewUserClient(cc grpc.ClientConnInterface) UserClient {
 	return &userClient{cc}
 }
 
-func (c *userClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error) {
-	out := new(CreateUserResponse)
+func (c *userClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*UserResponse, error) {
+	out := new(UserResponse)
 	err := c.cc.Invoke(ctx, "/pb.User/CreateUser", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -48,8 +48,8 @@ func (c *userClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts
 	return out, nil
 }
 
-func (c *userClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error) {
-	out := new(GetUserResponse)
+func (c *userClient) GetUser(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserResponse, error) {
+	out := new(UserResponse)
 	err := c.cc.Invoke(ctx, "/pb.User/GetUser", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -66,8 +66,8 @@ func (c *userClient) GetByFilter(ctx context.Context, in *GetByFilterRequest, op
 	return out, nil
 }
 
-func (c *userClient) GetByEmail(ctx context.Context, in *GetByEmailRequest, opts ...grpc.CallOption) (*GetByEmailResponse, error) {
-	out := new(GetByEmailResponse)
+func (c *userClient) GetByEmail(ctx context.Context, in *GetByEmailRequest, opts ...grpc.CallOption) (*UserResponse, error) {
+	out := new(UserResponse)
 	err := c.cc.Invoke(ctx, "/pb.User/GetByEmail", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -75,8 +75,8 @@ func (c *userClient) GetByEmail(ctx context.Context, in *GetByEmailRequest, opts
 	return out, nil
 }
 
-func (c *userClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error) {
-	out := new(UpdateUserResponse)
+func (c *userClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UserResponse, error) {
+	out := new(UserResponse)
 	err := c.cc.Invoke(ctx, "/pb.User/UpdateUser", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -84,7 +84,7 @@ func (c *userClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts
 	return out, nil
 }
 
-func (c *userClient) DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *userClient) DeleteUser(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/pb.User/DeleteUser", in, out, opts...)
 	if err != nil {
@@ -97,12 +97,12 @@ func (c *userClient) DeleteUser(ctx context.Context, in *DeleteUserRequest, opts
 // All implementations must embed UnimplementedUserServer
 // for forward compatibility
 type UserServer interface {
-	CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
-	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
+	CreateUser(context.Context, *CreateUserRequest) (*UserResponse, error)
+	GetUser(context.Context, *UserID) (*UserResponse, error)
 	GetByFilter(context.Context, *GetByFilterRequest) (*GetByFilterResponse, error)
-	GetByEmail(context.Context, *GetByEmailRequest) (*GetByEmailResponse, error)
-	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
-	DeleteUser(context.Context, *DeleteUserRequest) (*emptypb.Empty, error)
+	GetByEmail(context.Context, *GetByEmailRequest) (*UserResponse, error)
+	UpdateUser(context.Context, *UpdateUserRequest) (*UserResponse, error)
+	DeleteUser(context.Context, *UserID) (*emptypb.Empty, error)
 	mustEmbedUnimplementedUserServer()
 }
 
@@ -110,22 +110,22 @@ type UserServer interface {
 type UnimplementedUserServer struct {
 }
 
-func (UnimplementedUserServer) CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error) {
+func (UnimplementedUserServer) CreateUser(context.Context, *CreateUserRequest) (*UserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
 }
-func (UnimplementedUserServer) GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error) {
+func (UnimplementedUserServer) GetUser(context.Context, *UserID) (*UserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
 }
 func (UnimplementedUserServer) GetByFilter(context.Context, *GetByFilterRequest) (*GetByFilterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetByFilter not implemented")
 }
-func (UnimplementedUserServer) GetByEmail(context.Context, *GetByEmailRequest) (*GetByEmailResponse, error) {
+func (UnimplementedUserServer) GetByEmail(context.Context, *GetByEmailRequest) (*UserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetByEmail not implemented")
 }
-func (UnimplementedUserServer) UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error) {
+func (UnimplementedUserServer) UpdateUser(context.Context, *UpdateUserRequest) (*UserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
 }
-func (UnimplementedUserServer) DeleteUser(context.Context, *DeleteUserRequest) (*emptypb.Empty, error) {
+func (UnimplementedUserServer) DeleteUser(context.Context, *UserID) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
 }
 func (UnimplementedUserServer) mustEmbedUnimplementedUserServer() {}
@@ -160,7 +160,7 @@ func _User_CreateUser_Handler(srv interface{}, ctx context.Context, dec func(int
 }
 
 func _User_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUserRequest)
+	in := new(UserID)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -172,7 +172,7 @@ func _User_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interf
 		FullMethod: "/pb.User/GetUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServer).GetUser(ctx, req.(*GetUserRequest))
+		return srv.(UserServer).GetUser(ctx, req.(*UserID))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -232,7 +232,7 @@ func _User_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(int
 }
 
 func _User_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteUserRequest)
+	in := new(UserID)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -244,7 +244,7 @@ func _User_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(int
 		FullMethod: "/pb.User/DeleteUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServer).DeleteUser(ctx, req.(*DeleteUserRequest))
+		return srv.(UserServer).DeleteUser(ctx, req.(*UserID))
 	}
 	return interceptor(ctx, in, info, handler)
 }
