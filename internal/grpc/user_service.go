@@ -29,7 +29,7 @@ func NewUserService(store storage.UserStorage, log *zap.Logger) *userService {
 // CreateUser creates a new user. Returns an error if the user couldn't be created
 // or if the request is invalid.
 func (s *userService) CreateUser(
-	ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
+	ctx context.Context, req *pb.CreateUserRequest) (*pb.UserID, error) {
 	if err := validateCreateUserRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -44,13 +44,13 @@ func (s *userService) CreateUser(
 		return nil, internalServerError()
 	}
 
-	return &pb.CreateUserResponse{Id: createdUserID}, nil
+	return &pb.UserID{Id: createdUserID}, nil
 }
 
 // GetUser returns a user by id. Returns an error if the user couldn't be found
 // or if the request is invalid.
 func (s *userService) GetUser(
-	ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse, error) {
+	ctx context.Context, req *pb.UserID) (*pb.UserResponse, error) {
 	if req == nil {
 		return nil, requestIsNilError()
 	}
@@ -72,13 +72,13 @@ func (s *userService) GetUser(
 		}
 	}
 
-	return &pb.GetUserResponse{User: userToProto(user)}, nil
+	return userToProto(user), nil
 }
 
 // GetByEmail returns a user by email. Returns an error if the user couldn't be not
 // found or if the request is invalid.
 func (s *userService) GetByEmail(
-	ctx context.Context, req *pb.GetByEmailRequest) (*pb.GetByEmailResponse, error) {
+	ctx context.Context, req *pb.GetByEmailRequest) (*pb.UserResponse, error) {
 	if req == nil {
 		return nil, requestIsNilError()
 	}
@@ -98,7 +98,7 @@ func (s *userService) GetByEmail(
 		}
 	}
 
-	return &pb.GetByEmailResponse{User: userToProto(user)}, nil
+	return userToProto(user), nil
 }
 
 // GetByFilter returns a list of users by filter. Returns an error if the request is invalid
@@ -142,7 +142,7 @@ func (s *userService) GetByFilter(
 // UpdateUser updates a user by id. Returns an error if the user couldn't be updated
 // or if the request is invalid.
 func (s *userService) UpdateUser(
-	ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
+	ctx context.Context, req *pb.UpdateUserRequest) (*pb.UserResponse, error) {
 	if err := validateUpdateUserRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -162,13 +162,13 @@ func (s *userService) UpdateUser(
 		}
 	}
 
-	return &pb.UpdateUserResponse{User: userToProto(updatedUser)}, nil
+	return userToProto(updatedUser), nil
 }
 
 // DeleteUser deletes a user by id. Returns an error if the user couldn't be deleted,
 // if the user doesn't exist or if the request is invalid.
 func (s *userService) DeleteUser(
-	ctx context.Context, req *pb.DeleteUserRequest) (*emptypb.Empty, error) {
+	ctx context.Context, req *pb.UserID) (*emptypb.Empty, error) {
 	if req == nil {
 		return nil, requestIsNilError()
 	}
