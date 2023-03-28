@@ -61,12 +61,15 @@ func (s *userService) GetUser(
 
 	user, err := s.UserStorage.FindOneByID(ctx, req.GetId())
 	if err != nil {
-		if errors.Is(err, storage.UserNotFoundErr()) {
+		switch {
+		case errors.Is(err, storage.ErrUserNotFound):
 			return nil, status.Error(codes.NotFound, err.Error())
+		case errors.Is(err, storage.ErrInvalidID):
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		default:
+			s.logger.Error("failed to find user", zap.Error(err))
+			return nil, internalServerError()
 		}
-		s.logger.Error("failed to find user", zap.Error(err))
-
-		return nil, internalServerError()
 	}
 
 	return &pb.GetUserResponse{User: userToProto(user)}, nil
@@ -86,12 +89,13 @@ func (s *userService) GetByEmail(
 
 	user, err := s.UserStorage.FindOneByEmail(ctx, req.GetEmail())
 	if err != nil {
-		if errors.Is(err, storage.UserNotFoundErr()) {
+		switch {
+		case errors.Is(err, storage.ErrUserNotFound):
 			return nil, status.Error(codes.NotFound, err.Error())
+		default:
+			s.logger.Error("failed to find user", zap.Error(err))
+			return nil, internalServerError()
 		}
-		s.logger.Error("failed to find user", zap.Error(err))
-
-		return nil, internalServerError()
 	}
 
 	return &pb.GetByEmailResponse{User: userToProto(user)}, nil
@@ -113,12 +117,13 @@ func (s *userService) GetByFilter(
 
 	fetchedUsers, err := s.UserStorage.FindByFilter(ctx, filter)
 	if err != nil {
-		if errors.Is(err, storage.UserNotFoundErr()) {
+		switch {
+		case errors.Is(err, storage.ErrUserNotFound):
 			return nil, status.Error(codes.NotFound, err.Error())
+		default:
+			s.logger.Error("failed to find user", zap.Error(err))
+			return nil, internalServerError()
 		}
-		s.logger.Error("failed to find users", zap.Error(err))
-
-		return nil, internalServerError()
 	}
 
 	var users []*pb.UserResponse
@@ -146,12 +151,15 @@ func (s *userService) UpdateUser(
 
 	updatedUser, err := s.UserStorage.UpdateOne(ctx, updateOneParam)
 	if err != nil {
-		if errors.Is(err, storage.UserNotFoundErr()) {
+		switch {
+		case errors.Is(err, storage.ErrUserNotFound):
 			return nil, status.Error(codes.NotFound, err.Error())
+		case errors.Is(err, storage.ErrInvalidID):
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		default:
+			s.logger.Error("failed to find user", zap.Error(err))
+			return nil, internalServerError()
 		}
-		s.logger.Error("failed to update user", zap.Error(err))
-
-		return nil, internalServerError()
 	}
 
 	return &pb.UpdateUserResponse{User: userToProto(updatedUser)}, nil
@@ -171,12 +179,15 @@ func (s *userService) DeleteUser(
 
 	err := s.UserStorage.DeleteOne(ctx, req.GetId())
 	if err != nil {
-		if errors.Is(err, storage.UserNotFoundErr()) {
+		switch {
+		case errors.Is(err, storage.ErrUserNotFound):
 			return nil, status.Error(codes.NotFound, err.Error())
+		case errors.Is(err, storage.ErrInvalidID):
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		default:
+			s.logger.Error("failed to find user", zap.Error(err))
+			return nil, internalServerError()
 		}
-		s.logger.Error("failed to delete user", zap.Error(err))
-
-		return nil, internalServerError()
 	}
 
 	return &emptypb.Empty{}, nil
