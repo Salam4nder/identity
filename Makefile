@@ -12,6 +12,9 @@ down:
 
 logs:
 	docker-compose logs -f
+
+evans:
+	evans -r
 	
 proto:
 	rm -rf internal/proto/pb/*.go
