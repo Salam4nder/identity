@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/plaid/go-envvar/envvar"
 )
@@ -27,7 +28,9 @@ func New() (*Application, error) {
 
 // UserService holds the user service configuration.
 type UserService struct {
-	SymmetricKey string `envvar:"SYMMETRIC_KEY"`
+	SymmetricKey         string    `envvar:"SYMMETRIC_KEY"`
+	AccessTokenDuration  time.Time `envvar:"ACCESS_TOKEN_DURATION"`
+	RefreshTokenDuration time.Time `envvar:"REFRESH_TOKEN_DURATION"`
 }
 
 // MongoDB holds the MongoDB configuration.
