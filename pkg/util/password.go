@@ -14,8 +14,8 @@ func HashPassword(password string) (string, error) {
 	return string(bytes), nil
 }
 
-// ValidatePassword validates a password using bcrypt.
-func ValidatePassword(password, hash string) error {
+// ComparePasswordHash validates a password using bcrypt.
+func ComparePasswordHash(password, hash string) error {
 	return bcrypt.CompareHashAndPassword(
 		[]byte(hash), []byte(password))
 }

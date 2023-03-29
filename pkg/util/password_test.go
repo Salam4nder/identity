@@ -21,7 +21,7 @@ func TestValidatePassword(t *testing.T) {
 	assert.NotEmpty(t, hash)
 	assert.NotEqual(t, password, hash)
 
-	err = ValidatePassword(password, hash)
+	err = ComparePasswordHash(password, hash)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, hash)
 }
