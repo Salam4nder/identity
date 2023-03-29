@@ -6,7 +6,6 @@ import (
 
 	"github.com/Salam4nder/user/internal/config"
 
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -66,18 +65,4 @@ func (db *db) Close(ctx context.Context) error {
 // Ping pings the database to check the connection.
 func (db *db) Ping(ctx context.Context) error {
 	return db.client.Ping(ctx, nil)
-}
-
-// InitIndexes creates indexes for the collections.
-func (db *db) InitIndexes(ctx context.Context) error {
-	indexModel := mongo.IndexModel{
-		Keys:    bson.M{"email": 1},
-		Options: options.Index().SetUnique(true),
-	}
-	_, err := db.collection.Indexes().CreateOne(ctx, indexModel)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
