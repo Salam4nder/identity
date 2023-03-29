@@ -13,12 +13,13 @@ const (
 	xForwardedForHeader        = "x-forwarded-for"
 )
 
+// Metadata is a struct that contains metadata about the request.
 type Metadata struct {
 	UserAgent string
 	ClientIP  string
 }
 
-func (s *server) extractMetadata(ctx context.Context) *Metadata {
+func (s *userService) extractMetadata(ctx context.Context) *Metadata {
 	mtdt := &Metadata{}
 
 	if md, ok := metadata.FromIncomingContext(ctx); ok {

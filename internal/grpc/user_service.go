@@ -176,7 +176,7 @@ func (s *userService) UpdateUser(
 
 	if authPayload.Email != req.GetEmail() {
 		return nil, status.Errorf(
-			codes.PermissionDenied, "cannot update other user's info")
+			codes.PermissionDenied, "only owner can update details")
 	}
 
 	updateOneParam := protoToUpdateParam(req)
