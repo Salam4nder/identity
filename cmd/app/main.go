@@ -28,13 +28,16 @@ func main() {
 	mongoDB, err := mongo.New(ctx, cfg.Mongo)
 	panicOnErr(err)
 	defer mongoDB.Close(ctx)
+	mongoDB.InitIndexes(ctx)
 
 	userStorage := storage.NewUserStorage(
 		mongoDB.GetCollection())
 
 	logger, err := logger.New("")
 
-	service := grpc.NewUserService(userStorage, logger)
+	service, err := grpc.NewUserService(
+		userStorage, logger, cfg.Service)
+	panicOnErr(err)
 
 	server := grpc.NewServer(service, &cfg.Server, logger)
 
