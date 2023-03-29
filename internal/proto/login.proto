@@ -7,7 +7,7 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/Salam4nder/user/internal/proto/pb";
 
 message LoginUserRequest {
-    string username = 1;
+    string email = 1;
     string password = 2;
 }
 

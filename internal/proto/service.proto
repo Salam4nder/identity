@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/api/annotations.proto";
+import "user.proto";
+import "login.proto";
+
+option go_package = "github.com/Salam4nder/user/internal/proto/pb";
+
+service User {
+    rpc CreateUser (CreateUserRequest) returns (UserID) {
+            option (google.api.http) = {
+                post: "/v1/create_user"
+                body: "*"
+            };
+        }
+    rpc GetUser (UserID) returns (UserResponse) {
+            option (google.api.http) = {
+                get: "/v1/get_user/{id}"
+            };
+        }
+    rpc GetByFilter (GetByFilterRequest) returns (GetByFilterResponse) {
+            option (google.api.http) = {
+                post: "/v1/get_by_filter"
+                body: "*"
+            };
+        }
+    rpc GetByEmail (GetByEmailRequest) returns (UserResponse) {
+            option (google.api.http) = {
+                post: "/v1/get_by_email"
+                body: "*"
+            };
+        }
+    rpc UpdateUser (UpdateUserRequest) returns (UserResponse) {
+            option (google.api.http) = {
+                patch: "/v1/update_user"
+                body: "*"
+            };
+        }
+    rpc DeleteUser (UserID) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            delete: "/v1/delete_user/{id}"
+        };
+    }
+    rpc LoginUser (LoginUserRequest) returns (LoginUserResponse) {
+        option (google.api.http) = {
+            post: "/v1/login_user"
+            body: "*"
+        };
+    }
+}

@@ -7,15 +7,6 @@ import "google/protobuf/empty.proto";
 
 option go_package = "github.com/Salam4nder/user/internal/proto/pb";
 
-service User {
-    rpc CreateUser (CreateUserRequest) returns (UserID) {}
-    rpc GetUser (UserID) returns (UserResponse) {}
-    rpc GetByFilter (GetByFilterRequest) returns (GetByFilterResponse) {}
-    rpc GetByEmail (GetByEmailRequest) returns (UserResponse) {}
-    rpc UpdateUser (UpdateUserRequest) returns (UserResponse) {}
-    rpc DeleteUser (UserID) returns (google.protobuf.Empty) {}
-}
-
 message UserResponse {
     string id = 1;
     string full_name = 2;
