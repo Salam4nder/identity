@@ -31,7 +31,7 @@ func NewServer(
 	}
 }
 
-// Serve starts gRPC server.
+// Serve starts the gRPC server.
 func (s *server) Serve() error {
 	listener, err := net.Listen("tcp", s.cfg.Addr())
 	if err != nil {
