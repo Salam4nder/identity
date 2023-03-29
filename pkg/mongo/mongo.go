@@ -6,6 +6,7 @@ import (
 
 	"github.com/Salam4nder/user/internal/config"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -17,14 +18,13 @@ const (
 	maxPoolSize       = 100
 )
 
-// DB implements the mongo.Database interface.
-type DB struct {
+type db struct {
 	client     *mongo.Client
 	collection *mongo.Collection
 }
 
 // New creates a new MongoDB instance.
-func New(ctx context.Context, cfg config.MongoDB) (*DB, error) {
+func New(ctx context.Context, cfg config.MongoDB) (*db, error) {
 	opts := options.Client().ApplyURI(cfg.URI()).
 		SetAuth(
 			options.Credential{
@@ -47,23 +47,37 @@ func New(ctx context.Context, cfg config.MongoDB) (*DB, error) {
 
 	collection := client.Database(cfg.Name).Collection(cfg.Collection)
 
-	return &DB{
+	return &db{
 		client:     client,
 		collection: collection,
 	}, nil
 }
 
 // GetCollection returns the collection of the database.
-func (db *DB) GetCollection() *mongo.Collection {
+func (db *db) GetCollection() *mongo.Collection {
 	return db.collection
 }
 
 // Close closes the database connection.
-func (db *DB) Close(ctx context.Context) error {
+func (db *db) Close(ctx context.Context) error {
 	return db.client.Disconnect(ctx)
 }
 
 // Ping pings the database to check the connection.
-func (db *DB) Ping(ctx context.Context) error {
+func (db *db) Ping(ctx context.Context) error {
 	return db.client.Ping(ctx, nil)
+}
+
+// InitIndexes creates indexes for the collections.
+func (db *db) InitIndexes(ctx context.Context) error {
+	indexModel := mongo.IndexModel{
+		Keys:    bson.M{"email": 1},
+		Options: options.Index().SetUnique(true),
+	}
+	_, err := db.collection.Indexes().CreateOne(ctx, indexModel)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
