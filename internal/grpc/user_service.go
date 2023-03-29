@@ -5,8 +5,11 @@ import (
 	"errors"
 	"time"
 
+	"github.com/Salam4nder/user/internal/config"
 	"github.com/Salam4nder/user/internal/proto/pb"
 	"github.com/Salam4nder/user/internal/storage"
+	"github.com/Salam4nder/user/pkg/token"
+	"github.com/Salam4nder/user/pkg/util"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -17,13 +20,24 @@ import (
 
 type userService struct {
 	pb.UserServer
-	logger *zap.Logger
 	storage.UserStorage
+	token.Maker
+	*zap.Logger
+	config.UserService
 }
 
 // NewUserService returns a new instance of UserService.
-func NewUserService(store storage.UserStorage, log *zap.Logger) *userService {
-	return &userService{UserStorage: store, logger: log}
+func NewUserService(
+	store storage.UserStorage,
+	log *zap.Logger,
+	cfg config.UserService) (*userService, error) {
+	tokenMaker, err := token.NewPasetoMaker(cfg.SymmetricKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return &userService{
+		UserStorage: store, Logger: log, Maker: tokenMaker}, nil
 }
 
 // CreateUser creates a new user. Returns an error if the user couldn't be created
@@ -39,7 +53,10 @@ func (s *userService) CreateUser(
 
 	createdUserID, err := s.UserStorage.InsertOne(ctx, insertOneParam)
 	if err != nil {
-		s.logger.Error("failed to insert user", zap.Error(err))
+		if err == storage.ErrDuplicateEmail {
+			return nil, status.Error(codes.AlreadyExists, err.Error())
+		}
+		s.Logger.Error("failed to insert user", zap.Error(err))
 
 		return nil, internalServerError()
 	}
@@ -64,10 +81,12 @@ func (s *userService) GetUser(
 		switch {
 		case errors.Is(err, storage.ErrUserNotFound):
 			return nil, status.Error(codes.NotFound, err.Error())
+
 		case errors.Is(err, storage.ErrInvalidID):
 			return nil, status.Error(codes.InvalidArgument, err.Error())
+
 		default:
-			s.logger.Error("failed to find user", zap.Error(err))
+			s.Logger.Error("failed to find user", zap.Error(err))
 			return nil, internalServerError()
 		}
 	}
@@ -92,8 +111,9 @@ func (s *userService) GetByEmail(
 		switch {
 		case errors.Is(err, storage.ErrUserNotFound):
 			return nil, status.Error(codes.NotFound, err.Error())
+
 		default:
-			s.logger.Error("failed to find user", zap.Error(err))
+			s.Logger.Error("failed to find user", zap.Error(err))
 			return nil, internalServerError()
 		}
 	}
@@ -120,8 +140,9 @@ func (s *userService) GetByFilter(
 		switch {
 		case errors.Is(err, storage.ErrUserNotFound):
 			return nil, status.Error(codes.NotFound, err.Error())
+
 		default:
-			s.logger.Error("failed to find user", zap.Error(err))
+			s.Logger.Error("failed to find user", zap.Error(err))
 			return nil, internalServerError()
 		}
 	}
@@ -143,8 +164,18 @@ func (s *userService) GetByFilter(
 // or if the request is invalid.
 func (s *userService) UpdateUser(
 	ctx context.Context, req *pb.UpdateUserRequest) (*pb.UserResponse, error) {
+	authPayload, err := s.authorizeUser(ctx)
+	if err != nil {
+		return nil, unauthenticatedError()
+	}
+
 	if err := validateUpdateUserRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	if authPayload.Email != req.GetEmail() {
+		return nil, status.Errorf(
+			codes.PermissionDenied, "cannot update other user's info")
 	}
 
 	updateOneParam := protoToUpdateParam(req)
@@ -154,10 +185,12 @@ func (s *userService) UpdateUser(
 		switch {
 		case errors.Is(err, storage.ErrUserNotFound):
 			return nil, status.Error(codes.NotFound, err.Error())
+
 		case errors.Is(err, storage.ErrInvalidID):
 			return nil, status.Error(codes.InvalidArgument, err.Error())
+
 		default:
-			s.logger.Error("failed to find user", zap.Error(err))
+			s.Logger.Error("failed to find user", zap.Error(err))
 			return nil, internalServerError()
 		}
 	}
@@ -182,10 +215,12 @@ func (s *userService) DeleteUser(
 		switch {
 		case errors.Is(err, storage.ErrUserNotFound):
 			return nil, status.Error(codes.NotFound, err.Error())
+
 		case errors.Is(err, storage.ErrInvalidID):
 			return nil, status.Error(codes.InvalidArgument, err.Error())
+
 		default:
-			s.logger.Error("failed to find user", zap.Error(err))
+			s.Logger.Error("failed to find user", zap.Error(err))
 			return nil, internalServerError()
 		}
 	}
@@ -203,11 +238,20 @@ func validateUpdateUserRequest(req *pb.UpdateUserRequest) error {
 		return errors.New("invalid id")
 	}
 
-	if req.GetFullName() == "" && req.GetEmail() == "" {
-		return errors.New("at least one field must be provided for an update")
+	var (
+		fullNameErr error
+		emailErr    error
+	)
+
+	if err := util.ValidateFullName(req.GetFullName()); err != nil {
+		fullNameErr = err
 	}
 
-	return nil
+	if err := util.ValidateEmail(req.GetEmail()); err != nil {
+		emailErr = err
+	}
+
+	return errors.Join(fullNameErr, emailErr)
 }
 
 // validateGetByFilterRequest returns nil if the request is valid.
@@ -237,16 +281,16 @@ func validateCreateUserRequest(req *pb.CreateUserRequest) error {
 		passwordErr error
 	)
 
-	if req.GetFullName() == "" {
-		fullNameErr = errors.New("full name can not be empty")
+	if err := util.ValidateFullName(req.GetFullName()); err != nil {
+		fullNameErr = err
 	}
 
-	if req.GetEmail() == "" {
-		emailErr = errors.New("email can not be empty")
+	if err := util.ValidateEmail(req.GetEmail()); err != nil {
+		emailErr = err
 	}
 
-	if req.GetPassword() == "" {
-		passwordErr = errors.New("password can not be empty")
+	if err := util.ValidatePassword(req.GetPassword()); err != nil {
+		passwordErr = err
 	}
 
 	return errors.Join(fullNameErr, emailErr, passwordErr)
