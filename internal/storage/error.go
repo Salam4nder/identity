@@ -1,12 +1,10 @@
 package storage
 
-// Error is used for custom errors.
-type Error string
+import "errors"
 
-func (e Error) Error() string { return string(e) }
-
-// Common errors
-const (
-	ErrUserNotFound = Error("user not found")
-	ErrInvalidID    = Error("ID is not a valid ObjectID")
+// Common errors.
+var (
+	ErrUserNotFound   = errors.New("user not found")
+	ErrInvalidID      = errors.New("ID is not a valid ObjectID")
+	ErrDuplicateEmail = errors.New("email already exists")
 )
