@@ -12,3 +12,7 @@ func requestIsNilError() error {
 func internalServerError() error {
 	return status.Error(codes.Internal, "internal server error")
 }
+
+func unauthenticatedError() error {
+	return status.Error(codes.Unauthenticated, "unauthenticated")
+}
