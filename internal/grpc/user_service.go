@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/Salam4nder/user/internal/config"
@@ -282,15 +283,15 @@ func validateCreateUserRequest(req *pb.CreateUserRequest) error {
 	)
 
 	if err := util.ValidateFullName(req.GetFullName()); err != nil {
-		fullNameErr = err
+		fullNameErr = fmt.Errorf("full_name %w", err)
 	}
 
 	if err := util.ValidateEmail(req.GetEmail()); err != nil {
-		emailErr = err
+		emailErr = fmt.Errorf("email %w", err)
 	}
 
 	if err := util.ValidatePassword(req.GetPassword()); err != nil {
-		passwordErr = err
+		passwordErr = fmt.Errorf("password %w", err)
 	}
 
 	return errors.Join(fullNameErr, emailErr, passwordErr)
