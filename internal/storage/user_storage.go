@@ -28,9 +28,9 @@ type userStorage struct {
 }
 
 // NewUserStorage creates a new user service.
-func NewUserStorage(c *mongo.Collection) UserStorage {
+func NewUserStorage(coll *mongo.Collection) UserStorage {
 	return &userStorage{
-		collection: c,
+		collection: coll,
 	}
 }
 
@@ -52,6 +52,10 @@ func (s *userStorage) InsertOne(
 
 	createdUser, err := s.collection.InsertOne(ctx, param)
 	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return "", ErrDuplicateEmail
+		}
+
 		return "", err
 	}
 
