@@ -8,19 +8,26 @@ import (
 
 // Application is the application configuration.
 type Application struct {
-	Mongo  MongoDB    `envvar:"MONGO_"`
-	Server GRPCServer `envvar:"GRPC_SERVER_"`
+	Mongo   MongoDB     `envvar:"MONGO_"`
+	Server  GRPCServer  `envvar:"GRPC_SERVER_"`
+	Service UserService `envvar:"USER_SERVICE_"`
 }
 
 // New returns a new application configuration
 // Returns an error if any of the environment variables are missing.
 func New() (*Application, error) {
 	var cfg Application
+
 	if err := envvar.Parse(&cfg); err != nil {
 		return nil, err
 	}
 
 	return &cfg, nil
+}
+
+// UserService holds the user service configuration.
+type UserService struct {
+	SymmetricKey string `envvar:"SYMMETRIC_KEY"`
 }
 
 // MongoDB holds the MongoDB configuration.
