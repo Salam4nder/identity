@@ -28,9 +28,9 @@ func New() (*Application, error) {
 
 // UserService holds the user service configuration.
 type UserService struct {
-	SymmetricKey         string    `envvar:"SYMMETRIC_KEY"`
-	AccessTokenDuration  time.Time `envvar:"ACCESS_TOKEN_DURATION"`
-	RefreshTokenDuration time.Time `envvar:"REFRESH_TOKEN_DURATION"`
+	SymmetricKey         string        `envvar:"SYMMETRIC_KEY"`
+	AccessTokenDuration  time.Duration `envvar:"ACCESS_TOKEN_DURATION"`
+	RefreshTokenDuration time.Duration `envvar:"REFRESH_TOKEN_DURATION"`
 }
 
 // MongoDB holds the MongoDB configuration.
