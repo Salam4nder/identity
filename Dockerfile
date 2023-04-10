@@ -14,6 +14,6 @@ WORKDIR /app
 COPY --from=builder /app/main .
 # COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-EXPOSE 50051
+EXPOSE 50051 8080
 
 CMD ["./main"]
