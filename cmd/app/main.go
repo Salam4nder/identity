@@ -45,8 +45,11 @@ func main() {
 
 	server := grpc.NewServer(service, &cfg.Server, logger)
 
-	err = server.Serve()
+	go server.ServeGRPCGateway()
+
+	err = server.ServeGRPC()
 	panicOnErr(err)
+
 }
 
 func panicOnErr(err error) {
