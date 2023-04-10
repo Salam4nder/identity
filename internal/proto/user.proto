@@ -1,11 +1,10 @@
 syntax = "proto3";
 
-package pb;
+package gen;
 
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/empty.proto";
 
-option go_package = "github.com/Salam4nder/user/internal/proto/pb";
+option go_package = "github.com/Salam4nder/user/internal/proto/gen";
 
 message UserResponse {
     string id = 1;

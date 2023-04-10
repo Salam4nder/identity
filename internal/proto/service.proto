@@ -1,12 +1,13 @@
 syntax = "proto3";
 
-package pb;
+package gen;
 
 import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
 import "user.proto";
 import "login.proto";
 
-option go_package = "github.com/Salam4nder/user/internal/proto/pb";
+option go_package = "github.com/Salam4nder/user/internal/proto/gen";
 
 service User {
     rpc CreateUser (CreateUserRequest) returns (UserID) {
