@@ -10,7 +10,7 @@ import (
 // Application is the application configuration.
 type Application struct {
 	Mongo   MongoDB     `envvar:"MONGO_"`
-	Server  GRPCServer  `envvar:"GRPC_SERVER_"`
+	Server  Server      `envvar:"SERVER_"`
 	Service UserService `envvar:"USER_SERVICE_"`
 }
 
@@ -43,10 +43,12 @@ type MongoDB struct {
 	Collection string `envvar:"COLLECTION" default:"users"`
 }
 
-// GRPCServer holds the gRPC server configuration.
-type GRPCServer struct {
-	Host string `envvar:"HOST" default:"localhost"`
-	Port string `envvar:"PORT" default:"8080"`
+// Server holds the gRPC server configuration.
+type Server struct {
+	GRPCHost string `envvar:"GRPC_HOST" default:"localhost"`
+	GRPCPort string `envvar:"GRPC_PORT" default:"8080"`
+	HTTPHost string `envvar:"HTTP_HOST" default:"localhost"`
+	HTTPPort string `envvar:"HTTP_PORT" default:"8081"`
 }
 
 // URI returns the mongoDB connection string.
@@ -59,7 +61,12 @@ func (m *MongoDB) URI() string {
 		m.Port)
 }
 
-// Addr returns the gRPC server address.
-func (g *GRPCServer) Addr() string {
-	return fmt.Sprintf("%s:%s", g.Host, g.Port)
+// GRPCAddr returns the gRPC server address.
+func (g *Server) GRPCAddr() string {
+	return fmt.Sprintf("%s:%s", g.GRPCHost, g.GRPCPort)
+}
+
+// HTTPAddr returns the gRPC gateway server address.
+func (g *Server) HTTPAddr() string {
+	return fmt.Sprintf("%s:%s", g.HTTPHost, g.HTTPPort)
 }
