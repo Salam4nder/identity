@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Salam4nder/user/internal/config"
-	"github.com/Salam4nder/user/internal/proto/pb"
+	"github.com/Salam4nder/user/internal/proto/gen"
 	"github.com/Salam4nder/user/internal/storage"
 	"github.com/Salam4nder/user/pkg/token"
 	"github.com/Salam4nder/user/pkg/util"
@@ -20,7 +20,7 @@ import (
 )
 
 type userService struct {
-	pb.UserServer
+	gen.UserServer
 	storage.UserStorage
 	token.Maker
 	*zap.Logger
@@ -44,7 +44,7 @@ func NewUserService(
 // CreateUser creates a new user. Returns an error if the user couldn't be created
 // or if the request is invalid.
 func (s *userService) CreateUser(
-	ctx context.Context, req *pb.CreateUserRequest) (*pb.UserID, error) {
+	ctx context.Context, req *gen.CreateUserRequest) (*gen.UserID, error) {
 	if err := validateCreateUserRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -62,13 +62,13 @@ func (s *userService) CreateUser(
 		return nil, internalServerError()
 	}
 
-	return &pb.UserID{Id: createdUserID}, nil
+	return &gen.UserID{Id: createdUserID}, nil
 }
 
 // GetUser returns a user by id. Returns an error if the user couldn't be found
 // or if the request is invalid.
 func (s *userService) GetUser(
-	ctx context.Context, req *pb.UserID) (*pb.UserResponse, error) {
+	ctx context.Context, req *gen.UserID) (*gen.UserResponse, error) {
 	if req == nil {
 		return nil, requestIsNilError()
 	}
@@ -98,7 +98,7 @@ func (s *userService) GetUser(
 // GetByEmail returns a user by email. Returns an error if the user couldn't be not
 // found or if the request is invalid.
 func (s *userService) GetByEmail(
-	ctx context.Context, req *pb.GetByEmailRequest) (*pb.UserResponse, error) {
+	ctx context.Context, req *gen.GetByEmailRequest) (*gen.UserResponse, error) {
 	if req == nil {
 		return nil, requestIsNilError()
 	}
@@ -125,7 +125,7 @@ func (s *userService) GetByEmail(
 // GetByFilter returns a list of users by filter. Returns an error if the request is invalid
 // or no users were found.
 func (s *userService) GetByFilter(
-	ctx context.Context, req *pb.GetByFilterRequest) (*pb.GetByFilterResponse, error) {
+	ctx context.Context, req *gen.GetByFilterRequest) (*gen.GetByFilterResponse, error) {
 	if err := validateGetByFilterRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -148,7 +148,7 @@ func (s *userService) GetByFilter(
 		}
 	}
 
-	var users []*pb.UserResponse
+	var users []*gen.UserResponse
 
 	for _, user := range fetchedUsers {
 		users = append(users, userToProto(user))
@@ -158,13 +158,13 @@ func (s *userService) GetByFilter(
 		return nil, status.Error(codes.NotFound, "no users found")
 	}
 
-	return &pb.GetByFilterResponse{Users: users}, nil
+	return &gen.GetByFilterResponse{Users: users}, nil
 }
 
 // UpdateUser updates a user by id. Returns an error if the user couldn't be updated
 // or if the request is invalid.
 func (s *userService) UpdateUser(
-	ctx context.Context, req *pb.UpdateUserRequest) (*pb.UserResponse, error) {
+	ctx context.Context, req *gen.UpdateUserRequest) (*gen.UserResponse, error) {
 	authPayload, err := s.authorizeUser(ctx)
 	if err != nil {
 		return nil, unauthenticatedError()
@@ -202,7 +202,7 @@ func (s *userService) UpdateUser(
 // DeleteUser deletes a user by id. Returns an error if the user couldn't be deleted,
 // if the user doesn't exist or if the request is invalid.
 func (s *userService) DeleteUser(
-	ctx context.Context, req *pb.UserID) (*emptypb.Empty, error) {
+	ctx context.Context, req *gen.UserID) (*emptypb.Empty, error) {
 	if req == nil {
 		return nil, requestIsNilError()
 	}
@@ -230,7 +230,7 @@ func (s *userService) DeleteUser(
 }
 
 // validateUpdateUserRequest returns nil if the request is valid.
-func validateUpdateUserRequest(req *pb.UpdateUserRequest) error {
+func validateUpdateUserRequest(req *gen.UpdateUserRequest) error {
 	if req == nil {
 		return errors.New("request can not be nil")
 	}
@@ -256,7 +256,7 @@ func validateUpdateUserRequest(req *pb.UpdateUserRequest) error {
 }
 
 // validateGetByFilterRequest returns nil if the request is valid.
-func validateGetByFilterRequest(req *pb.GetByFilterRequest) error {
+func validateGetByFilterRequest(req *gen.GetByFilterRequest) error {
 	if req == nil {
 		return errors.New("request can not be nil")
 	}
@@ -271,7 +271,7 @@ func validateGetByFilterRequest(req *pb.GetByFilterRequest) error {
 }
 
 // validateCreateUserRequest returns nil if the request is valid.
-func validateCreateUserRequest(req *pb.CreateUserRequest) error {
+func validateCreateUserRequest(req *gen.CreateUserRequest) error {
 	if req == nil {
 		return errors.New("request can not be nil")
 	}
@@ -297,7 +297,7 @@ func validateCreateUserRequest(req *pb.CreateUserRequest) error {
 	return errors.Join(fullNameErr, emailErr, passwordErr)
 }
 
-func protoToUpdateParam(req *pb.UpdateUserRequest) storage.UpdateParam {
+func protoToUpdateParam(req *gen.UpdateUserRequest) storage.UpdateParam {
 	return storage.UpdateParam{
 		ID:       req.GetId(),
 		FullName: req.GetFullName(),
@@ -305,7 +305,7 @@ func protoToUpdateParam(req *pb.UpdateUserRequest) storage.UpdateParam {
 	}
 }
 
-func protoToInsertOneParam(req *pb.CreateUserRequest) storage.InsertParam {
+func protoToInsertOneParam(req *gen.CreateUserRequest) storage.InsertParam {
 	return storage.InsertParam{
 		FullName: req.GetFullName(),
 		Email:    req.GetEmail(),
@@ -313,8 +313,8 @@ func protoToInsertOneParam(req *pb.CreateUserRequest) storage.InsertParam {
 	}
 }
 
-func userToProto(user storage.User) *pb.UserResponse {
-	return &pb.UserResponse{
+func userToProto(user storage.User) *gen.UserResponse {
+	return &gen.UserResponse{
 		Id:        user.ID.Hex(),
 		FullName:  user.FullName,
 		Email:     user.Email,
