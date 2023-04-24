@@ -41,6 +41,64 @@ func NewUserService(
 		UserStorage: store, Logger: log, Maker: tokenMaker}, nil
 }
 
+// LoginUser logs in a user and returns a session and a token payload.
+// Returns an error if the user couldn't be found, if the password
+// is incorrect or if the request is invalid.
+func (s *userService) LoginUser(
+	ctx context.Context,
+	req *gen.LoginUserRequest,
+) (*gen.LoginUserResponse, error) {
+	if err := validateLoginUserRequest(req); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	user, err := s.UserStorage.FindOneByEmail(ctx, req.Email)
+	if err != nil {
+		if errors.Is(err, storage.ErrUserNotFound) {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
+		s.Logger.Error("failed to find user", zap.Error(err))
+
+		return nil, internalServerError()
+	}
+
+	if err := util.ComparePasswordHash(req.Password, user.Password); err != nil {
+		return nil, status.Error(codes.Unauthenticated, "invalid password")
+	}
+
+	accessToken, accessPayload, err := s.Maker.NewToken(
+		req.GetEmail(), s.UserService.AccessTokenDuration)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	refreshToken, refreshPayload, err := s.Maker.NewToken(
+		req.GetEmail(), s.UserService.RefreshTokenDuration)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	// if accessPayload.ExpiresAt.After(refreshPayload.ExpiresAt) {
+
+	// 	s.Logger.Info("access token expires after refresh token")
+	// 	s.Logger.Info(accessPayload.ExpiresAt.String())
+	// 	s.Logger.Info(refreshPayload.ExpiresAt.String())
+	// } else {
+	// 	s.Logger.Info("access token expires before refresh token")
+	// 	s.Logger.Info(accessPayload.ExpiresAt.String())
+	// 	s.Logger.Info(refreshPayload.ExpiresAt.String())
+	// }
+
+	return &gen.LoginUserResponse{
+		User:                  userToProto(user),
+		SessionId:             accessPayload.ID.String(),
+		AccessToken:           accessToken,
+		RefreshToken:          refreshToken,
+		AccessTokenExpiresAt:  timestamppb.New(accessPayload.ExpiresAt),
+		RefreshTokenExpiresAt: timestamppb.New(refreshPayload.ExpiresAt),
+	}, nil
+}
+
 // CreateUser creates a new user. Returns an error if the user couldn't be created
 // or if the request is invalid.
 func (s *userService) CreateUser(
@@ -268,6 +326,27 @@ func validateGetByFilterRequest(req *gen.GetByFilterRequest) error {
 	}
 
 	return nil
+}
+
+func validateLoginUserRequest(req *gen.LoginUserRequest) error {
+	if req == nil {
+		return errors.New("request can not be nil")
+	}
+
+	var (
+		emailErr    error
+		passwordErr error
+	)
+
+	if err := util.ValidateEmail(req.GetEmail()); err != nil {
+		emailErr = err
+	}
+
+	if err := util.ValidatePassword(req.GetPassword()); err != nil {
+		passwordErr = err
+	}
+
+	return errors.Join(emailErr, passwordErr)
 }
 
 // validateCreateUserRequest returns nil if the request is valid.
