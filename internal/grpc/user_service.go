@@ -78,20 +78,11 @@ func (s *userService) LoginUser(
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	// if accessPayload.ExpiresAt.After(refreshPayload.ExpiresAt) {
-
-	// 	s.Logger.Info("access token expires after refresh token")
-	// 	s.Logger.Info(accessPayload.ExpiresAt.String())
-	// 	s.Logger.Info(refreshPayload.ExpiresAt.String())
-	// } else {
-	// 	s.Logger.Info("access token expires before refresh token")
-	// 	s.Logger.Info(accessPayload.ExpiresAt.String())
-	// 	s.Logger.Info(refreshPayload.ExpiresAt.String())
-	// }
+	// reminder to fix expiration timing on refresh token
 
 	return &gen.LoginUserResponse{
 		User:                  userToProto(user),
-		SessionId:             accessPayload.ID.String(),
+		SessionId:             refreshPayload.ID.String(),
 		AccessToken:           accessToken,
 		RefreshToken:          refreshToken,
 		AccessTokenExpiresAt:  timestamppb.New(accessPayload.ExpiresAt),
