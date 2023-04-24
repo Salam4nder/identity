@@ -36,8 +36,8 @@ func ExtractMetadata(ctx context.Context) *Metadata {
 		}
 	}
 
-	if p, ok := peer.FromContext(ctx); ok {
-		mtdt.ClientIP = p.Addr.String()
+	if peer, ok := peer.FromContext(ctx); ok {
+		mtdt.ClientIP = peer.Addr.String()
 	}
 
 	return mtdt
