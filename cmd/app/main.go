@@ -4,15 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/Salam4nder/inventory/pkg/logger"
 	"github.com/Salam4nder/user/internal/config"
+	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/grpc"
-	"github.com/Salam4nder/user/internal/storage"
-	"github.com/Salam4nder/user/pkg/mongo"
 
-	"go.mongodb.org/mongo-driver/bson"
-	mongoDB "go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/Salam4nder/inventory/pkg/logger"
+	"github.com/stimtech/go-migration"
 )
 
 const (
@@ -29,18 +26,21 @@ func main() {
 	)
 	defer cancel()
 
-	mongoDB, err := mongo.New(ctx, cfg.Mongo)
-	panicOnErr(err)
-	defer mongoDB.Close(ctx)
-	initDBIndexes(ctx, mongoDB.GetCollection())
-
-	userStorage := storage.NewUserStorage(
-		mongoDB.GetCollection())
-
 	logger, err := logger.New("")
 
-	service, err := grpc.NewUserService(
-		userStorage, logger, cfg.Service)
+	storage, err := db.NewSQLDatabase(ctx, cfg.PSQL)
+	if err != nil {
+		panicOnErr(err)
+	}
+	logger.Info("Connected to database...")
+
+	migration := migration.New(storage.GetDB(), logger)
+
+	if err := migration.Migrate(); err != nil {
+		panicOnErr(err)
+	}
+
+	service, err := grpc.NewUserService(storage, logger, cfg.Service)
 	panicOnErr(err)
 
 	server := grpc.NewServer(service, &cfg.Server, logger)
@@ -56,23 +56,4 @@ func panicOnErr(err error) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-// initDBIndexes creates indexes for the collections.
-func initDBIndexes(ctx context.Context, colls ...*mongoDB.Collection) error {
-	indexModel := mongoDB.IndexModel{
-		Keys:    bson.M{"email": 1},
-		Options: options.Index().SetUnique(true),
-	}
-
-	for _, coll := range colls {
-		if coll.Name() == "users" {
-			_, err := coll.Indexes().CreateOne(ctx, indexModel)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }
