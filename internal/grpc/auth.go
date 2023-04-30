@@ -15,7 +15,7 @@ const (
 	authorizationBearer = "bearer"
 )
 
-func (s *userService) authorizeUser(ctx context.Context) (*token.Payload, error) {
+func (s *userServer) authorizeUser(ctx context.Context) (*token.Payload, error) {
 	metadata, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing metadata")
@@ -38,7 +38,7 @@ func (s *userService) authorizeUser(ctx context.Context) (*token.Payload, error)
 	}
 
 	accessToken := fields[1]
-	payload, err := s.Maker.VerifyToken(accessToken)
+	payload, err := s.tokenMaker.VerifyToken(accessToken)
 	if err != nil {
 		return nil, fmt.Errorf("invalid access token: %s", err)
 	}
