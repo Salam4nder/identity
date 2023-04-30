@@ -17,14 +17,14 @@ import (
 )
 
 type server struct {
-	userSrvc *userService
+	userSrvc *userServer
 	cfg      *config.Server
 	logger   *zap.Logger
 }
 
 // NewServer creates new gRPC server.
 func NewServer(
-	srvc *userService,
+	srvc *userServer,
 	cfg *config.Server,
 	logger *zap.Logger,
 ) *server {
@@ -51,7 +51,6 @@ func (s *server) ServeGRPC() error {
 
 	return grpcServer.Serve(listener)
 }
-
 
 // ServeGRPCGateway starts the gRPC gateway.
 func (s *server) ServeGRPCGateway() {
