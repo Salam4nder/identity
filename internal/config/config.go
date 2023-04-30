@@ -9,7 +9,7 @@ import (
 
 // Application is the application configuration.
 type Application struct {
-	Mongo   MongoDB     `envvar:"MONGO_"`
+	PSQL    Postgres    `envvar:"POSTGRES_"`
 	Server  Server      `envvar:"SERVER_"`
 	Service UserService `envvar:"USER_SERVICE_"`
 }
@@ -33,14 +33,13 @@ type UserService struct {
 	RefreshTokenDuration time.Duration `envvar:"REFRESH_TOKEN_DURATION"`
 }
 
-// MongoDB holds the MongoDB configuration.
-type MongoDB struct {
-	Host       string `envvar:"HOST" default:"localhost"`
-	Port       string `envvar:"PORT" default:"27017"`
-	Username   string `envvar:"USERNAME" default:"root"`
-	Password   string `envvar:"PASSWORD" default:"root"`
-	Name       string `envvar:"NAME" default:"user"`
-	Collection string `envvar:"COLLECTION" default:"users"`
+// Postgres holds the Postgres configuration.
+type Postgres struct {
+	Host     string `envvar:"HOST" default:"postgres"`
+	Port     string `envvar:"PORT" default:"5432"`
+	Name     string `envvar:"DB" default:"user"`
+	User     string `envvar:"USER" default:"admin"`
+	Password string `envvar:"PASSWORD" default:"password"`
 }
 
 // Server holds the gRPC server configuration.
@@ -52,13 +51,19 @@ type Server struct {
 }
 
 // URI returns the mongoDB connection string.
-func (m *MongoDB) URI() string {
+func (dbCfg *Postgres) URI() string {
 	return fmt.Sprintf(
-		"mongodb://%s:%s@%s:%s",
-		m.Username,
-		m.Password,
-		m.Host,
-		m.Port)
+		"postgresql://%s:%s@%s:%s/%s?sslmode=disable",
+		dbCfg.User,
+		dbCfg.Password,
+		dbCfg.Host,
+		dbCfg.Port,
+		dbCfg.Name)
+}
+
+// Driver returns the database driver name.
+func (dbCfg *Postgres) Driver() string {
+	return "postgres"
 }
 
 // GRPCAddr returns the gRPC server address.
