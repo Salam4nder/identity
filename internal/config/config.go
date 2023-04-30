@@ -29,8 +29,8 @@ func New() (*Application, error) {
 // UserService holds the user service configuration.
 type UserService struct {
 	SymmetricKey         string        `envvar:"SYMMETRIC_KEY"`
-	AccessTokenDuration  time.Duration `envvar:"ACCESS_TOKEN_DURATION"`
-	RefreshTokenDuration time.Duration `envvar:"REFRESH_TOKEN_DURATION"`
+	AccessTokenDuration  time.Duration `envvar:"ACCESS_TOKEN_DURATION" default:"1h"`
+	RefreshTokenDuration time.Duration `envvar:"REFRESH_TOKEN_DURATION" default:"24h"`
 }
 
 // Postgres holds the Postgres configuration.
