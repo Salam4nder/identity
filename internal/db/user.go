@@ -33,7 +33,7 @@ func (s *SQL) CreateUserTx(
 	ctx context.Context,
 	params CreateUserParams,
 ) (*User, error) {
-	user := &User{}
+	var user User
 
 	query := `
     INSERT INTO users (full_name, email, password_hash, created_at)
@@ -78,7 +78,7 @@ func (s *SQL) CreateUserTx(
 		return nil, err
 	}
 
-	return user, nil
+	return &user, nil
 }
 
 // ReadUser reads a user from the database.
@@ -86,7 +86,7 @@ func (s *SQL) ReadUser(
 	ctx context.Context,
 	id uuid.UUID,
 ) (*User, error) {
-	user := &User{}
+	var user User
 
 	query := `
     SELECT id, full_name, email, password_hash, created_at, updated_at
@@ -109,7 +109,7 @@ func (s *SQL) ReadUser(
 		return nil, err
 	}
 
-	return user, nil
+	return &user, nil
 }
 
 // ReadUserByEmail reads a user from the database by email.
@@ -117,7 +117,7 @@ func (s *SQL) ReadUserByEmail(
 	ctx context.Context,
 	email string,
 ) (*User, error) {
-	user := &User{}
+	var user User
 
 	query := `
     SELECT id, full_name, email, password_hash, created_at, updated_at
@@ -140,7 +140,7 @@ func (s *SQL) ReadUserByEmail(
 		return nil, err
 	}
 
-	return user, nil
+	return &user, nil
 }
 
 // UpdateUserParams defines the parameters used to update a user.
@@ -150,12 +150,12 @@ type UpdateUserParams struct {
 	Email    string
 }
 
-// UpdateUserTx updates a user in the database.
+// UpdateUserTx updates a user in the database as a transaction.
 func (s *SQL) UpdateUserTx(
 	ctx context.Context,
 	params UpdateUserParams,
 ) (*User, error) {
-	user := &User{}
+	var user User
 
 	query := `
     UPDATE users
@@ -196,7 +196,7 @@ func (s *SQL) UpdateUserTx(
 		return nil, err
 	}
 
-	return user, nil
+	return &user, nil
 }
 
 // DeleteUserTx deletes a user from the database.
