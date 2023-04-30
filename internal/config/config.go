@@ -67,11 +67,11 @@ func (dbCfg *Postgres) Driver() string {
 }
 
 // GRPCAddr returns the gRPC server address.
-func (g *Server) GRPCAddr() string {
-	return fmt.Sprintf("%s:%s", g.GRPCHost, g.GRPCPort)
+func (srvCfg *Server) GRPCAddr() string {
+	return fmt.Sprintf("%s:%s", srvCfg.GRPCHost, srvCfg.GRPCPort)
 }
 
 // HTTPAddr returns the gRPC gateway server address.
-func (g *Server) HTTPAddr() string {
-	return fmt.Sprintf("%s:%s", g.HTTPHost, g.HTTPPort)
+func (srvCfg *Server) HTTPAddr() string {
+	return fmt.Sprintf("%s:%s", srvCfg.HTTPHost, srvCfg.HTTPPort)
 }
