@@ -1,5 +1,5 @@
 test: 
-	go test ./...
+	go test -v ./...
 
 run:
 	go run ./cmd/app/main.go
