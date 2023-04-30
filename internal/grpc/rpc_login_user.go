@@ -2,11 +2,13 @@ package grpc
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 
+	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/proto/gen"
+	grpcUtil "github.com/Salam4nder/user/pkg/grpc"
 	"github.com/Salam4nder/user/pkg/util"
+
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -26,7 +28,7 @@ func (s *userServer) LoginUser(
 
 	user, err := s.storage.ReadUserByEmail(ctx, req.Email)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, db.ErrUserNotFound) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
 		s.logger.Error("failed to find user", zap.Error(err))
@@ -50,11 +52,22 @@ func (s *userServer) LoginUser(
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
+	metadata := grpcUtil.ExtractMetadata(ctx)
+
+	session, err := s.storage.CreateSessionTx(ctx, db.CreateSessionParams{
+		ID:           refreshPayload.ID,
+		Email:        user.Email,
+		ClientIP:     metadata.ClientIP,
+		UserAgent:    metadata.UserAgent,
+		RefreshToken: refreshToken,
+		ExpiresAt:    refreshPayload.ExpiresAt,
+	})
+
 	// reminder to fix expiration timing on refresh token
 
 	return &gen.LoginUserResponse{
 		User:                  userToProtoResponse(user),
-		SessionId:             refreshPayload.ID.String(),
+		SessionId:             session.ID.String(),
 		AccessToken:           accessToken,
 		RefreshToken:          refreshToken,
 		AccessTokenExpiresAt:  timestamppb.New(accessPayload.ExpiresAt),
