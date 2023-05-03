@@ -160,7 +160,7 @@ func (s *SQL) UpdateUserTx(
 	query := `
     UPDATE users
     SET full_name = $1, email = $2, updated_at = $3
-    WHERE id = $3
+    WHERE id = $4
     RETURNING id, full_name, email, password_hash, created_at, updated_at
     `
 
