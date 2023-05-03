@@ -9,8 +9,10 @@ import (
 
 	"github.com/Salam4nder/user/internal/config"
 	"github.com/Salam4nder/user/internal/proto/gen"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	grpcutil "github.com/Salam4nder/user/pkg/grpc"
 
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -42,7 +44,13 @@ func (s *server) ServeGRPC() error {
 		return fmt.Errorf("failed to listen: %w", err)
 	}
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			grpcutil.LoggerInterceptor,
+			recovery.UnaryServerInterceptor(),
+		),
+	)
+
 	gen.RegisterUserServer(grpcServer, s.userSrvc)
 	reflection.Register(grpcServer)
 
