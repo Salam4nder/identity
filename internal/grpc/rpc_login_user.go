@@ -52,7 +52,7 @@ func (s *userServer) LoginUser(
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	metadata := grpcUtil.ExtractMetadata(ctx)
+	metadata := grpcUtil.MetadataFromContext(ctx)
 
 	session, err := s.storage.CreateSessionTx(ctx, db.CreateSessionParams{
 		ID:           refreshPayload.ID,
