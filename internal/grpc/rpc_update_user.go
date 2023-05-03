@@ -20,7 +20,7 @@ func (s *userServer) UpdateUser(
 	ctx context.Context, req *gen.UpdateUserRequest) (*gen.UserResponse, error) {
 	authPayload, err := s.authorizeUser(ctx)
 	if err != nil {
-		return nil, unauthenticatedError()
+		return nil, unauthenticatedError(err)
 	}
 
 	if err := validateUpdateUserRequest(req); err != nil {
@@ -73,12 +73,16 @@ func validateUpdateUserRequest(req *gen.UpdateUserRequest) error {
 		emailErr    error
 	)
 
-	if err := util.ValidateFullName(req.GetFullName()); err != nil {
-		fullNameErr = err
+	if req.GetFullName() != "" {
+		if err := util.ValidateFullName(req.GetFullName()); err != nil {
+			fullNameErr = err
+		}
 	}
 
-	if err := util.ValidateEmail(req.GetEmail()); err != nil {
-		emailErr = err
+	if req.GetEmail() != "" {
+		if err := util.ValidateEmail(req.GetEmail()); err != nil {
+			emailErr = err
+		}
 	}
 
 	return errors.Join(fullNameErr, emailErr)
