@@ -13,9 +13,9 @@ CREATE TABLE IF NOT EXISTS sessions (
     id uuid PRIMARY KEY,
     email varchar(255) NOT NULL,
     is_active boolean NOT NULL,
-    refresh_token varchar(255) NOT NULL UNIQUE,
-    user_agent varchar NOT NULL,
-    client_ip varchar NOT NULL,
+    refresh_token varchar NOT NULL UNIQUE,
+    user_agent varchar(255) NOT NULL,
+    client_ip varchar(255) NOT NULL,
     created_at timestamptz NOT NULL,
     expires_at timestamptz NOT NULL
 );
