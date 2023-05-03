@@ -1,2 +1,6 @@
 # user
-User service using MongoDB and gRPC gateway. WIP
+
+# Start:
+
+1. Fill in the .env file
+2. `make up`
