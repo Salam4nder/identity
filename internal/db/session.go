@@ -8,6 +8,11 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	// SessionActiveByDefault is the default value for the is_active column.
+	SessionActiveByDefault = true
+)
+
 // Session defines a session in the database.
 type Session struct {
 	ID           uuid.UUID `db:"id"`
@@ -65,7 +70,6 @@ func (s *SQL) CreateSessionTx(
         created_at,
         expires_at,
         refresh_token
-    )
     `
 	if err := s.execTx(ctx, func(tx *sql.Tx) error {
 		return tx.QueryRowContext(
@@ -73,7 +77,7 @@ func (s *SQL) CreateSessionTx(
 			query,
 			params.ID,
 			params.Email,
-			true,
+			SessionActiveByDefault,
 			params.ClientIP,
 			params.UserAgent,
 			time.Now(),
