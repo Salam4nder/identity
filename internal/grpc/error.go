@@ -13,6 +13,6 @@ func internalServerError() error {
 	return status.Error(codes.Internal, "internal server error")
 }
 
-func unauthenticatedError() error {
-	return status.Error(codes.Unauthenticated, "unauthenticated")
+func unauthenticatedError(err error) error {
+	return status.Error(codes.Unauthenticated, err.Error())
 }
