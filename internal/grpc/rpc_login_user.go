@@ -9,7 +9,6 @@ import (
 	grpcUtil "github.com/Salam4nder/user/pkg/grpc"
 	"github.com/Salam4nder/user/pkg/util"
 
-	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -31,7 +30,7 @@ func (s *userServer) LoginUser(
 		if errors.Is(err, db.ErrUserNotFound) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
-		s.logger.Error("failed to find user", zap.Error(err))
+		s.logger.Error().Err(err).Msg("failed to read user by email")
 
 		return nil, internalServerError()
 	}
