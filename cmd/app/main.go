@@ -2,13 +2,16 @@ package main
 
 import (
 	"context"
+	"os"
 	"time"
 
 	"github.com/Salam4nder/user/internal/config"
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/grpc"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"go.uber.org/zap"
 
-	"github.com/Salam4nder/inventory/pkg/logger"
 	"github.com/stimtech/go-migration"
 )
 
@@ -18,7 +21,20 @@ const (
 
 func main() {
 	cfg, err := config.New()
-	panicOnErr(err)
+	fatalExitOnErr(err)
+
+	var logger zerolog.Logger
+
+	if cfg.Environment == "dev" {
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	} else {
+		file, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		fatalExitOnErr(err)
+
+		defer file.Close()
+
+		log.Logger = log.Output(file)
+	}
 
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
@@ -26,34 +42,31 @@ func main() {
 	)
 	defer cancel()
 
-	logger, err := logger.New("")
-
 	storage, err := db.NewSQLDatabase(ctx, cfg.PSQL)
-	if err != nil {
-		panicOnErr(err)
-	}
-	logger.Info("Connected to database...")
+	fatalExitOnErr(err)
 
-	migration := migration.New(storage.GetDB(), logger)
+	log.Info().Msg("successfully connected to database...")
+
+	migration := migration.New(storage.GetDB(), zap.NewNop())
 
 	if err := migration.Migrate(); err != nil {
-		panicOnErr(err)
+		fatalExitOnErr(err)
 	}
+	log.Info().Msg("successfully migrated database...")
 
-	service, err := grpc.NewUserService(storage, logger, cfg.Service)
-	panicOnErr(err)
+	service, err := grpc.NewUserService(storage, &logger, cfg.Service)
+	fatalExitOnErr(err)
 
-	server := grpc.NewServer(service, &cfg.Server, logger)
+	server := grpc.NewServer(service, &cfg.Server, &logger)
 
 	go server.ServeGRPCGateway()
 
 	err = server.ServeGRPC()
-	panicOnErr(err)
-
+	fatalExitOnErr(err)
 }
 
-func panicOnErr(err error) {
+func fatalExitOnErr(err error) {
 	if err != nil {
-		panic(err)
+		log.Fatal().Err(err).Msg("fatal exit: failed to start user service")
 	}
 }
