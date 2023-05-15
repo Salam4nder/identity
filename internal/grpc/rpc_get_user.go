@@ -6,7 +6,6 @@ import (
 
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/proto/gen"
-	"go.uber.org/zap"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
@@ -37,7 +36,7 @@ func (s *userServer) GetUser(
 			return nil, status.Error(codes.NotFound, err.Error())
 
 		default:
-			s.logger.Error("failed to find user", zap.Error(err))
+			s.logger.Error().Err(err).Msg("failed to get user")
 			return nil, internalServerError()
 		}
 	}
