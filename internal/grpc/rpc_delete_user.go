@@ -8,7 +8,6 @@ import (
 	"github.com/Salam4nder/user/internal/proto/gen"
 
 	"github.com/google/uuid"
-	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -38,7 +37,7 @@ func (s *userServer) DeleteUser(
 			return nil, status.Error(codes.NotFound, err.Error())
 
 		default:
-			s.logger.Error("failed to find user", zap.Error(err))
+			s.logger.Error().Err(err).Msg("failed to delete user")
 			return nil, internalServerError()
 		}
 	}
