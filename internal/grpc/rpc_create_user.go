@@ -10,7 +10,6 @@ import (
 	"github.com/Salam4nder/user/internal/proto/gen"
 	"github.com/Salam4nder/user/pkg/util"
 
-	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -36,7 +35,7 @@ func (s *userServer) CreateUser(
 		if err == db.ErrDuplicateEmail {
 			return nil, status.Error(codes.AlreadyExists, err.Error())
 		}
-		s.logger.Error("failed to insert user", zap.Error(err))
+		s.logger.Error().Err(err).Msg("failed to create user")
 
 		return nil, internalServerError()
 	}
