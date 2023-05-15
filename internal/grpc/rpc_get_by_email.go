@@ -7,7 +7,6 @@ import (
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/proto/gen"
 
-	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -31,7 +30,7 @@ func (s *userServer) GetByEmail(
 			return nil, status.Error(codes.NotFound, err.Error())
 
 		default:
-			s.logger.Error("failed to find user", zap.Error(err))
+			s.logger.Error().Err(err).Msg("failed to get user by email")
 			return nil, internalServerError()
 		}
 	}
