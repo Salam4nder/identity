@@ -1,8 +1,11 @@
 test: 
 	go test -v ./...
 
-run:
+api:
 	go run ./cmd/app/main.go
+
+docker:
+	docker build -t user-api .
 
 up:
 	docker-compose up -d
@@ -12,6 +15,12 @@ down:
 
 logs:
 	docker-compose logs -f
+
+logs-user:
+	docker-compose logs -f api
+
+logs-db:
+	docker-compose logs -f postgres
 
 evans:
 	evans -r
