@@ -9,7 +9,6 @@ import (
 	"github.com/Salam4nder/user/pkg/util"
 	"github.com/google/uuid"
 
-	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -50,7 +49,7 @@ func (s *userServer) UpdateUser(
 			return nil, status.Error(codes.NotFound, err.Error())
 
 		default:
-			s.logger.Error("failed to find user", zap.Error(err))
+			s.logger.Error().Err(err).Msg("failed to update user")
 			return nil, internalServerError()
 		}
 	}
