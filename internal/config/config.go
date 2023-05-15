@@ -9,9 +9,10 @@ import (
 
 // Application is the application configuration.
 type Application struct {
-	PSQL    Postgres    `envvar:"POSTGRES_"`
-	Server  Server      `envvar:"SERVER_"`
-	Service UserService `envvar:"USER_SERVICE_"`
+	Environment string      `envvar:"ENVIRONMENT"`
+	PSQL        Postgres    `envvar:"POSTGRES_"`
+	Server      Server      `envvar:"SERVER_"`
+	Service     UserService `envvar:"USER_SERVICE_"`
 }
 
 // New returns a new application configuration

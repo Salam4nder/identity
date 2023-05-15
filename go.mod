@@ -3,7 +3,6 @@ module github.com/Salam4nder/user
 go 1.20
 
 require (
-	github.com/Salam4nder/inventory v0.0.0-20230302181218-7a7c12388504
 	github.com/aead/chacha20poly1305 v0.0.0-20170617001512-233f39982aeb
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.0-rc.5
