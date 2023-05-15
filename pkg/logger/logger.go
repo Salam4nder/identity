@@ -1,5 +1,7 @@
 package logger
 
+//TODO
+
 // Logger is a generic interface for logging libraries that
 // support basic logging functionality.
 type Logger interface {
