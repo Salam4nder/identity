@@ -30,9 +30,9 @@ func LoggerInterceptor(
 
 	logger := log.Info()
 
-    if code != codes.OK {
-        logger = log.Error().Err(err)
-    }
+	if err != nil {
+		logger = log.Error().Err(err)
+	}
 
 	duration := time.Since(startTime)
 
@@ -40,22 +40,28 @@ func LoggerInterceptor(
 		Str("method", info.FullMethod).
 		Int("status_code", int(code)).
 		Str("status_text", code.String()).
-		Dur("duration", duration)
+		Dur("duration", duration).
+		Send()
 
 	return result, err
 }
 
+// ResponseRecorder is a wrapper around http.ResponseWriter that records its
+// HTTP status code and body size.
 type ResponseRecorder struct {
 	http.ResponseWriter
 	StatusCode int
 	Body       []byte
 }
 
+// WriteHeader records the HTTP status code.
 func (rec *ResponseRecorder) WriteHeader(statusCode int) {
 	rec.StatusCode = statusCode
 	rec.ResponseWriter.WriteHeader(statusCode)
 }
 
+// Write is a wrapper around http.ResponseWriter.Write that records the
+// response body.
 func (rec *ResponseRecorder) Write(body []byte) (int, error) {
 	rec.Body = body
 	return rec.ResponseWriter.Write(body)
@@ -82,6 +88,7 @@ func HTTPLogger(handler http.Handler) http.Handler {
 			Str("path", req.RequestURI).
 			Int("status_code", rec.StatusCode).
 			Str("status_text", http.StatusText(rec.StatusCode)).
-			Dur("duration", duration)
+			Dur("duration", duration).
+			Send()
 	})
 }
