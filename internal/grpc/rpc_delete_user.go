@@ -6,7 +6,6 @@ import (
 
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/proto/gen"
-
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -22,22 +21,28 @@ func (s *userServer) DeleteUser(
 	}
 
 	if req.GetId() == "" {
-		return nil, status.Error(codes.InvalidArgument, "ID can not be empty")
+		return nil, status.Error(
+			codes.InvalidArgument,
+			"ID can not be empty",
+		)
 	}
 
 	id, err := uuid.Parse(req.GetId())
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "ID is invalid")
+		return nil, status.Error(
+			codes.InvalidArgument,
+			"ID is invalid",
+		)
 	}
 
-	err = s.storage.DeleteUserTx(ctx, id)
-	if err != nil {
+	if err = s.storage.DeleteUserTx(ctx, id); err != nil {
 		switch {
 		case errors.Is(err, db.ErrUserNotFound):
 			return nil, status.Error(codes.NotFound, err.Error())
 
 		default:
 			s.logger.Error().Err(err).Msg("failed to delete user")
+
 			return nil, internalServerError()
 		}
 	}
