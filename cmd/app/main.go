@@ -8,11 +8,11 @@ import (
 	"github.com/Salam4nder/user/internal/config"
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/grpc"
+
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"go.uber.org/zap"
-
 	"github.com/stimtech/go-migration"
+	"go.uber.org/zap"
 )
 
 const (
