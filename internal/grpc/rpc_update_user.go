@@ -7,8 +7,8 @@ import (
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/proto/gen"
 	"github.com/Salam4nder/user/pkg/util"
-	"github.com/google/uuid"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
