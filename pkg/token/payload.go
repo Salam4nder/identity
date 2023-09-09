@@ -15,15 +15,13 @@ type Payload struct {
 }
 
 // NewPayload creates a new token payload with a specific email and duration.
-func NewPayload(email string, duration time.Duration) (*Payload, error) {
-	payload := &Payload{
+func NewPayload(email string, duration time.Duration) *Payload {
+	return &Payload{
 		ID:        uuid.New(),
 		Email:     email,
 		IssuedAt:  time.Now(),
 		ExpiresAt: time.Now().Add(duration),
 	}
-
-	return payload, nil
 }
 
 // Valid checks if the token payload is valid.
