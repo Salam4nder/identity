@@ -43,3 +43,6 @@ test/integration/run:
 	POSTGRES_PASSWORD=integration \
 	USER_SERVICE_SYMMETRIC_KEY=12345678901234567890123456789012 \
 	go test -tags integration -v --coverprofile=coverage.out -coverpkg ./... ./test/integration
+
+lint:
+	golangci-lint run
