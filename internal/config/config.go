@@ -36,11 +36,12 @@ type UserService struct {
 
 // Postgres holds the Postgres configuration.
 type Postgres struct {
-	Host     string `envvar:"HOST" default:"postgres"`
-	Port     string `envvar:"PORT" default:"5432"`
-	Name     string `envvar:"DB" default:"user"`
-	User     string `envvar:"USER" default:"admin"`
-	Password string `envvar:"PASSWORD" default:"password"`
+	Host            string `envvar:"HOST" default:"postgres"`
+	Port            string `envvar:"PORT" default:"5432"`
+	Name            string `envvar:"DB" default:"user"`
+	User            string `envvar:"USER" default:"admin"`
+	Password        string `envvar:"PASSWORD" default:"password"`
+	ApplicationName string `envvar:"APPLICATION_NAME" default:"user"`
 }
 
 // Server holds the gRPC server configuration.
@@ -54,12 +55,14 @@ type Server struct {
 // URI returns the mongoDB connection string.
 func (dbCfg *Postgres) URI() string {
 	return fmt.Sprintf(
-		"postgresql://%s:%s@%s:%s/%s?sslmode=disable",
+		"postgresql://%s:%s@%s:%s/%s?sslmode=disable&application_name=%s",
 		dbCfg.User,
 		dbCfg.Password,
 		dbCfg.Host,
 		dbCfg.Port,
-		dbCfg.Name)
+		dbCfg.Name,
+		dbCfg.ApplicationName,
+	)
 }
 
 // Driver returns the database driver name.
