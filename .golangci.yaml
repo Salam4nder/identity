@@ -1,0 +1,33 @@
+linters:
+   enable:
+     # Default 
+     - errcheck
+     - govet
+     - ineffassign
+     - staticcheck
+     - typecheck
+     - unused
+
+     # Optional linters
+     - bodyclose
+     - bidichk
+     - containedctx
+     - contextcheck
+     - errname
+     - errorlint
+     - gci
+     - gocritic
+     - godot
+     - gosec
+     - lll
+     - misspell
+     - noctx
+     - revive
+     - unconvert
+     - unparam
+
+
+run:
+   go: '1.19'
+   skip-dirs:
+     - tests/mocks
