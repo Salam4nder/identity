@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/Salam4nder/user/pkg/token"
-
 	"google.golang.org/grpc/metadata"
 )
 
