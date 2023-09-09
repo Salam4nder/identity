@@ -71,14 +71,18 @@ func (rec *ResponseRecorder) Write(body []byte) (int, error) {
 func HTTPLogger(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		startTime := time.Now()
+
 		rec := &ResponseRecorder{
 			ResponseWriter: res,
 			StatusCode:     http.StatusOK,
 		}
+
 		handler.ServeHTTP(rec, req)
+
 		duration := time.Since(startTime)
 
 		logger := log.Info()
+
 		if rec.StatusCode != http.StatusOK {
 			logger = log.Error().Bytes("body", rec.Body)
 		}
