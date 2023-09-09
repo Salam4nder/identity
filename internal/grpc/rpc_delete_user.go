@@ -12,8 +12,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-// DeleteUser deletes a user by id. Returns an error if the user couldn't be deleted,
-// if the user doesn't exist or if the request is invalid.
+// DeleteUser deletes a user by ID.
 func (s *userServer) DeleteUser(
 	ctx context.Context, req *gen.UserID) (*emptypb.Empty, error) {
 	if req == nil {
