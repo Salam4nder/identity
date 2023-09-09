@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/Salam4nder/user/pkg/util"
-
 	"github.com/stretchr/testify/require"
 )
 
