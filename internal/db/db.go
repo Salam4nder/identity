@@ -13,6 +13,21 @@ type SQL struct {
 	db *sql.DB
 }
 
+// DB returns the underlying sql.DB.
+func (s *SQL) DB() *sql.DB {
+	return s.db
+}
+
+// Close closes the underlying sql.DB.
+func (s *SQL) Close() error {
+	return s.db.Close()
+}
+
+//PingContext pings the underlying sql.DB.
+func (s *SQL) PingContext(ctx context.Context) error {
+	return s.db.PingContext(ctx)
+}
+
 // NewSQLDatabase creates a new SQLDatabase.
 func NewSQLDatabase(ctx context.Context, cfg config.Postgres) (*SQL, error) {
 	db, err := sql.Open(cfg.Driver(), cfg.URI())
@@ -25,11 +40,6 @@ func NewSQLDatabase(ctx context.Context, cfg config.Postgres) (*SQL, error) {
 	}
 
 	return &SQL{db: db}, nil
-}
-
-// GetDB returns the underlying sql.DB.
-func (s *SQL) GetDB() *sql.DB {
-	return s.db
 }
 
 // execTx executes a function in a transaction.
