@@ -6,7 +6,6 @@ import (
 
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/proto/gen"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
