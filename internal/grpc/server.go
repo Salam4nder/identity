@@ -9,23 +9,23 @@ import (
 	"github.com/Salam4nder/user/internal/config"
 	"github.com/Salam4nder/user/internal/proto/gen"
 	grpcutil "github.com/Salam4nder/user/pkg/grpc"
-	"github.com/rs/zerolog"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
 type server struct {
-	userSrvc *userServer
+	userSrvc *UserServer
 	cfg      *config.Server
 	logger   *zerolog.Logger
 }
 
 // NewServer creates new gRPC server.
 func NewServer(
-	srvc *userServer,
+	srvc *UserServer,
 	cfg *config.Server,
 	logger *zerolog.Logger,
 ) *server {
