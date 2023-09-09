@@ -42,19 +42,19 @@ func main() {
 	)
 	defer cancel()
 
-	storage, err := db.NewSQLDatabase(ctx, cfg.PSQL)
+	sql, err := db.NewSQLDatabase(ctx, cfg.PSQL)
 	fatalExitOnErr(err)
 
 	log.Info().Msg("successfully connected to database...")
 
-	migration := migration.New(storage.GetDB(), zap.NewNop())
+	migration := migration.New(sql.DB(), zap.NewNop())
 
 	if err := migration.Migrate(); err != nil {
 		fatalExitOnErr(err)
 	}
 	log.Info().Msg("successfully migrated database...")
 
-	service, err := grpc.NewUserService(storage, &logger, cfg.Service)
+	service, err := grpc.NewUserService(sql, &logger, cfg.Service)
 	fatalExitOnErr(err)
 
 	server := grpc.NewServer(service, &cfg.Server, &logger)

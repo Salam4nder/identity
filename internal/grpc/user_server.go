@@ -10,7 +10,7 @@ import (
 )
 
 // UserServer is a gRPC server for user service.
-type userServer struct {
+type UserServer struct {
 	gen.UserServer
 
 	storage    *db.SQL
@@ -24,13 +24,13 @@ func NewUserService(
 	store *db.SQL,
 	log *zerolog.Logger,
 	cfg config.UserService,
-) (*userServer, error) {
+) (*UserServer, error) {
 	tokenMaker, err := token.NewPasetoMaker(cfg.SymmetricKey)
 	if err != nil {
 		return nil, err
 	}
 
-	return &userServer{
+	return &UserServer{
 		storage:    store,
 		tokenMaker: tokenMaker,
 		logger:     log,

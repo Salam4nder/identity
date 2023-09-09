@@ -13,7 +13,7 @@ import (
 
 // GetUser returns a user by id. Returns an error if the user couldn't be found
 // or if the request is invalid.
-func (s *userServer) GetUser(
+func (s *UserServer) GetUser(
 	ctx context.Context, req *gen.UserID) (*gen.UserResponse, error) {
 	if req == nil {
 		return nil, requestIsNilError()

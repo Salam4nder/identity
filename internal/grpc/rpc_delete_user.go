@@ -13,7 +13,7 @@ import (
 )
 
 // DeleteUser deletes a user by ID.
-func (s *userServer) DeleteUser(
+func (s *UserServer) DeleteUser(
 	ctx context.Context, req *gen.UserID) (*emptypb.Empty, error) {
 	if req == nil {
 		return nil, requestIsNilError()

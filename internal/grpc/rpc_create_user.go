@@ -17,7 +17,7 @@ import (
 
 // CreateUser creates a new user. Returns an error if the user couldn't be created
 // or if the request is invalid.
-func (s *userServer) CreateUser(
+func (s *UserServer) CreateUser(
 	ctx context.Context,
 	req *gen.CreateUserRequest,
 ) (*gen.UserID, error) {

@@ -35,10 +35,7 @@ func (x *pasetoMaker) NewToken(
 	email string,
 	duration time.Duration,
 ) (string, *Payload, error) {
-	payload, err := NewPayload(email, duration)
-	if err != nil {
-		return "", nil, err
-	}
+	payload := NewPayload(email, duration)
 
 	token, err := x.paseto.Encrypt(x.symmetricKey, payload, nil)
 	return token, payload, err

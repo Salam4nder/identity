@@ -15,7 +15,7 @@ import (
 
 // UpdateUser updates a user by id. Returns an error if the user couldn't be updated
 // or if the request is invalid.
-func (s *userServer) UpdateUser(
+func (s *UserServer) UpdateUser(
 	ctx context.Context, req *gen.UpdateUserRequest) (*gen.UserResponse, error) {
 	authPayload, err := s.authorizeUser(ctx)
 	if err != nil {

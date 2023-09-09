@@ -12,7 +12,7 @@ import (
 
 // GetByEmail returns a user by email. Returns an error if the user couldn't be not
 // found or if the request is invalid.
-func (s *userServer) GetByEmail(
+func (s *UserServer) GetByEmail(
 	ctx context.Context, req *gen.GetByEmailRequest) (*gen.UserResponse, error) {
 	if req == nil {
 		return nil, requestIsNilError()

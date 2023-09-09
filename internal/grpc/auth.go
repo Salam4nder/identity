@@ -14,7 +14,7 @@ const (
 	authorizationBearer = "bearer"
 )
 
-func (s *userServer) authorizeUser(ctx context.Context) (*token.Payload, error) {
+func (s *UserServer) authorizeUser(ctx context.Context) (*token.Payload, error) {
 	metadata, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing metadata")

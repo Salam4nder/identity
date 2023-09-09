@@ -17,6 +17,12 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
+// Server is the interface for the gRPC server.
+type Server interface {
+	ServeGRPC() error
+	ServeGRPCGateway() error
+}
+
 type server struct {
 	userSrvc *UserServer
 	cfg      *config.Server
@@ -28,7 +34,7 @@ func NewServer(
 	srvc *UserServer,
 	cfg *config.Server,
 	logger *zerolog.Logger,
-) *server {
+) Server {
 	return &server{
 		userSrvc: srvc,
 		cfg:      cfg,

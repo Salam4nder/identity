@@ -17,7 +17,7 @@ import (
 // LoginUser logs in a user and returns a session and a token payload.
 // Returns an error if the user couldn't be found, if the password
 // is incorrect or if the request is invalid.
-func (s *userServer) LoginUser(
+func (s *UserServer) LoginUser(
 	ctx context.Context,
 	req *gen.LoginUserRequest,
 ) (*gen.LoginUserResponse, error) {
