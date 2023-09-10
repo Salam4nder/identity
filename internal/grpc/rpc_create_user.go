@@ -18,7 +18,7 @@ import (
 
 // CreateUser creates a new user. Returns an error if the user couldn't be created
 // or if the request is invalid.
-func (s *UserServer) CreateUser(
+func (x *UserServer) CreateUser(
 	ctx context.Context,
 	req *gen.CreateUserRequest,
 ) (*gen.UserID, error) {
@@ -33,12 +33,12 @@ func (s *UserServer) CreateUser(
 		CreatedAt: time.Now(),
 	}
 
-	createdUser, err := s.storage.CreateUser(ctx, params)
+	createdUser, err := x.storage.CreateUser(ctx, params)
 	if err != nil {
-		if err == db.ErrDuplicateEmail {
+		if errors.Is(err, db.ErrDuplicateEmail) {
 			return nil, status.Error(codes.AlreadyExists, err.Error())
 		}
-		log.Error().Err(err).Msg("failed to create user")
+		log.Error().Err(err).Msg("grpc: failed to create user")
 
 		return nil, internalServerError()
 	}
@@ -49,7 +49,7 @@ func (s *UserServer) CreateUser(
 // validateCreateUserRequest returns nil if the request is valid.
 func validateCreateUserRequest(req *gen.CreateUserRequest) error {
 	if req == nil {
-		return errors.New("request can not be nil")
+		return errors.New("grpc: request can not be nil")
 	}
 
 	var (
