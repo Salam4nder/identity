@@ -3,11 +3,13 @@ package db
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/Salam4nder/user/pkg/util"
+
 	"github.com/google/uuid"
-	"github.com/lib/pq"
+	"github.com/rs/zerolog/log"
 )
 
 // User defines a user in the database.
@@ -40,9 +42,10 @@ func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) (*User, e
 
 	passwordHash, err := util.HashPassword(params.Password)
 	if err != nil {
+		log.Error().Err(err).Msg("db: error hashing password")
+
 		return nil, err
 	}
-
 	params.Password = passwordHash
 
 	if err := x.db.QueryRowContext(
@@ -71,10 +74,7 @@ func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) (*User, e
 }
 
 // ReadUser reads a user from the database.
-func (x *SQL) ReadUser(
-	ctx context.Context,
-	id uuid.UUID,
-) (*User, error) {
+func (x *SQL) ReadUser(ctx context.Context, id uuid.UUID) (*User, error) {
 	var user User
 
 	query := `
@@ -91,9 +91,10 @@ func (x *SQL) ReadUser(
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	); err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrUserNotFound
 		}
+		log.Error().Err(err).Msg("db: error reading user")
 
 		return nil, err
 	}
@@ -102,10 +103,7 @@ func (x *SQL) ReadUser(
 }
 
 // ReadUserByEmail reads a user from the database by email.
-func (x *SQL) ReadUserByEmail(
-	ctx context.Context,
-	email string,
-) (*User, error) {
+func (x *SQL) ReadUserByEmail(ctx context.Context, email string) (*User, error) {
 	var user User
 
 	query := `
@@ -122,9 +120,10 @@ func (x *SQL) ReadUserByEmail(
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	); err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrUserNotFound
 		}
+		log.Error().Err(err).Msg("db: error reading user")
 
 		return nil, err
 	}
@@ -139,11 +138,8 @@ type UpdateUserParams struct {
 	Email    string
 }
 
-// UpdateUserTx updates a user in the database as a transaction.
-func (x *SQL) UpdateUserTx(
-	ctx context.Context,
-	params UpdateUserParams,
-) (*User, error) {
+// UpdateUser updates a user in the database as a transaction.
+func (x *SQL) UpdateUser(ctx context.Context, params UpdateUserParams) (*User, error) {
 	var user User
 
 	query := `
@@ -153,34 +149,25 @@ func (x *SQL) UpdateUserTx(
     RETURNING id, full_name, email, password_hash, created_at, updated_at
     `
 
-	if err := x.execTx(ctx, func(tx *sql.Tx) error {
-		return tx.QueryRowContext(
-			ctx,
-			query,
-			params.FullName,
-			params.Email,
-			time.Now(),
-			params.ID,
-		).Scan(
-			&user.ID,
-			&user.FullName,
-			&user.Email,
-			&user.PasswordHash,
-			&user.CreatedAt,
-			&user.UpdatedAt,
-		)
-	}); err != nil {
-		if pqErr, exists := err.(*pq.Error); exists {
-			switch pqErr.Code.Name() {
-			case "unique_violation":
-				return nil, ErrDuplicateEmail
-
-			default:
-				return nil, err
-			}
-		} else if err == sql.ErrNoRows {
-			return nil, ErrUserNotFound
+	if err := x.db.QueryRowContext(
+		ctx,
+		query,
+		params.FullName,
+		params.Email,
+		time.Now(),
+		params.ID,
+	).Scan(
+		&user.ID,
+		&user.FullName,
+		&user.Email,
+		&user.PasswordHash,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	); err != nil {
+		if IsSentinelErr(err) {
+			return nil, SentinelErr(err)
 		}
+		log.Error().Err(err).Msg("db: error updating user")
 
 		return nil, err
 	}
@@ -188,34 +175,32 @@ func (x *SQL) UpdateUserTx(
 	return &user, nil
 }
 
-// DeleteUserTx deletes a user from the database.
-func (x *SQL) DeleteUserTx(
-	ctx context.Context,
-	id uuid.UUID,
-) error {
+// DeleteUser deletes a user from the database.
+func (x *SQL) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	query := `
     DELETE FROM users
     WHERE id = $1
     `
 
-	if err := x.execTx(ctx, func(tx *sql.Tx) error {
-		result, err := tx.ExecContext(ctx, query, id)
-		if err != nil {
-			return err
+	result, err := x.db.ExecContext(ctx, query, id)
+	if err != nil {
+		if IsSentinelErr(err) {
+			return SentinelErr(err)
 		}
+		log.Error().Err(err).Msg("db: error deleting user")
 
-		rowsAffected, err := result.RowsAffected()
-		if err != nil {
+		return err
+	}
+
+	if rowsAffected, _ := result.RowsAffected(); rowsAffected != 1 {
+		switch {
+		case rowsAffected > 1:
+			log.Error().Err(err).Msg("db: error deleting user, multiple rows affected")
 			return err
-		}
 
-		if rowsAffected < 1 {
+		case rowsAffected < 1:
 			return ErrUserNotFound
 		}
-
-		return nil
-	}); err != nil {
-		return err
 	}
 
 	return nil
