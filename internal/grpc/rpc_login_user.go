@@ -31,8 +31,7 @@ func (s *UserServer) LoginUser(
 		if errors.Is(err, db.ErrUserNotFound) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
-
-		log.Error().Err(err).Msg("failed to read user by email")
+		log.Error().Err(err).Msg("grpc: failed to read user by email")
 
 		return nil, internalServerError()
 	}
@@ -46,7 +45,7 @@ func (s *UserServer) LoginUser(
 		s.config.AccessTokenDuration,
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to create access token")
+		log.Error().Err(err).Msg("grpc: failed to create access token")
 
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -56,7 +55,7 @@ func (s *UserServer) LoginUser(
 		s.config.RefreshTokenDuration,
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to create refresh token")
+		log.Error().Err(err).Msg("grpc: failed to create refresh token")
 
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -71,9 +70,13 @@ func (s *UserServer) LoginUser(
 		RefreshToken: refreshToken,
 		ExpiresAt:    refreshPayload.ExpiresAt,
 	})
+	if err != nil {
+		log.Error().Err(err).Msg("grpc: failed to create session")
+
+		return nil, internalServerError()
+	}
 
 	// reminder to fix expiration timing on refresh token
-
 	return &gen.LoginUserResponse{
 		User:                  userToProtoResponse(user),
 		SessionId:             session.ID.String(),
