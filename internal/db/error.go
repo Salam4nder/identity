@@ -28,7 +28,7 @@ func IsSentinelErr(err error) bool {
 	return false
 }
 
-// SentinelErr returns a sentinel error.
+// SentinelErr returns a PSQL sentinel error.
 func SentinelErr(err error) error {
 	if err == sql.ErrNoRows {
 		return ErrUserNotFound
