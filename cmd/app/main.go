@@ -59,9 +59,11 @@ func main() {
 	fatalExitOnErr(err)
 
 	server := grpc.NewServer(service, &cfg.Server)
-
-	go server.ServeGRPCGateway()
-
+	go func() {
+		if err := server.ServeGRPC(); err != nil {
+			log.Fatal().Err(err).Msg("failed to start grpc server")
+		}
+	}()
 	err = server.ServeGRPC()
 	fatalExitOnErr(err)
 }
