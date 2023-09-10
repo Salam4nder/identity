@@ -28,11 +28,8 @@ type CreateUserParams struct {
 	CreatedAt time.Time
 }
 
-// CreateUserTx creates a new user in the database as a transaction.
-func (s *SQL) CreateUserTx(
-	ctx context.Context,
-	params CreateUserParams,
-) (*User, error) {
+// CreateUser creates a new user in the database as a transaction.
+func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) (*User, error) {
 	var user User
 
 	query := `
@@ -48,31 +45,23 @@ func (s *SQL) CreateUserTx(
 
 	params.Password = passwordHash
 
-	if err := s.execTx(ctx, func(tx *sql.Tx) error {
-		return tx.QueryRowContext(
-			ctx,
-			query,
-			params.FullName,
-			params.Email,
-			params.Password,
-			params.CreatedAt,
-		).Scan(
-			&user.ID,
-			&user.FullName,
-			&user.Email,
-			&user.PasswordHash,
-			&user.CreatedAt,
-			&user.UpdatedAt,
-		)
-	}); err != nil {
-		if pqErr, exists := err.(*pq.Error); exists {
-			switch pqErr.Code.Name() {
-			case "unique_violation":
-				return nil, ErrDuplicateEmail
-
-			default:
-				return nil, err
-			}
+	if err := x.db.QueryRowContext(
+		ctx,
+		query,
+		params.FullName,
+		params.Email,
+		params.Password,
+		params.CreatedAt,
+	).Scan(
+		&user.ID,
+		&user.FullName,
+		&user.Email,
+		&user.PasswordHash,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	); err != nil {
+		if IsSentinelErr(err) {
+			return nil, SentinelErr(err)
 		}
 
 		return nil, err
