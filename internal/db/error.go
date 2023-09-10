@@ -30,7 +30,7 @@ func IsSentinelErr(err error) bool {
 
 // SentinelErr returns a PSQL sentinel error.
 func SentinelErr(err error) error {
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return ErrUserNotFound
 	}
 
