@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/Salam4nder/user/pkg/util"
-
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )

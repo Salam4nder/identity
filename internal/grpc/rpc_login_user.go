@@ -8,7 +8,6 @@ import (
 	"github.com/Salam4nder/user/internal/proto/gen"
 	grpcUtil "github.com/Salam4nder/user/pkg/grpc"
 	"github.com/Salam4nder/user/pkg/util"
-
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

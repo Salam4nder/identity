@@ -45,4 +45,4 @@ test/integration/run:
 	go test -tags integration -v --coverprofile=coverage.out -coverpkg ./... ./test/integration
 
 lint:
-	golangci-lint run
+	golangci-lint run --fix

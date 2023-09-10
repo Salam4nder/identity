@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/Salam4nder/user/internal/config"
-
 	"github.com/rs/zerolog/log"
 )
 
@@ -25,7 +24,7 @@ func (s *SQL) Close() error {
 	return s.db.Close()
 }
 
-//PingContext pings the underlying sql.DB.
+// PingContext pings the underlying sql.DB.
 func (s *SQL) PingContext(ctx context.Context) error {
 	return s.db.PingContext(ctx)
 }
