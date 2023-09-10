@@ -36,7 +36,7 @@ func (s *UserServer) DeleteUser(
 		)
 	}
 
-	if err = s.storage.DeleteUserTx(ctx, id); err != nil {
+	if err = s.storage.DeleteUser(ctx, id); err != nil {
 		switch {
 		case errors.Is(err, db.ErrUserNotFound):
 			return nil, status.Error(codes.NotFound, err.Error())

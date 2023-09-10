@@ -43,7 +43,7 @@ func (s *UserServer) UpdateUser(
 		Email:    req.GetEmail(),
 	}
 
-	updatedUser, err := s.storage.UpdateUserTx(ctx, params)
+	updatedUser, err := s.storage.UpdateUser(ctx, params)
 	if err != nil {
 		switch {
 		case errors.Is(err, db.ErrUserNotFound):
