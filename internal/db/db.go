@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"github.com/Salam4nder/user/internal/config"
+
+	"github.com/rs/zerolog/log"
 )
 
 // SQL is a wrapper around sql.DB which provides a transactional context.
@@ -32,12 +34,14 @@ func (s *SQL) PingContext(ctx context.Context) error {
 func NewSQLDatabase(ctx context.Context, cfg config.Postgres) (*SQL, error) {
 	db, err := sql.Open(cfg.Driver(), cfg.URI())
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
+		return nil, fmt.Errorf("db: failed to open database: %w", err)
 	}
 
 	if err := db.PingContext(ctx); err != nil {
-		return nil, fmt.Errorf("pinging database: %w", err)
+		return nil, fmt.Errorf("db: pinging database: %w", err)
 	}
+
+	log.Info().Msg("db: successfully connected to database...")
 
 	return &SQL{db: db}, nil
 }
@@ -46,18 +50,18 @@ func NewSQLDatabase(ctx context.Context, cfg config.Postgres) (*SQL, error) {
 func (s *SQL) execTx(ctx context.Context, fn func(tx *sql.Tx) error) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("beginning transaction: %w", err)
+		return fmt.Errorf("db: beginning transaction: %w", err)
 	}
 
 	if err := fn(tx); err != nil {
 		if err := tx.Rollback(); err != nil {
-			return fmt.Errorf("rolling back transaction: %w", err)
+			return fmt.Errorf("db: rolling back transaction: %w", err)
 		}
 		return err
 	}
 
 	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("committing transaction: %w", err)
+		return fmt.Errorf("db: committing transaction: %w", err)
 	}
 
 	return nil
