@@ -36,6 +36,7 @@ func SentinelErr(err error) error {
 
 	var pqErr *pq.Error
 
+	// nolint: errorlint
 	pqErr = err.(*pq.Error)
 
 	switch pqErr.Code.Name() {
