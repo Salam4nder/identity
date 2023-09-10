@@ -33,6 +33,8 @@ func main() {
 	cfg, err := config.New()
 	fatalExitOnErr(err)
 
+	// UNIX Time is faster and smaller than most timestamps
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	if cfg.Environment == EnvironmentDev {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
