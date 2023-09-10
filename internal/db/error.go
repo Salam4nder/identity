@@ -21,11 +21,7 @@ func IsSentinelErr(err error) bool {
 
 	var pqErr *pq.Error
 
-	if errors.As(err, &pqErr) {
-		return true
-	}
-
-	return false
+	return errors.As(err, &pqErr)
 }
 
 // SentinelErr returns a PSQL sentinel error.
@@ -34,10 +30,8 @@ func SentinelErr(err error) error {
 		return ErrUserNotFound
 	}
 
-	var pqErr *pq.Error
-
 	// nolint: errorlint
-	pqErr = err.(*pq.Error)
+	pqErr := err.(*pq.Error)
 
 	switch pqErr.Code.Name() {
 	case "unique_violation":
