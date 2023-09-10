@@ -48,22 +48,20 @@ func main() {
 	sql, err := db.NewSQLDatabase(ctx, cfg.PSQL)
 	fatalExitOnErr(err)
 
-	log.Info().Msg("successfully connected to database...")
-
 	migration := migration.New(sql.DB(), zap.NewNop())
 
 	if err := migration.Migrate(); err != nil {
 		fatalExitOnErr(err)
 	}
-	log.Info().Msg("successfully migrated database...")
+	log.Info().Msg("main: successfully migrated database...")
 
 	service, err := grpc.NewUserService(sql, cfg.Service)
 	fatalExitOnErr(err)
 
 	server := grpc.NewServer(service, &cfg.Server)
 	go func() {
-		if err := server.ServeGRPC(); err != nil {
-			log.Fatal().Err(err).Msg("failed to start grpc server")
+		if err := server.ServeGRPCGateway(); err != nil {
+			fatalExitOnErr(err)
 		}
 	}()
 	err = server.ServeGRPC()
@@ -72,6 +70,6 @@ func main() {
 
 func fatalExitOnErr(err error) {
 	if err != nil {
-		log.Fatal().Err(err).Msg("fatal exit: failed to start user service")
+		log.Fatal().Err(err).Msg("main fatal exit: failed to start user service")
 	}
 }
