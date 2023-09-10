@@ -87,7 +87,7 @@ func HTTPLogger(handler http.Handler) http.Handler {
 			logger = log.Error().Bytes("body", rec.Body)
 		}
 
-		logger.Str("protocol", "http").
+		logger.Str("protocol", "http 1.1").
 			Str("method", req.Method).
 			Str("path", req.RequestURI).
 			Int("status_code", rec.StatusCode).
