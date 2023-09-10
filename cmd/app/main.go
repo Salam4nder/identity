@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	//PingTimeout is the maximum duration for waiting on ping.
+	// PingTimeout is the maximum duration for waiting on ping.
 	PingTimeout = 5 * time.Second
 	// ReadTimeout is the maximum duration for reading the entire
 	// request, including the body.

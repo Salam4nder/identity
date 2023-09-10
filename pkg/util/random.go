@@ -10,6 +10,7 @@ const charset = "abcdefghijklmnopqrstuvwxyz"
 
 // RandomInt returns a random integer between min and max.
 func RandomInt(min, max int64) int64 {
+	// nolint:gosec
 	return min + rand.Int63n(max-min+1)
 }
 
@@ -20,6 +21,7 @@ func RandomString(length int) string {
 	k := len(charset)
 
 	for i := 0; i < length; i++ {
+		// nolint:gosec
 		c := charset[rand.Intn(k)]
 		builder.WriteByte(c)
 	}
