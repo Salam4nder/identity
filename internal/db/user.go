@@ -71,7 +71,7 @@ func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) (*User, e
 }
 
 // ReadUser reads a user from the database.
-func (s *SQL) ReadUser(
+func (x *SQL) ReadUser(
 	ctx context.Context,
 	id uuid.UUID,
 ) (*User, error) {
@@ -83,7 +83,7 @@ func (s *SQL) ReadUser(
     WHERE id = $1
     `
 
-	if err := s.db.QueryRowContext(ctx, query, id).Scan(
+	if err := x.db.QueryRowContext(ctx, query, id).Scan(
 		&user.ID,
 		&user.FullName,
 		&user.Email,
@@ -102,7 +102,7 @@ func (s *SQL) ReadUser(
 }
 
 // ReadUserByEmail reads a user from the database by email.
-func (s *SQL) ReadUserByEmail(
+func (x *SQL) ReadUserByEmail(
 	ctx context.Context,
 	email string,
 ) (*User, error) {
@@ -114,7 +114,7 @@ func (s *SQL) ReadUserByEmail(
     WHERE email = $1
     `
 
-	if err := s.db.QueryRowContext(ctx, query, email).Scan(
+	if err := x.db.QueryRowContext(ctx, query, email).Scan(
 		&user.ID,
 		&user.FullName,
 		&user.Email,
@@ -140,7 +140,7 @@ type UpdateUserParams struct {
 }
 
 // UpdateUserTx updates a user in the database as a transaction.
-func (s *SQL) UpdateUserTx(
+func (x *SQL) UpdateUserTx(
 	ctx context.Context,
 	params UpdateUserParams,
 ) (*User, error) {
@@ -153,7 +153,7 @@ func (s *SQL) UpdateUserTx(
     RETURNING id, full_name, email, password_hash, created_at, updated_at
     `
 
-	if err := s.execTx(ctx, func(tx *sql.Tx) error {
+	if err := x.execTx(ctx, func(tx *sql.Tx) error {
 		return tx.QueryRowContext(
 			ctx,
 			query,
@@ -189,7 +189,7 @@ func (s *SQL) UpdateUserTx(
 }
 
 // DeleteUserTx deletes a user from the database.
-func (s *SQL) DeleteUserTx(
+func (x *SQL) DeleteUserTx(
 	ctx context.Context,
 	id uuid.UUID,
 ) error {
@@ -198,7 +198,7 @@ func (s *SQL) DeleteUserTx(
     WHERE id = $1
     `
 
-	if err := s.execTx(ctx, func(tx *sql.Tx) error {
+	if err := x.execTx(ctx, func(tx *sql.Tx) error {
 		result, err := tx.ExecContext(ctx, query, id)
 		if err != nil {
 			return err
