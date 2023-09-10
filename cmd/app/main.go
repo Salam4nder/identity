@@ -33,17 +33,8 @@ func main() {
 	cfg, err := config.New()
 	fatalExitOnErr(err)
 
-	var logger zerolog.Logger
-
-	if cfg.Environment == "dev" {
+	if cfg.Environment == EnvironmentDev {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
-	} else {
-		file, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		fatalExitOnErr(err)
-
-		defer file.Close()
-
-		log.Logger = log.Output(file)
 	}
 
 	ctx, cancel := context.WithTimeout(
@@ -67,7 +58,7 @@ func main() {
 	service, err := grpc.NewUserService(sql, cfg.Service)
 	fatalExitOnErr(err)
 
-	server := grpc.NewServer(service, &cfg.Server, &logger)
+	server := grpc.NewServer(service, &cfg.Server)
 
 	go server.ServeGRPCGateway()
 
