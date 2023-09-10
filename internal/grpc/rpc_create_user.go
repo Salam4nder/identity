@@ -10,6 +10,7 @@ import (
 	"github.com/Salam4nder/user/internal/proto/gen"
 	"github.com/Salam4nder/user/pkg/util"
 
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -32,12 +33,12 @@ func (s *UserServer) CreateUser(
 		CreatedAt: time.Now(),
 	}
 
-	createdUser, err := s.storage.CreateUserTx(ctx, params)
+	createdUser, err := s.storage.CreateUser(ctx, params)
 	if err != nil {
 		if err == db.ErrDuplicateEmail {
 			return nil, status.Error(codes.AlreadyExists, err.Error())
 		}
-		s.logger.Error().Err(err).Msg("failed to create user")
+		log.Error().Err(err).Msg("failed to create user")
 
 		return nil, internalServerError()
 	}

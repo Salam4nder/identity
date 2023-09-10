@@ -7,6 +7,8 @@ import (
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/proto/gen"
 	"github.com/google/uuid"
+
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -40,7 +42,7 @@ func (s *UserServer) DeleteUser(
 			return nil, status.Error(codes.NotFound, err.Error())
 
 		default:
-			s.logger.Error().Err(err).Msg("failed to delete user")
+			log.Error().Err(err).Msg("failed to delete user")
 
 			return nil, internalServerError()
 		}

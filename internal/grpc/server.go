@@ -12,7 +12,7 @@ import (
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -26,19 +26,16 @@ type Server interface {
 type server struct {
 	userSrvc *UserServer
 	cfg      *config.Server
-	logger   *zerolog.Logger
 }
 
 // NewServer creates new gRPC server.
 func NewServer(
 	srvc *UserServer,
 	cfg *config.Server,
-	logger *zerolog.Logger,
 ) Server {
 	return &server{
 		userSrvc: srvc,
 		cfg:      cfg,
-		logger:   logger,
 	}
 }
 
@@ -59,7 +56,7 @@ func (s *server) ServeGRPC() error {
 	gen.RegisterUserServer(grpcServer, s.userSrvc)
 	reflection.Register(grpcServer)
 
-	s.logger.Info().
+	log.Info().
 		Str("address", s.cfg.GRPCAddr()).
 		Msg("gRPC server is running")
 
@@ -89,7 +86,7 @@ func (s *server) ServeGRPCGateway() error {
 		return fmt.Errorf("failed to listen: %w", err)
 	}
 
-	s.logger.Info().
+	log.Info().
 		Str("address", s.cfg.HTTPAddr()).
 		Msg("gRPC gateway is running")
 

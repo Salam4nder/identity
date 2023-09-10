@@ -9,6 +9,7 @@ import (
 	"github.com/Salam4nder/user/pkg/util"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -49,7 +50,7 @@ func (s *UserServer) UpdateUser(
 			return nil, status.Error(codes.NotFound, err.Error())
 
 		default:
-			s.logger.Error().Err(err).Msg("failed to update user")
+			log.Error().Err(err).Msg("failed to update user")
 			return nil, internalServerError()
 		}
 	}

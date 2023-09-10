@@ -64,7 +64,7 @@ func main() {
 	}
 	log.Info().Msg("successfully migrated database...")
 
-	service, err := grpc.NewUserService(sql, &logger, cfg.Service)
+	service, err := grpc.NewUserService(sql, cfg.Service)
 	fatalExitOnErr(err)
 
 	server := grpc.NewServer(service, &cfg.Server, &logger)
