@@ -29,10 +29,7 @@ type server struct {
 }
 
 // NewServer creates new gRPC server.
-func NewServer(
-	srvc *UserServer,
-	cfg *config.Server,
-) Server {
+func NewServer(srvc *UserServer, cfg *config.Server) Server {
 	return &server{
 		userSrvc: srvc,
 		cfg:      cfg,
