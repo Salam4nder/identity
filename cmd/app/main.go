@@ -16,7 +16,17 @@ import (
 )
 
 const (
-	timeout = 20 * time.Second
+	//PingTimeout is the maximum duration for waiting on ping.
+	PingTimeout = 5 * time.Second
+	// ReadTimeout is the maximum duration for reading the entire
+	// request, including the body.
+	ReadTimeout = 10 * time.Second
+	// WriteTimeout is the maximum duration before timing out
+	// writes of the response. It is reset whenever a new
+	// request's header is read.
+	WriteTimeout = 10 * time.Second
+	// EnvironmentDev is the development environment.
+	EnvironmentDev = "dev"
 )
 
 func main() {
@@ -38,7 +48,7 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		timeout,
+		PingTimeout,
 	)
 	defer cancel()
 
