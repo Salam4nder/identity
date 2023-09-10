@@ -76,16 +76,12 @@ func (s *server) ServeGRPCGateway() error {
 
 	server := &http.Server{
 		Handler: mux,
-	}
-
-	listener, err := net.Listen("tcp", s.cfg.HTTPAddr())
-	if err != nil {
-		return fmt.Errorf("failed to listen: %w", err)
+		Addr:    s.cfg.HTTPAddr(),
 	}
 
 	log.Info().
 		Str("address", s.cfg.HTTPAddr()).
 		Msg("gRPC gateway is running")
 
-	return server.Serve(listener)
+	return server.ListenAndServe()
 }
