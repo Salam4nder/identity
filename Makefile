@@ -5,7 +5,7 @@ api:
 	go run ./cmd/app/main.go
 
 docker:
-	docker build -t user-api .
+	docker build -t user .
 
 up:
 	docker-compose up -d
