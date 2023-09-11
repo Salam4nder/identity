@@ -15,9 +15,11 @@ import (
 
 // UpdateUser updates a user by id. Returns an error if the user couldn't be updated
 // or if the request is invalid.
-func (s *UserServer) UpdateUser(
-	ctx context.Context, req *gen.UpdateUserRequest) (*gen.UserResponse, error) {
-	authPayload, err := s.authorizeUser(ctx)
+func (x *UserServer) UpdateUser(
+	ctx context.Context,
+	req *gen.UpdateUserRequest,
+) (*gen.UserResponse, error) {
+	authPayload, err := x.authorizeUser(ctx)
 	if err != nil {
 		return nil, unauthenticatedError(err)
 	}
@@ -28,7 +30,9 @@ func (s *UserServer) UpdateUser(
 
 	if authPayload.Email != req.GetEmail() {
 		return nil, status.Errorf(
-			codes.PermissionDenied, "only owner can update details")
+			codes.PermissionDenied,
+			"invoker is not owner of provided email",
+		)
 	}
 
 	id, err := uuid.Parse(req.GetId())
@@ -42,7 +46,7 @@ func (s *UserServer) UpdateUser(
 		Email:    req.GetEmail(),
 	}
 
-	updatedUser, err := s.storage.UpdateUser(ctx, params)
+	updatedUser, err := x.storage.UpdateUser(ctx, params)
 	if err != nil {
 		switch {
 		case errors.Is(err, db.ErrUserNotFound):

@@ -14,7 +14,7 @@ const (
 	authorizationBearer = "bearer"
 )
 
-func (s *UserServer) authorizeUser(ctx context.Context) (*token.Payload, error) {
+func (x *UserServer) authorizeUser(ctx context.Context) (*token.Payload, error) {
 	metadata, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, fmt.Errorf("grpc: missing metadata")
@@ -37,7 +37,7 @@ func (s *UserServer) authorizeUser(ctx context.Context) (*token.Payload, error) 
 	}
 
 	accessToken := fields[1]
-	payload, err := s.tokenMaker.VerifyToken(accessToken)
+	payload, err := x.tokenMaker.VerifyToken(accessToken)
 	if err != nil {
 		return nil, fmt.Errorf("grpc: invalid access token: %w", err)
 	}

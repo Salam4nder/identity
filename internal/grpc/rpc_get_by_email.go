@@ -11,10 +11,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// GetByEmail returns a user by email. Returns an error if the user couldn't be not
+// GetByEmail returns a user by email. Fails if the user couldn't be not
 // found or if the request is invalid.
-func (s *UserServer) GetByEmail(
-	ctx context.Context, req *gen.GetByEmailRequest) (*gen.UserResponse, error) {
+func (x *UserServer) GetByEmail(
+	ctx context.Context,
+	req *gen.GetByEmailRequest,
+) (*gen.UserResponse, error) {
 	if req == nil {
 		return nil, requestIsNilError()
 	}
@@ -23,7 +25,7 @@ func (s *UserServer) GetByEmail(
 		return nil, status.Error(codes.InvalidArgument, "email can not be empty")
 	}
 
-	user, err := s.storage.ReadUserByEmail(ctx, req.GetEmail())
+	user, err := x.storage.ReadUserByEmail(ctx, req.GetEmail())
 	if err != nil {
 		switch {
 		case errors.Is(err, db.ErrUserNotFound):

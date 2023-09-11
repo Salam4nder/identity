@@ -36,7 +36,7 @@ type CreateSessionParams struct {
 }
 
 // CreateSessionTx creates a new session in the database as a transaction.
-func (s *SQL) CreateSessionTx(
+func (x *SQL) CreateSessionTx(
 	ctx context.Context,
 	params CreateSessionParams,
 ) (*Session, error) {
@@ -71,7 +71,7 @@ func (s *SQL) CreateSessionTx(
         expires_at,
         refresh_token
     `
-	if err := s.execTx(ctx, func(tx *sql.Tx) error {
+	if err := x.execTx(ctx, func(tx *sql.Tx) error {
 		return tx.QueryRowContext(
 			ctx,
 			query,
@@ -101,7 +101,7 @@ func (s *SQL) CreateSessionTx(
 }
 
 // GetSession returns a session from the database.
-func (s *SQL) GetSession(
+func (x *SQL) GetSession(
 	ctx context.Context,
 	id uuid.UUID,
 ) (*Session, error) {
@@ -123,7 +123,7 @@ func (s *SQL) GetSession(
         id = $1
     `
 
-	if err := s.db.QueryRowContext(ctx, query, id).Scan(
+	if err := x.db.QueryRowContext(ctx, query, id).Scan(
 		&session.ID,
 		&session.Email,
 		&session.IsActive,
@@ -140,7 +140,7 @@ func (s *SQL) GetSession(
 }
 
 // BlockSessionTx deactivates a session in the database as a transaction.
-func (s *SQL) BlockSessionTx(
+func (x *SQL) BlockSessionTx(
 	ctx context.Context,
 	id uuid.UUID,
 ) error {
@@ -153,7 +153,7 @@ func (s *SQL) BlockSessionTx(
         id = $1
     `
 
-	return s.execTx(ctx, func(tx *sql.Tx) error {
+	return x.execTx(ctx, func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, query, id)
 		return err
 	})

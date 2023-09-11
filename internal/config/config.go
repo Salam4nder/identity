@@ -53,29 +53,29 @@ type Server struct {
 }
 
 // URI returns the mongoDB connection string.
-func (dbCfg *Postgres) URI() string {
+func (x *Postgres) URI() string {
 	return fmt.Sprintf(
 		"postgresql://%s:%s@%s:%s/%s?sslmode=disable&application_name=%s",
-		dbCfg.User,
-		dbCfg.Password,
-		dbCfg.Host,
-		dbCfg.Port,
-		dbCfg.Name,
-		dbCfg.ApplicationName,
+		x.User,
+		x.Password,
+		x.Host,
+		x.Port,
+		x.Name,
+		x.ApplicationName,
 	)
 }
 
 // Driver returns the database driver name.
-func (dbCfg *Postgres) Driver() string {
+func (x *Postgres) Driver() string {
 	return "postgres"
 }
 
 // GRPCAddr returns the gRPC server address.
-func (srvCfg *Server) GRPCAddr() string {
-	return fmt.Sprintf("%s:%s", srvCfg.GRPCHost, srvCfg.GRPCPort)
+func (x *Server) GRPCAddr() string {
+	return fmt.Sprintf("%s:%s", x.GRPCHost, x.GRPCPort)
 }
 
 // HTTPAddr returns the gRPC gateway server address.
-func (srvCfg *Server) HTTPAddr() string {
-	return fmt.Sprintf("%s:%s", srvCfg.HTTPHost, srvCfg.HTTPPort)
+func (x *Server) HTTPAddr() string {
+	return fmt.Sprintf("%s:%s", x.HTTPHost, x.HTTPPort)
 }

@@ -15,18 +15,18 @@ type SQL struct {
 }
 
 // DB returns the underlying sql.DB.
-func (s *SQL) DB() *sql.DB {
-	return s.db
+func (x *SQL) DB() *sql.DB {
+	return x.db
 }
 
 // Close closes the underlying sql.DB.
-func (s *SQL) Close() error {
-	return s.db.Close()
+func (x *SQL) Close() error {
+	return x.db.Close()
 }
 
 // PingContext pings the underlying sql.DB.
-func (s *SQL) PingContext(ctx context.Context) error {
-	return s.db.PingContext(ctx)
+func (x *SQL) PingContext(ctx context.Context) error {
+	return x.db.PingContext(ctx)
 }
 
 // NewSQLDatabase creates a new SQLDatabase.
@@ -46,8 +46,8 @@ func NewSQLDatabase(ctx context.Context, cfg config.Postgres) (*SQL, error) {
 }
 
 // execTx executes a function in a transaction.
-func (s *SQL) execTx(ctx context.Context, fn func(tx *sql.Tx) error) error {
-	tx, err := s.db.BeginTx(ctx, nil)
+func (x *SQL) execTx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	tx, err := x.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("db: beginning transaction: %w", err)
 	}

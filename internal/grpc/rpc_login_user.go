@@ -17,7 +17,7 @@ import (
 // LoginUser logs in a user and returns a session and a token payload.
 // Returns an error if the user couldn't be found, if the password
 // is incorrect or if the request is invalid.
-func (s *UserServer) LoginUser(
+func (x *UserServer) LoginUser(
 	ctx context.Context,
 	req *gen.LoginUserRequest,
 ) (*gen.LoginUserResponse, error) {
@@ -25,7 +25,7 @@ func (s *UserServer) LoginUser(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	user, err := s.storage.ReadUserByEmail(ctx, req.Email)
+	user, err := x.storage.ReadUserByEmail(ctx, req.Email)
 	if err != nil {
 		if errors.Is(err, db.ErrUserNotFound) {
 			return nil, status.Error(codes.NotFound, "user not found")
@@ -39,9 +39,9 @@ func (s *UserServer) LoginUser(
 		return nil, status.Error(codes.Unauthenticated, "invalid password")
 	}
 
-	accessToken, accessPayload, err := s.tokenMaker.NewToken(
+	accessToken, accessPayload, err := x.tokenMaker.NewToken(
 		req.GetEmail(),
-		s.config.AccessTokenDuration,
+		x.config.AccessTokenDuration,
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("grpc: failed to create access token")
@@ -49,9 +49,9 @@ func (s *UserServer) LoginUser(
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	refreshToken, refreshPayload, err := s.tokenMaker.NewToken(
+	refreshToken, refreshPayload, err := x.tokenMaker.NewToken(
 		req.GetEmail(),
-		s.config.RefreshTokenDuration,
+		x.config.RefreshTokenDuration,
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("grpc: failed to create refresh token")
@@ -61,7 +61,7 @@ func (s *UserServer) LoginUser(
 
 	metadata := grpcUtil.MetadataFromContext(ctx)
 
-	session, err := s.storage.CreateSessionTx(ctx, db.CreateSessionParams{
+	session, err := x.storage.CreateSessionTx(ctx, db.CreateSessionParams{
 		ID:           refreshPayload.ID,
 		Email:        user.Email,
 		ClientIP:     metadata.ClientIP,

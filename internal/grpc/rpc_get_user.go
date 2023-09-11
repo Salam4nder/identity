@@ -14,7 +14,7 @@ import (
 
 // GetUser returns a user by id. Returns an error if the user couldn't be found
 // or if the request is invalid.
-func (s *UserServer) GetUser(ctx context.Context, req *gen.UserID) (*gen.UserResponse, error) {
+func (x *UserServer) GetUser(ctx context.Context, req *gen.UserID) (*gen.UserResponse, error) {
 	if req == nil {
 		return nil, requestIsNilError()
 	}
@@ -28,7 +28,7 @@ func (s *UserServer) GetUser(ctx context.Context, req *gen.UserID) (*gen.UserRes
 		return nil, status.Error(codes.InvalidArgument, "ID is invalid")
 	}
 
-	user, err := s.storage.ReadUser(ctx, id)
+	user, err := x.storage.ReadUser(ctx, id)
 	if err != nil {
 		switch {
 		case errors.Is(err, db.ErrUserNotFound):
