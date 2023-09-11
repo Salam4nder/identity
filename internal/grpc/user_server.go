@@ -16,8 +16,8 @@ type UserServer struct {
 	config     config.UserService
 }
 
-// NewUserService returns a new instance of UserService.
-func NewUserService(
+// NewUserServer returns a new instance of UserService.
+func NewUserServer(
 	store *db.SQL,
 	cfg config.UserService,
 ) (*UserServer, error) {
