@@ -17,9 +17,10 @@ services:
       timeout: 10s
       retries: 5
   api:
-    build:
-     context: .
-     dockerfile: Dockerfile
+    image: user:latest
+    # build:
+    #  context: .
+    #  dockerfile: Dockerfile
     env_file: dev.env
     ports:
       - "50051:50051"
