@@ -46,3 +46,6 @@ test/integration/run:
 
 lint:
 	golangci-lint run --fix
+
+nancy:
+	go list -json -deps ./... | docker run --rm -i sonatypecommunity/nancy:latest sleuth
