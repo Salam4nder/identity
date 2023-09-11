@@ -29,7 +29,7 @@ type CreateUserParams struct {
 	CreatedAt time.Time
 }
 
-// CreateUser creates a new user in the database as a transaction.
+// CreateUser creates a new user in the database.
 func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) (*User, error) {
 	var user User
 
@@ -137,7 +137,7 @@ type UpdateUserParams struct {
 	Email    string
 }
 
-// UpdateUser updates a user in the database as a transaction.
+// UpdateUser updates a user in the database.
 func (x *SQL) UpdateUser(ctx context.Context, params UpdateUserParams) (*User, error) {
 	var user User
 

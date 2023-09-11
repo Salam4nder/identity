@@ -2,10 +2,10 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -35,8 +35,8 @@ type CreateSessionParams struct {
 	ExpiresAt    time.Time
 }
 
-// CreateSessionTx creates a new session in the database as a transaction.
-func (x *SQL) CreateSessionTx(
+// CreateSession creates a new session in the database.
+func (x *SQL) CreateSession(
 	ctx context.Context,
 	params CreateSessionParams,
 ) (*Session, error) {
@@ -71,29 +71,29 @@ func (x *SQL) CreateSessionTx(
         expires_at,
         refresh_token
     `
-	if err := x.execTx(ctx, func(tx *sql.Tx) error {
-		return tx.QueryRowContext(
-			ctx,
-			query,
-			params.ID,
-			params.Email,
-			SessionActiveByDefault,
-			params.ClientIP,
-			params.UserAgent,
-			time.Now(),
-			params.ExpiresAt,
-			params.RefreshToken,
-		).Scan(
-			&session.ID,
-			&session.Email,
-			&session.IsActive,
-			&session.ClientIP,
-			&session.UserAgent,
-			&session.CreatedAt,
-			&session.ExpiresAt,
-			&session.RefreshToken,
-		)
-	}); err != nil {
+	if err := x.db.QueryRowContext(
+		ctx,
+		query,
+		params.ID,
+		params.Email,
+		SessionActiveByDefault,
+		params.ClientIP,
+		params.UserAgent,
+		time.Now(),
+		params.ExpiresAt,
+		params.RefreshToken,
+	).Scan(
+		&session.ID,
+		&session.Email,
+		&session.IsActive,
+		&session.ClientIP,
+		&session.UserAgent,
+		&session.CreatedAt,
+		&session.ExpiresAt,
+		&session.RefreshToken,
+	); err != nil {
+		log.Error().Err(err).Msg("db: failed to create session")
+
 		return nil, err
 	}
 
@@ -101,10 +101,7 @@ func (x *SQL) CreateSessionTx(
 }
 
 // GetSession returns a session from the database.
-func (x *SQL) GetSession(
-	ctx context.Context,
-	id uuid.UUID,
-) (*Session, error) {
+func (x *SQL) GetSession(ctx context.Context, id uuid.UUID) (*Session, error) {
 	var session Session
 
 	query := `
@@ -133,17 +130,16 @@ func (x *SQL) GetSession(
 		&session.ExpiresAt,
 		&session.RefreshToken,
 	); err != nil {
+		log.Error().Err(err).Msgf("db: failed to get session %s", id)
+
 		return nil, err
 	}
 
 	return &session, nil
 }
 
-// BlockSessionTx deactivates a session in the database as a transaction.
-func (x *SQL) BlockSessionTx(
-	ctx context.Context,
-	id uuid.UUID,
-) error {
+// BlockSession deactivates a session in the database.
+func (x *SQL) BlockSession(ctx context.Context, id uuid.UUID) error {
 	query := `
     UPDATE
         sessions
@@ -153,8 +149,10 @@ func (x *SQL) BlockSessionTx(
         id = $1
     `
 
-	return x.execTx(ctx, func(tx *sql.Tx) error {
-		_, err := tx.ExecContext(ctx, query, id)
-		return err
-	})
+	_, err := x.db.ExecContext(ctx, query, id)
+	if err != nil {
+		log.Error().Err(err).Msgf("db: failed to block session %s", id)
+	}
+
+	return err
 }

@@ -61,7 +61,7 @@ func (x *UserServer) LoginUser(
 
 	metadata := grpcUtil.MetadataFromContext(ctx)
 
-	session, err := x.storage.CreateSessionTx(ctx, db.CreateSessionParams{
+	session, err := x.storage.CreateSession(ctx, db.CreateSessionParams{
 		ID:           refreshPayload.ID,
 		Email:        user.Email,
 		ClientIP:     metadata.ClientIP,
