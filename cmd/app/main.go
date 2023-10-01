@@ -58,7 +58,7 @@ func main() {
 	fatalExitOnErr(err)
 
 	migration := migration.New(sql.DB(), zap.NewNop())
-	if err := migration.Migrate(); err != nil {
+	if err = migration.Migrate(); err != nil {
 		fatalExitOnErr(err)
 	}
 
@@ -90,7 +90,7 @@ func main() {
 
 	// dialOpts := []grpc.DialOption{grpc.WithInsecure()}
 	dialOpts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-	if err := gen.RegisterUserHandlerFromEndpoint(
+	if err = gen.RegisterUserHandlerFromEndpoint(
 		ctx,
 		mux,
 		cfg.Server.GRPCAddr(),
@@ -123,7 +123,9 @@ func main() {
 
 	log.Info().Msg("shutting down server...")
 	grpcServer.GracefulStop()
-	server.Shutdown(ctx)
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatal().Err(err).Msg("server shutdown failed")
+	}
 	log.Info().Msg("server gracefully stopped")
 }
 

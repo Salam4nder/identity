@@ -24,7 +24,7 @@ func (x *UserServer) UpdateUser(
 		return nil, unauthenticatedError(err)
 	}
 
-	if err := validateUpdateUserRequest(req); err != nil {
+	if err = validateUpdateUserRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
