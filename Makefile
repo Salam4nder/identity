@@ -45,7 +45,7 @@ test/integration/run:
 	go test -tags integration -v --coverprofile=coverage.out -coverpkg ./... ./test/integration
 
 lint:
-	golangci-lint run --fix
+	golangci-lint run
 
 nancy:
 	go list -json -deps ./... | docker run --rm -i sonatypecommunity/nancy:latest sleuth
