@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/Salam4nder/user/internal/config"
@@ -39,8 +40,14 @@ const (
 )
 
 func main() {
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		PingTimeout,
+	)
+	defer cancel()
+
 	cfg, err := config.New()
-	fatalExitOnErr(err)
+	exitWithError(ctx, err)
 
 	// UNIX Time is faster and smaller than most timestamps
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
@@ -48,25 +55,19 @@ func main() {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
-	ctx, cancel := context.WithTimeout(
-		context.Background(),
-		PingTimeout,
-	)
-	defer cancel()
-
 	sql, err := db.NewSQLDatabase(ctx, cfg.PSQL)
-	fatalExitOnErr(err)
+	exitWithError(ctx, err)
 
 	migration := migration.New(sql.DB(), zap.NewNop())
 	if err = migration.Migrate(); err != nil {
-		fatalExitOnErr(err)
+		exitWithError(ctx, err)
 	}
 
-	userServer, err := internalGRPC.NewUserServer(sql, cfg.Service)
-	fatalExitOnErr(err)
+	userServer, err := internalGRPC.NewUserServer(sql, cfg.UserService)
+	exitWithError(ctx, err)
 
 	grpcListener, err := net.Listen("tcp", cfg.Server.GRPCAddr())
-	fatalExitOnErr(err)
+	exitWithError(ctx, err)
 
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
@@ -78,7 +79,7 @@ func main() {
 	reflection.Register(grpcServer)
 	go func() {
 		if err := grpcServer.Serve(grpcListener); err != nil {
-			fatalExitOnErr(err)
+			exitWithError(ctx, err)
 		}
 	}()
 
@@ -87,8 +88,6 @@ func main() {
 		Msg("gRPC server is running")
 
 	mux := runtime.NewServeMux()
-
-	// dialOpts := []grpc.DialOption{grpc.WithInsecure()}
 	dialOpts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	if err = gen.RegisterUserHandlerFromEndpoint(
 		ctx,
@@ -96,7 +95,7 @@ func main() {
 		cfg.Server.GRPCAddr(),
 		dialOpts,
 	); err != nil {
-		fatalExitOnErr(err)
+		exitWithError(ctx, err)
 	}
 
 	server := &http.Server{
@@ -108,7 +107,7 @@ func main() {
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
-			fatalExitOnErr(err)
+			exitWithError(ctx, err)
 		}
 	}()
 
@@ -116,21 +115,23 @@ func main() {
 		Str("address", cfg.Server.HTTPAddr()).
 		Msg("gRPC gateway is running")
 
-	// Wait for interrupt or kill signal to gracefully shutdown the server with.
+	// Wait for interrupt signal to gracefully shutdown the server with.
 	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, os.Kill)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
 
 	log.Info().Msg("shutting down server...")
 	grpcServer.GracefulStop()
 	if err := server.Shutdown(ctx); err != nil {
-		log.Fatal().Err(err).Msg("server shutdown failed")
+		exitWithError(ctx, err)
 	}
 	log.Info().Msg("server gracefully stopped")
 }
 
-func fatalExitOnErr(err error) {
+func exitWithError(ctx context.Context, err error) {
 	if err != nil {
-		log.Fatal().Err(err).Msg("main fatal exit: failed to start user service")
+		log.Error().Err(err).Msg("main: exit with error")
+		ctx.Done()
 	}
+	os.Exit(1)
 }
