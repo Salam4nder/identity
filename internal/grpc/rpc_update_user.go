@@ -53,7 +53,7 @@ func (x *UserServer) UpdateUser(
 			return nil, status.Error(codes.NotFound, err.Error())
 
 		default:
-			log.Error().Err(err).Msg("failed to update user")
+			log.Error().Err(err).Msg("grpc: failed to update user")
 			return nil, internalServerError()
 		}
 	}

@@ -58,15 +58,15 @@ func validateCreateUserRequest(req *gen.CreateUserRequest) error {
 	)
 
 	if err := util.ValidateFullName(req.GetFullName()); err != nil {
-		fullNameErr = fmt.Errorf("full_name %w", err)
+		fullNameErr = fmt.Errorf("grpc: full_name %w", err)
 	}
 
 	if err := util.ValidateEmail(req.GetEmail()); err != nil {
-		emailErr = fmt.Errorf("email %w", err)
+		emailErr = fmt.Errorf("grpc: email %w", err)
 	}
 
 	if err := util.ValidatePassword(req.GetPassword()); err != nil {
-		passwordErr = fmt.Errorf("password %w", err)
+		passwordErr = fmt.Errorf("grpc: password %w", err)
 	}
 
 	return errors.Join(fullNameErr, emailErr, passwordErr)
