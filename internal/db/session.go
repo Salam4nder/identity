@@ -93,7 +93,6 @@ func (x *SQL) CreateSession(
 		&session.RefreshToken,
 	); err != nil {
 		log.Error().Err(err).Msg("db: failed to create session")
-
 		return nil, err
 	}
 
@@ -131,7 +130,6 @@ func (x *SQL) GetSession(ctx context.Context, id uuid.UUID) (*Session, error) {
 		&session.RefreshToken,
 	); err != nil {
 		log.Error().Err(err).Msgf("db: failed to get session %s", id)
-
 		return nil, err
 	}
 

@@ -65,7 +65,7 @@ func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) (*User, e
 		if IsSentinelErr(err) {
 			return nil, SentinelErr(err)
 		}
-
+		log.Error().Err(err).Msg("db: error creating user")
 		return nil, err
 	}
 
@@ -94,7 +94,6 @@ func (x *SQL) ReadUser(ctx context.Context, id uuid.UUID) (*User, error) {
 			return nil, ErrUserNotFound
 		}
 		log.Error().Err(err).Msg("db: error reading user")
-
 		return nil, err
 	}
 
@@ -123,7 +122,6 @@ func (x *SQL) ReadUserByEmail(ctx context.Context, email string) (*User, error) 
 			return nil, ErrUserNotFound
 		}
 		log.Error().Err(err).Msg("db: error reading user")
-
 		return nil, err
 	}
 
@@ -167,7 +165,6 @@ func (x *SQL) UpdateUser(ctx context.Context, params UpdateUserParams) (*User, e
 			return nil, SentinelErr(err)
 		}
 		log.Error().Err(err).Msg("db: error updating user")
-
 		return nil, err
 	}
 

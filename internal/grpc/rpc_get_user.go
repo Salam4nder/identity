@@ -12,9 +12,9 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// GetUser returns a user by id. Returns an error if the user couldn't be found
+// ReadUser returns a user by id. Returns an error if the user couldn't be found
 // or if the request is invalid.
-func (x *UserServer) GetUser(ctx context.Context, req *gen.UserID) (*gen.UserResponse, error) {
+func (x *UserServer) ReadUser(ctx context.Context, req *gen.UserID) (*gen.UserResponse, error) {
 	if req == nil {
 		return nil, requestIsNilError()
 	}
@@ -35,7 +35,7 @@ func (x *UserServer) GetUser(ctx context.Context, req *gen.UserID) (*gen.UserRes
 			return nil, status.Error(codes.NotFound, err.Error())
 
 		default:
-			log.Error().Err(err).Msg("failed to get user")
+			log.Error().Err(err).Msg("grpc: failed to read user")
 
 			return nil, internalServerError()
 		}
