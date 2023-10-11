@@ -1,3 +1,4 @@
+// Package db provides a wrapper around sql.DB which provides a transactional context.
 package db
 
 import (
@@ -46,22 +47,23 @@ func NewSQLDatabase(ctx context.Context, cfg config.Postgres) (*SQL, error) {
 }
 
 // execTx executes a function in a transaction.
-func (x *SQL) execTx(ctx context.Context, fn func(tx *sql.Tx) error) error {
-	tx, err := x.db.BeginTx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("db: beginning transaction: %w", err)
-	}
+// Need to figure out a better implementation for this.
+// func (x *SQL) execTx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+// 	tx, err := x.db.BeginTx(ctx, nil)
+// 	if err != nil {
+// 		return fmt.Errorf("db: beginning transaction: %w", err)
+// 	}
 
-	if err := fn(tx); err != nil {
-		if err := tx.Rollback(); err != nil {
-			return fmt.Errorf("db: rolling back transaction: %w", err)
-		}
-		return err
-	}
+// 	if err := fn(tx); err != nil {
+// 		if err := tx.Rollback(); err != nil {
+// 			return fmt.Errorf("db: rolling back transaction: %w", err)
+// 		}
+// 		return err
+// 	}
 
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("db: committing transaction: %w", err)
-	}
+// 	if err := tx.Commit(); err != nil {
+// 		return fmt.Errorf("db: committing transaction: %w", err)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
