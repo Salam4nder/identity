@@ -28,4 +28,5 @@ jobs:
       run: go test -v ./...
 
     - name: Lint
-      run: make lint -C ${{ github.workspace }}
+      run: make lint
+      working-directory: ${{ github.workspace }}
