@@ -1,3 +1,6 @@
+// Package config provides the application configuration.
+// Currently using envvar package to parse environment variables.
+// Planning to switch to Viper in the future.
 package config
 
 import (
@@ -12,7 +15,7 @@ type Application struct {
 	Environment string      `envvar:"ENVIRONMENT"`
 	PSQL        Postgres    `envvar:"POSTGRES_"`
 	Server      Server      `envvar:"SERVER_"`
-	Service     UserService `envvar:"USER_SERVICE_"`
+	UserService UserService `envvar:"USER_SERVICE_"`
 }
 
 // New returns a new application configuration
