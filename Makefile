@@ -1,5 +1,17 @@
+.PHONY: test
+
 test: 
 	go test -v ./...
+
+test-db:
+	docker compose -f internal/db/docker-compose.yaml up -d --wait
+	bash -c "trap '$(MAKE) test-db/down' EXIT; $(MAKE) test-db/run"
+
+test-db/down:
+	docker compose -f internal/db/docker-compose.yaml down -v
+
+test-db/run:
+	go test -tags testdb -v --coverprofile=coverage.out -coverpkg ./... ./internal/db
 
 api:
 	go run ./cmd/app/main.go
