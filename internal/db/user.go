@@ -42,7 +42,6 @@ func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) (*User, e
 	passwordHash, err := util.HashPassword(params.Password)
 	if err != nil {
 		log.Error().Err(err).Msg("db: error hashing password")
-
 		return nil, err
 	}
 	params.Password = passwordHash
