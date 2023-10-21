@@ -9,8 +9,9 @@ import (
 
 // Common db errors.
 var (
-	ErrDuplicateEmail = errors.New("duplicate email")
-	ErrUserNotFound   = errors.New("user not found")
+	ErrDuplicateEmail = errors.New("db: duplicate email")
+	ErrStringTooLong  = errors.New("db: string too long")
+	ErrUserNotFound   = errors.New("db: user not found")
 )
 
 // IsSentinelErr is a sentinel error.
@@ -36,8 +37,8 @@ func SentinelErr(err error) error {
 	switch pqErr.Code.Name() {
 	case "unique_violation":
 		return ErrDuplicateEmail
-
-	// TODO: Add more cases here.
+	case "string_data_right_truncation":
+		return ErrStringTooLong
 	default:
 		return err
 	}
