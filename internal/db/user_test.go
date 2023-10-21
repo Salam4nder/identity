@@ -157,3 +157,44 @@ func TestSQL_ReadUser(t *testing.T) {
 		require.ErrorIs(t, err, ErrUserNotFound)
 	})
 }
+
+func TestSQL_ReadUserByEmail(t *testing.T) {
+	user, err := TestSQLConnPool.CreateUser(ctx, CreateUserParams{
+		FullName:  util.RandomString(10),
+		Email:     util.RandomEmail(),
+		Password:  util.RandomString(10),
+		CreatedAt: time.Now().UTC(),
+	})
+	require.NoError(t, err)
+
+	got, err := TestSQLConnPool.ReadUserByEmail(ctx, user.Email)
+	require.NoError(t, err)
+	require.NotNil(t, got)
+	require.Equal(t, user.ID, got.ID)
+	require.Equal(t, user.FullName, got.FullName)
+	require.Equal(t, user.Email, got.Email)
+	require.Equal(t, user.CreatedAt, got.CreatedAt)
+	require.Equal(t, user.PasswordHash, got.PasswordHash)
+	require.Equal(t, user.CreatedAt, got.CreatedAt)
+
+	t.Cleanup(func() {
+		_, err := TestSQLConnPool.db.ExecContext(
+			ctx,
+			`DELETE FROM users WHERE id = $1`,
+			user.ID,
+		)
+		require.NoError(t, err)
+	})
+
+	t.Run("Not found", func(t *testing.T) {
+		_, err := TestSQLConnPool.ReadUserByEmail(ctx, util.RandomEmail())
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrUserNotFound)
+	})
+
+	t.Run("Email is empty", func(t *testing.T) {
+		_, err := TestSQLConnPool.ReadUserByEmail(ctx, "")
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrUserNotFound)
+	})
+}
