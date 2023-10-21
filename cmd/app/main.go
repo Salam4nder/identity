@@ -47,7 +47,7 @@ func main() {
 	defer cancel()
 
 	cfg, err := config.New()
-	exitWithError(ctx, err)
+	exitWithError(err)
 
 	// UNIX Time is faster and smaller than most timestamps
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
@@ -56,18 +56,18 @@ func main() {
 	}
 
 	sql, err := db.NewSQLDatabase(ctx, cfg.PSQL)
-	exitWithError(ctx, err)
+	exitWithError(err)
 
 	migration := migration.New(sql.DB(), zap.NewNop())
 	if err = migration.Migrate(); err != nil {
-		exitWithError(ctx, err)
+		exitWithError(err)
 	}
 
 	userServer, err := internalGRPC.NewUserServer(sql, cfg.UserService)
-	exitWithError(ctx, err)
+	exitWithError(err)
 
 	grpcListener, err := net.Listen("tcp", cfg.Server.GRPCAddr())
-	exitWithError(ctx, err)
+	exitWithError(err)
 
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
@@ -79,7 +79,7 @@ func main() {
 	reflection.Register(grpcServer)
 	go func() {
 		if err := grpcServer.Serve(grpcListener); err != nil {
-			exitWithError(ctx, err)
+			exitWithError(err)
 		}
 	}()
 
@@ -95,7 +95,7 @@ func main() {
 		cfg.Server.GRPCAddr(),
 		dialOpts,
 	); err != nil {
-		exitWithError(ctx, err)
+		exitWithError(err)
 	}
 
 	server := &http.Server{
@@ -107,7 +107,7 @@ func main() {
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
-			exitWithError(ctx, err)
+			exitWithError(err)
 		}
 	}()
 
@@ -123,15 +123,14 @@ func main() {
 	log.Info().Msg("shutting down server...")
 	grpcServer.GracefulStop()
 	if err := server.Shutdown(ctx); err != nil {
-		exitWithError(ctx, err)
+		exitWithError(err)
 	}
 	log.Info().Msg("server gracefully stopped")
 }
 
-func exitWithError(ctx context.Context, err error) {
+func exitWithError(err error) {
 	if err != nil {
 		log.Error().Err(err).Msg("main: exit with error")
-		ctx.Done()
+		os.Exit(1)
 	}
-	os.Exit(1)
 }
