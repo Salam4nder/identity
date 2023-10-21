@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Salam4nder/user/pkg/util"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -23,9 +24,9 @@ func TestSQL_CreateUser(t *testing.T) {
 		{
 			name: "Success",
 			params: CreateUserParams{
-				FullName:  "Kam Gam",
-				Email:     "email@test.com",
-				Password:  "password",
+				FullName:  util.RandomString(10),
+				Email:     util.RandomEmail(),
+				Password:  util.RandomString(10),
 				CreatedAt: time.Now().UTC(),
 			},
 		},
@@ -61,8 +62,8 @@ func TestSQL_CreateUser(t *testing.T) {
 			name: "Name exceeds 255 chars returns err",
 			params: CreateUserParams{
 				FullName:  strings.Repeat("a", 256),
-				Email:     "email@test.com",
-				Password:  "password",
+				Email:     util.RandomEmail(),
+				Password:  util.RandomString(10),
 				CreatedAt: time.Now().UTC(),
 			},
 			wantErr:     true,
@@ -71,9 +72,9 @@ func TestSQL_CreateUser(t *testing.T) {
 		{
 			name: "Email exceeds 255 chars returns err",
 			params: CreateUserParams{
-				FullName:  "Full name",
+				FullName:  util.RandomString(10),
 				Email:     strings.Repeat("a", 256),
-				Password:  "password",
+				Password:  util.RandomString(10),
 				CreatedAt: time.Now().UTC(),
 			},
 			wantErr:     true,
