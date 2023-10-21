@@ -5,16 +5,16 @@ import (
 	"errors"
 
 	"github.com/Salam4nder/user/internal/db"
-	"github.com/Salam4nder/user/internal/proto/gen"
+	"github.com/Salam4nder/user/internal/grpc/gen"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-// ReadUser returns a user by id. Returns an error if the user couldn't be found
-// or if the request is invalid.
+// ReadUser returns a user by ID.
 func (x *UserServer) ReadUser(ctx context.Context, req *gen.UserID) (*gen.UserResponse, error) {
+	log.Info().Msg("grpc: ReadUser")
 	if req == nil {
 		return nil, requestIsNilError()
 	}

@@ -23,17 +23,7 @@ message UserID {
     string id = 1;
 }
 
-message GetByFilterRequest {
-    optional string full_name = 1;
-    optional string email = 2;
-    google.protobuf.Timestamp created_at = 3;
-}
-
-message GetByFilterResponse {
-    repeated UserResponse users = 1;
-}
-
-message GetByEmailRequest {
+message ReadByEmailRequest {
     string email = 1;
 }
 

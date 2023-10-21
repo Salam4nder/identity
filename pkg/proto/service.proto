@@ -16,20 +16,14 @@ service User {
                 body: "*"
             };
         }
-    rpc GetUser (UserID) returns (UserResponse) {
+    rpc ReadUser (UserID) returns (UserResponse) {
             option (google.api.http) = {
-                get: "/v1/get_user/{id}"
+                get: "/v1/read_user/{id}"
             };
         }
-    rpc GetByFilter (GetByFilterRequest) returns (GetByFilterResponse) {
+    rpc ReadByEmail (ReadByEmailRequest) returns (UserResponse) {
             option (google.api.http) = {
-                post: "/v1/get_by_filter"
-                body: "*"
-            };
-        }
-    rpc GetByEmail (GetByEmailRequest) returns (UserResponse) {
-            option (google.api.http) = {
-                post: "/v1/get_by_email"
+                post: "/v1/read_by_email"
                 body: "*"
             };
         }

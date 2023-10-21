@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/Salam4nder/user/internal/db"
-	"github.com/Salam4nder/user/internal/proto/gen"
+	"github.com/Salam4nder/user/internal/grpc/gen"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -15,7 +15,7 @@ import (
 // found or if the request is invalid.
 func (x *UserServer) GetByEmail(
 	ctx context.Context,
-	req *gen.GetByEmailRequest,
+	req *gen.ReadByEmailRequest,
 ) (*gen.UserResponse, error) {
 	if req == nil {
 		return nil, requestIsNilError()

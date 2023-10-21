@@ -23,13 +23,11 @@ func LoggerInterceptor(
 	result, err := handler(ctx, req)
 
 	code := codes.Unknown
-
 	if status, exists := status.FromError(err); exists {
 		code = status.Code()
 	}
 
 	logger := log.Info()
-
 	if err != nil {
 		logger = log.Error().Err(err)
 	}

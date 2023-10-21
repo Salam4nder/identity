@@ -12,7 +12,7 @@ import (
 	"github.com/Salam4nder/user/internal/config"
 	"github.com/Salam4nder/user/internal/db"
 	internalGRPC "github.com/Salam4nder/user/internal/grpc"
-	"github.com/Salam4nder/user/internal/proto/gen"
+	"github.com/Salam4nder/user/internal/grpc/gen"
 	grpcUtil "github.com/Salam4nder/user/pkg/grpc"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"

@@ -21,9 +21,8 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	User_CreateUser_FullMethodName  = "/gen.User/CreateUser"
-	User_GetUser_FullMethodName     = "/gen.User/GetUser"
-	User_GetByFilter_FullMethodName = "/gen.User/GetByFilter"
-	User_GetByEmail_FullMethodName  = "/gen.User/GetByEmail"
+	User_ReadUser_FullMethodName    = "/gen.User/ReadUser"
+	User_ReadByEmail_FullMethodName = "/gen.User/ReadByEmail"
 	User_UpdateUser_FullMethodName  = "/gen.User/UpdateUser"
 	User_DeleteUser_FullMethodName  = "/gen.User/DeleteUser"
 	User_LoginUser_FullMethodName   = "/gen.User/LoginUser"
@@ -34,9 +33,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserClient interface {
 	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*UserID, error)
-	GetUser(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserResponse, error)
-	GetByFilter(ctx context.Context, in *GetByFilterRequest, opts ...grpc.CallOption) (*GetByFilterResponse, error)
-	GetByEmail(ctx context.Context, in *GetByEmailRequest, opts ...grpc.CallOption) (*UserResponse, error)
+	ReadUser(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserResponse, error)
+	ReadByEmail(ctx context.Context, in *ReadByEmailRequest, opts ...grpc.CallOption) (*UserResponse, error)
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UserResponse, error)
 	DeleteUser(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	LoginUser(ctx context.Context, in *LoginUserRequest, opts ...grpc.CallOption) (*LoginUserResponse, error)
@@ -59,27 +57,18 @@ func (c *userClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts
 	return out, nil
 }
 
-func (c *userClient) GetUser(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserResponse, error) {
+func (c *userClient) ReadUser(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserResponse, error) {
 	out := new(UserResponse)
-	err := c.cc.Invoke(ctx, User_GetUser_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, User_ReadUser_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *userClient) GetByFilter(ctx context.Context, in *GetByFilterRequest, opts ...grpc.CallOption) (*GetByFilterResponse, error) {
-	out := new(GetByFilterResponse)
-	err := c.cc.Invoke(ctx, User_GetByFilter_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *userClient) GetByEmail(ctx context.Context, in *GetByEmailRequest, opts ...grpc.CallOption) (*UserResponse, error) {
+func (c *userClient) ReadByEmail(ctx context.Context, in *ReadByEmailRequest, opts ...grpc.CallOption) (*UserResponse, error) {
 	out := new(UserResponse)
-	err := c.cc.Invoke(ctx, User_GetByEmail_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, User_ReadByEmail_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -118,9 +107,8 @@ func (c *userClient) LoginUser(ctx context.Context, in *LoginUserRequest, opts .
 // for forward compatibility
 type UserServer interface {
 	CreateUser(context.Context, *CreateUserRequest) (*UserID, error)
-	GetUser(context.Context, *UserID) (*UserResponse, error)
-	GetByFilter(context.Context, *GetByFilterRequest) (*GetByFilterResponse, error)
-	GetByEmail(context.Context, *GetByEmailRequest) (*UserResponse, error)
+	ReadUser(context.Context, *UserID) (*UserResponse, error)
+	ReadByEmail(context.Context, *ReadByEmailRequest) (*UserResponse, error)
 	UpdateUser(context.Context, *UpdateUserRequest) (*UserResponse, error)
 	DeleteUser(context.Context, *UserID) (*emptypb.Empty, error)
 	LoginUser(context.Context, *LoginUserRequest) (*LoginUserResponse, error)
@@ -134,14 +122,11 @@ type UnimplementedUserServer struct {
 func (UnimplementedUserServer) CreateUser(context.Context, *CreateUserRequest) (*UserID, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
 }
-func (UnimplementedUserServer) GetUser(context.Context, *UserID) (*UserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
+func (UnimplementedUserServer) ReadUser(context.Context, *UserID) (*UserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadUser not implemented")
 }
-func (UnimplementedUserServer) GetByFilter(context.Context, *GetByFilterRequest) (*GetByFilterResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetByFilter not implemented")
-}
-func (UnimplementedUserServer) GetByEmail(context.Context, *GetByEmailRequest) (*UserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetByEmail not implemented")
+func (UnimplementedUserServer) ReadByEmail(context.Context, *ReadByEmailRequest) (*UserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadByEmail not implemented")
 }
 func (UnimplementedUserServer) UpdateUser(context.Context, *UpdateUserRequest) (*UserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
@@ -183,56 +168,38 @@ func _User_CreateUser_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
-func _User_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _User_ReadUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UserID)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UserServer).GetUser(ctx, in)
+		return srv.(UserServer).ReadUser(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: User_GetUser_FullMethodName,
+		FullMethod: User_ReadUser_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServer).GetUser(ctx, req.(*UserID))
+		return srv.(UserServer).ReadUser(ctx, req.(*UserID))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _User_GetByFilter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetByFilterRequest)
+func _User_ReadByEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadByEmailRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UserServer).GetByFilter(ctx, in)
+		return srv.(UserServer).ReadByEmail(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: User_GetByFilter_FullMethodName,
+		FullMethod: User_ReadByEmail_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServer).GetByFilter(ctx, req.(*GetByFilterRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _User_GetByEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetByEmailRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserServer).GetByEmail(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: User_GetByEmail_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServer).GetByEmail(ctx, req.(*GetByEmailRequest))
+		return srv.(UserServer).ReadByEmail(ctx, req.(*ReadByEmailRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -303,16 +270,12 @@ var User_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _User_CreateUser_Handler,
 		},
 		{
-			MethodName: "GetUser",
-			Handler:    _User_GetUser_Handler,
+			MethodName: "ReadUser",
+			Handler:    _User_ReadUser_Handler,
 		},
 		{
-			MethodName: "GetByFilter",
-			Handler:    _User_GetByFilter_Handler,
-		},
-		{
-			MethodName: "GetByEmail",
-			Handler:    _User_GetByEmail_Handler,
+			MethodName: "ReadByEmail",
+			Handler:    _User_ReadByEmail_Handler,
 		},
 		{
 			MethodName: "UpdateUser",

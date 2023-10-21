@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Salam4nder/user/internal/db"
-	"github.com/Salam4nder/user/internal/proto/gen"
+	"github.com/Salam4nder/user/internal/grpc/gen"
 	"github.com/Salam4nder/user/pkg/util"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
