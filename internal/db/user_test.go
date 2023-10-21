@@ -300,3 +300,24 @@ func TestSQL_UpdateUser(t *testing.T) {
 		})
 	}
 }
+
+func TestSQL_DeleteUser(t *testing.T) {
+	createdUser, err := TestSQLConnPool.CreateUser(ctx, CreateUserParams{
+		FullName:  util.RandomString(10),
+		Email:     util.RandomEmail(),
+		Password:  util.RandomString(10),
+		CreatedAt: time.Now().UTC(),
+	})
+	require.NoError(t, err)
+	require.NotEqual(t, uuid.Nil, createdUser.ID)
+
+	ctx := context.Background()
+	err = TestSQLConnPool.DeleteUser(ctx, createdUser.ID)
+	require.NoError(t, err)
+
+	t.Run("Not found", func(t *testing.T) {
+		err := TestSQLConnPool.DeleteUser(ctx, createdUser.ID)
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrUserNotFound)
+	})
+}
