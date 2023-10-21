@@ -14,7 +14,7 @@ func TestHashPassword(t *testing.T) {
 	assert.NotEqual(t, password, hash)
 }
 
-func TestValidatePassword(t *testing.T) {
+func TestComparePasswordHash(t *testing.T) {
 	password := "password"
 	hash, err := HashPassword(password)
 	assert.NoError(t, err)
