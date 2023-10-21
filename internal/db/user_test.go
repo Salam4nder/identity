@@ -4,6 +4,7 @@
 package db
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -88,6 +89,7 @@ func TestSQL_CreateUser(t *testing.T) {
 				require.NoError(t, test.preInsert())
 			}
 
+			ctx := context.Background()
 			got, err := TestSQLConnPool.CreateUser(ctx, test.params)
 			if test.wantErr {
 				require.Error(t, err)
@@ -126,6 +128,7 @@ func TestSQL_ReadUser(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	ctx := context.Background()
 	got, err := TestSQLConnPool.ReadUser(ctx, user.ID)
 	require.NoError(t, err)
 	require.NotNil(t, got)
@@ -167,6 +170,7 @@ func TestSQL_ReadUserByEmail(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	ctx := context.Background()
 	got, err := TestSQLConnPool.ReadUserByEmail(ctx, user.Email)
 	require.NoError(t, err)
 	require.NotNil(t, got)
@@ -197,4 +201,102 @@ func TestSQL_ReadUserByEmail(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrUserNotFound)
 	})
+}
+
+func TestSQL_UpdateUser(t *testing.T) {
+	type args struct {
+		ctx    context.Context
+		params UpdateUserParams
+	}
+	tests := []struct {
+		name          string
+		args          args
+		preUpdateArgs CreateUserParams
+		wantErr       bool
+		requiredErr   error
+	}{
+		{
+			name: "Success",
+			args: args{
+				ctx: context.Background(),
+				params: UpdateUserParams{
+					FullName: util.RandomString(10),
+					Email:    util.RandomEmail(),
+				},
+			},
+			preUpdateArgs: CreateUserParams{
+				FullName:  util.RandomString(10),
+				Email:     util.RandomEmail(),
+				Password:  util.RandomString(10),
+				CreatedAt: time.Now().UTC(),
+			},
+		},
+		{
+			name: "Name exceeds 255 chars returns err",
+			args: args{
+				ctx: context.Background(),
+				params: UpdateUserParams{
+					FullName: strings.Repeat("a", 256),
+				},
+			},
+			preUpdateArgs: CreateUserParams{
+				FullName:  util.RandomString(10),
+				Email:     util.RandomEmail(),
+				Password:  util.RandomString(10),
+				CreatedAt: time.Now().UTC(),
+			},
+			wantErr:     true,
+			requiredErr: ErrStringTooLong,
+		},
+		{
+			name: "Email exceeds 255 chars returns err",
+			args: args{
+				ctx: context.Background(),
+				params: UpdateUserParams{
+					Email: strings.Repeat("a", 256),
+				},
+			},
+			preUpdateArgs: CreateUserParams{
+				FullName:  util.RandomString(10),
+				Email:     util.RandomEmail(),
+				Password:  util.RandomString(10),
+				CreatedAt: time.Now().UTC(),
+			},
+			wantErr:     true,
+			requiredErr: ErrStringTooLong,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			preUpdateUser, err := TestSQLConnPool.CreateUser(ctx, test.preUpdateArgs)
+			require.NoError(t, err)
+
+			test.args.params.ID = preUpdateUser.ID
+			got, err := TestSQLConnPool.UpdateUser(test.args.ctx, test.args.params)
+			if test.wantErr {
+				require.Error(t, err)
+				if test.requiredErr != nil {
+					require.ErrorIs(t, err, test.requiredErr)
+				}
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, got)
+				require.Equal(t, test.args.params.ID, got.ID)
+				require.Equal(t, test.args.params.FullName, got.FullName)
+				require.Equal(t, test.args.params.Email, got.Email)
+				require.Equal(t, preUpdateUser.CreatedAt, got.CreatedAt)
+				require.NotEmpty(t, got.UpdatedAt)
+				require.NotEqual(t, preUpdateUser.UpdatedAt, got.UpdatedAt)
+				require.True(t, preUpdateUser.CreatedAt.Before(*got.UpdatedAt))
+			}
+			t.Cleanup(func() {
+				_, err := TestSQLConnPool.db.ExecContext(
+					ctx,
+					`DELETE FROM users WHERE id = $1`,
+					preUpdateUser.ID,
+				)
+				require.NoError(t, err)
+			})
+		})
+	}
 }
