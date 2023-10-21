@@ -183,19 +183,15 @@ func (x *SQL) DeleteUser(ctx context.Context, id uuid.UUID) error {
 			return SentinelErr(err)
 		}
 		log.Error().Err(err).Msg("db: error deleting user")
-
 		return err
 	}
 
 	if rowsAffected, _ := result.RowsAffected(); rowsAffected != 1 {
-		switch {
-		case rowsAffected > 1:
+		if rowsAffected > 1 {
 			log.Error().Err(err).Msg("db: error deleting user, multiple rows affected")
 			return err
-
-		case rowsAffected < 1:
-			return ErrUserNotFound
 		}
+		return ErrUserNotFound
 	}
 
 	return nil
