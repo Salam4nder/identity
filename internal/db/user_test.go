@@ -116,3 +116,44 @@ func TestSQL_CreateUser(t *testing.T) {
 		})
 	}
 }
+
+func TestSQL_ReadUser(t *testing.T) {
+	user, err := TestSQLConnPool.CreateUser(ctx, CreateUserParams{
+		FullName:  util.RandomString(10),
+		Email:     util.RandomEmail(),
+		Password:  util.RandomString(10),
+		CreatedAt: time.Now().UTC(),
+	})
+	require.NoError(t, err)
+
+	got, err := TestSQLConnPool.ReadUser(ctx, user.ID)
+	require.NoError(t, err)
+	require.NotNil(t, got)
+	require.Equal(t, user.ID, got.ID)
+	require.Equal(t, user.FullName, got.FullName)
+	require.Equal(t, user.Email, got.Email)
+	require.Equal(t, user.CreatedAt, got.CreatedAt)
+	require.Equal(t, user.PasswordHash, got.PasswordHash)
+	require.Equal(t, user.CreatedAt, got.CreatedAt)
+
+	t.Cleanup(func() {
+		_, err := TestSQLConnPool.db.ExecContext(
+			ctx,
+			`DELETE FROM users WHERE id = $1`,
+			user.ID,
+		)
+		require.NoError(t, err)
+	})
+
+	t.Run("Not found", func(t *testing.T) {
+		_, err := TestSQLConnPool.ReadUser(ctx, uuid.New())
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrUserNotFound)
+	})
+
+	t.Run("UUID is nil", func(t *testing.T) {
+		_, err := TestSQLConnPool.ReadUser(ctx, uuid.Nil)
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrUserNotFound)
+	})
+}
