@@ -106,3 +106,36 @@ func TestValidatePassword(t *testing.T) {
 		}
 	})
 }
+
+func TestValidateEmail(t *testing.T) {
+	t.Run("OK", func(t *testing.T) {
+		if err := ValidateEmail("email@email.com"); err != nil {
+			t.Errorf("ValidateEmail failed: %s", err)
+		}
+	})
+
+	t.Run("Empty string", func(t *testing.T) {
+		if err := ValidateEmail(""); err == nil {
+			t.Errorf("ValidateEmail failed: %s", err)
+		}
+	})
+
+	t.Run("Too short", func(t *testing.T) {
+		if err := ValidateEmail("a"); err == nil {
+			t.Errorf("ValidateEmail failed: %s", err)
+		}
+	})
+
+	t.Run("Too long", func(t *testing.T) {
+		if err := ValidateEmail(strings.Repeat("a", 300)); err == nil {
+			t.Errorf("ValidateEmail failed: %s", err)
+		}
+	})
+
+	t.Run("Invalid email", func(t *testing.T) {
+		err := ValidateEmail("email")
+		if !errors.Is(err, ErrInvalidEmail) {
+			t.Errorf("ValidateEmail failed: %s", err)
+		}
+	})
+}
