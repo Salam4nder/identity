@@ -139,3 +139,23 @@ func TestValidateEmail(t *testing.T) {
 		}
 	})
 }
+
+func TestValidateSecret(t *testing.T) {
+	t.Run("OK", func(t *testing.T) {
+		if err := ValidateSecret(strings.Repeat("a", 33)); err != nil {
+			t.Errorf("ValidateSecret failed: %s", err)
+		}
+	})
+
+	t.Run("Empty string", func(t *testing.T) {
+		if err := ValidateSecret(""); err == nil {
+			t.Errorf("ValidateSecret failed: %s", err)
+		}
+	})
+
+	t.Run("Too short", func(t *testing.T) {
+		if err := ValidateSecret("a"); err == nil {
+			t.Errorf("ValidateSecret failed: %s", err)
+		}
+	})
+}
