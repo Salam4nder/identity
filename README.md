@@ -4,7 +4,8 @@
 
 1. Copy contents from the `.env` file to a `dev.env` file.
 2. Fill in your `dev.env`.
-2. `make up`
+3. Run `make docker` to build the API docker image.
+4. Run `make up` to compose up the API and all its dependencies.
 
 # Test
 Unit test can be can with `make test` or simply `go test ./...`. 
