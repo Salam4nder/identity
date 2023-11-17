@@ -16,6 +16,5 @@ For viewing coverage, run `make test-cover`
 
 
 ## TODO
-* Email verification task handler.
-* Integration tests.
 * TLS setup.
+* Email sending implementation.
