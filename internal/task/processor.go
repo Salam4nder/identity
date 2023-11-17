@@ -7,6 +7,11 @@ import (
 	"github.com/hibiken/asynq"
 )
 
+const (
+	QueueCritical = "critical"
+	QueueDefault  = "default"
+)
+
 // Processor is an interface for processing tasks.
 type Processor interface {
 	Process() error
@@ -19,9 +24,14 @@ type RedisTaskProcessor struct {
 	db     db.Storage
 }
 
-// NewRedisProcessor creates a new redis processor.
-func NewRedisProcessor(db db.Storage, redisOpt asynq.RedisClientOpt) Processor {
-	server := asynq.NewServer(redisOpt, asynq.Config{})
+// NewRedisTaskProcessor creates a new redis processor.
+func NewRedisTaskProcessor(db db.Storage, redisOpt asynq.RedisClientOpt) Processor {
+	server := asynq.NewServer(redisOpt, asynq.Config{
+		Queues: map[string]int{
+			QueueCritical: 10,
+			QueueDefault:  1,
+		},
+	})
 
 	return &RedisTaskProcessor{
 		server: server,
