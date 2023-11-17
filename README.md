@@ -26,3 +26,4 @@ See https://github.com/ktr0731/evans.
 * TLS setup.
 * Email sending implementation.
 * Complete remaining unit tests.
+* oauth2 support.
