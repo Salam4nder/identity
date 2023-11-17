@@ -14,6 +14,7 @@ import (
 type Application struct {
 	Environment string      `envvar:"ENVIRONMENT"`
 	PSQL        Postgres    `envvar:"POSTGRES_"`
+	Redis       Redis       `envvar:"REDIS_"`
 	Server      Server      `envvar:"SERVER_"`
 	UserService UserService `envvar:"USER_SERVICE_"`
 }
@@ -47,6 +48,12 @@ type Postgres struct {
 	ApplicationName string `envvar:"APPLICATION_NAME" default:"user"`
 }
 
+// Redis holds the Redis configuration.
+type Redis struct {
+	Host string `envvar:"HOST" default:"0.0.0.0"`
+	Port string `envvar:"PORT" default:"6379"`
+}
+
 // Server holds the gRPC server configuration.
 type Server struct {
 	GRPCHost string `envvar:"GRPC_HOST" default:"localhost"`
@@ -55,8 +62,8 @@ type Server struct {
 	HTTPPort string `envvar:"HTTP_PORT" default:"8081"`
 }
 
-// URI returns the mongoDB connection string.
-func (x *Postgres) URI() string {
+// Addr returns the mongoDB connection string.
+func (x *Postgres) Addr() string {
 	return fmt.Sprintf(
 		"postgresql://%s:%s@%s:%s/%s?sslmode=disable&application_name=%s",
 		x.User,
@@ -71,6 +78,11 @@ func (x *Postgres) URI() string {
 // Driver returns the database driver name.
 func (x *Postgres) Driver() string {
 	return "postgres"
+}
+
+// Addr returns the Redis connection string.
+func (x *Redis) Addr() string {
+	return fmt.Sprintf("%s:%s", x.Host, x.Port)
 }
 
 // GRPCAddr returns the gRPC server address.
