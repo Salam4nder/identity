@@ -99,8 +99,8 @@ func (x *SQL) CreateSession(
 	return &session, nil
 }
 
-// GetSession returns a session from the database.
-func (x *SQL) GetSession(ctx context.Context, id uuid.UUID) (*Session, error) {
+// ReadSession returns a session from the database.
+func (x *SQL) ReadSession(ctx context.Context, id uuid.UUID) (*Session, error) {
 	var session Session
 
 	query := `
