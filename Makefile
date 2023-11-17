@@ -48,7 +48,7 @@ proto:
      pkg/proto/*.proto
 
 lint:
-	golangci-lint run
+	golangci-lint run --fix
 
 nancy:
 	go list -json -deps ./... | docker run --rm -i sonatypecommunity/nancy:latest sleuth
