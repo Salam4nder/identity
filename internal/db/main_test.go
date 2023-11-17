@@ -38,7 +38,7 @@ func TestMain(m *testing.M) {
 		Password: "unit-test-pw",
 	}
 
-	db, err := sql.Open(cfg.Driver(), cfg.URI())
+	db, err := sql.Open(cfg.Driver(), cfg.Addr())
 	if err != nil {
 		log.Error().Err(err).
 			Msg("db main_test: failed to connect to db, try running make test-db from project root")

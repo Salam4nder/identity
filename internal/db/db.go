@@ -52,7 +52,7 @@ func (x *SQL) PingContext(ctx context.Context) error {
 
 // NewSQLDatabase creates a new SQLDatabase.
 func NewSQLDatabase(ctx context.Context, cfg config.Postgres) (Storage, error) {
-	db, err := sql.Open(cfg.Driver(), cfg.URI())
+	db, err := sql.Open(cfg.Driver(), cfg.Addr())
 	if err != nil {
 		return nil, fmt.Errorf("db: failed to open database: %w", err)
 	}
