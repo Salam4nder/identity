@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"net"
 	"net/http"
 	"os"
@@ -122,7 +123,9 @@ func main() {
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
-			exitWithError(err)
+			if !errors.Is(err, http.ErrServerClosed) {
+				exitWithError(err)
+			}
 		}
 	}()
 
