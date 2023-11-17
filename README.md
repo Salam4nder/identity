@@ -18,3 +18,4 @@ For viewing coverage, run `make test-cover`
 ## TODO
 * TLS setup.
 * Email sending implementation.
+* Complete remaining unit tests.
