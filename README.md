@@ -6,6 +6,7 @@
 2. Fill in the values in your `dev.env`.
 3. Run `make docker` to build the API docker image.
 4. Run `make up` to compose up the API and all its dependencies.
+5. `make logs` to follow the application logs and its dependencies.
 
 # Test
 Unit test can be run with `make test` or simply with `go test ./...`  
