@@ -19,7 +19,7 @@ type VerificationEmailPayload struct {
 	Email string `json:"email"`
 }
 
-// SendVerificationEmail sends a verification email.
+// SendVerificationEmail sends a verification email task to Redis.
 func (x *RedisTaskCreator) SendVerificationEmail(
 	ctx context.Context,
 	payload VerificationEmailPayload,
@@ -46,7 +46,7 @@ func (x *RedisTaskCreator) SendVerificationEmail(
 	return nil
 }
 
-// ProcessVerificationEmail processes a verification email.
+// ProcessVerificationEmail processes a verification email task.
 func (x *RedisTaskProcessor) ProcessVerificationEmail(ctx context.Context, task *asynq.Task) error {
 	var payload VerificationEmailPayload
 
