@@ -16,6 +16,10 @@ services:
       interval: 5s
       timeout: 10s
       retries: 5
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
   api:
     image: user:latest
     # build:
