@@ -1,4 +1,4 @@
-.PHONY: test test-cover test-db test-db/down test-db/run run docker up down logs logs-user logs-db evans proto lint nancy
+.PHONY: test test-cover test-db test-db/down test-db/run run api up down logs logs-user logs-db evans proto lint nancy redis
 
 test: 
 	go test -v ./...
@@ -16,11 +16,11 @@ test-db/down:
 test-db/run:
 	go test -tags testdb -v --coverprofile=coverage.out -coverpkg ./... ./internal/db
 
-run:
-	go run ./cmd/app/main.go
-
-docker:
+api:
 	docker build -t user .
+
+redis:
+	docker run --name redis -p 6379:6379 -d redis-7alpine
 
 up:
 	docker-compose up -d
