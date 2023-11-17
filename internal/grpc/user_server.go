@@ -11,14 +11,14 @@ import (
 type UserServer struct {
 	gen.UserServer
 
-	storage    *db.SQL
+	storage    db.Storage
 	tokenMaker token.Maker
 	config     config.UserService
 }
 
 // NewUserServer returns a new instance of UserService.
 func NewUserServer(
-	store *db.SQL,
+	store db.Storage,
 	cfg config.UserService,
 ) (*UserServer, error) {
 	tokenMaker, err := token.NewPasetoMaker(cfg.SymmetricKey)
