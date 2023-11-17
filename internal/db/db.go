@@ -7,8 +7,28 @@ import (
 	"fmt"
 
 	"github.com/Salam4nder/user/internal/config"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
+
+// Storage has all methods to work with the database.
+type Storage interface {
+	DB() *sql.DB
+	Close() error
+	PingContext(ctx context.Context) error
+
+	// User repository
+	CreateUser(ctx context.Context, params CreateUserParams) (*User, error)
+	ReadUser(ctx context.Context, id uuid.UUID) (*User, error)
+	ReadUserByEmail(ctx context.Context, email string) (*User, error)
+	UpdateUser(ctx context.Context, params UpdateUserParams) (*User, error)
+	DeleteUser(ctx context.Context, id uuid.UUID) error
+
+	// Session repository
+	CreateSession(ctx context.Context, params CreateSessionParams) (*Session, error)
+	ReadSession(ctx context.Context, id uuid.UUID) (*Session, error)
+	BlockSession(ctx context.Context, id uuid.UUID) error
+}
 
 // SQL is a wrapper around sql.DB which provides a transactional context.
 type SQL struct {
@@ -31,7 +51,7 @@ func (x *SQL) PingContext(ctx context.Context) error {
 }
 
 // NewSQLDatabase creates a new SQLDatabase.
-func NewSQLDatabase(ctx context.Context, cfg config.Postgres) (*SQL, error) {
+func NewSQLDatabase(ctx context.Context, cfg config.Postgres) (Storage, error) {
 	db, err := sql.Open(cfg.Driver(), cfg.URI())
 	if err != nil {
 		return nil, fmt.Errorf("db: failed to open database: %w", err)
