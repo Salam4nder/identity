@@ -19,6 +19,7 @@ For viewing coverage, run `make test-cover`
 Easiest way to call the endpoints is by running `make evans` followed by `call`. 
 This will display the available endpoints based on reflection.
 An example is `call ReadUser`.
+See https://github.com/ktr0731/evans.
 
 
 ## TODO
