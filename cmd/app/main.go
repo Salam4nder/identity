@@ -13,9 +13,12 @@ import (
 	"github.com/Salam4nder/user/internal/db"
 	internalGRPC "github.com/Salam4nder/user/internal/grpc"
 	"github.com/Salam4nder/user/internal/grpc/gen"
+	"github.com/Salam4nder/user/internal/task"
 	grpcUtil "github.com/Salam4nder/user/pkg/grpc"
+
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/stimtech/go-migration"
@@ -49,21 +52,34 @@ func main() {
 	cfg, err := config.New()
 	exitWithError(err)
 
+	// TODO: config this better.
+	redisOpt := asynq.RedisClientOpt{
+		Addr: cfg.Redis.Addr(),
+	}
+
 	// UNIX Time is faster and smaller than most timestamps
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	if cfg.Environment == EnvironmentDev {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
-	sql, err := db.NewSQLDatabase(ctx, cfg.PSQL)
+	db, err := db.NewSQLDatabase(ctx, cfg.PSQL)
 	exitWithError(err)
 
-	migration := migration.New(sql.DB(), zap.NewNop())
+	migration := migration.New(db.DB(), zap.NewNop())
 	if err = migration.Migrate(); err != nil {
 		exitWithError(err)
 	}
 
-	userServer, err := internalGRPC.NewUserServer(sql, cfg.UserService)
+	taskCreator := task.NewRedisTaskCreator(redisOpt)
+	taskProcessor := task.NewRedisTaskProcessor(db, redisOpt)
+	go func() {
+		if err := taskProcessor.Process(); err != nil {
+			exitWithError(err)
+		}
+	}()
+
+	userServer, err := internalGRPC.NewUserServer(db, taskCreator, cfg.UserService)
 	exitWithError(err)
 
 	grpcListener, err := net.Listen("tcp", cfg.Server.GRPCAddr())
