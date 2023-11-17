@@ -10,7 +10,7 @@ import (
 type Creator interface {
 	SendVerificationEmail(
 		ctx context.Context,
-		payload *VerificationEmailPayload,
+		payload VerificationEmailPayload,
 		opts ...asynq.Option,
 	) error
 }

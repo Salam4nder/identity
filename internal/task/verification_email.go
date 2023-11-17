@@ -22,7 +22,7 @@ type VerificationEmailPayload struct {
 // SendVerificationEmail sends a verification email.
 func (x *RedisTaskCreator) SendVerificationEmail(
 	ctx context.Context,
-	payload *VerificationEmailPayload,
+	payload VerificationEmailPayload,
 	opts ...asynq.Option,
 ) error {
 	jsonPayload, err := json.Marshal(payload)
