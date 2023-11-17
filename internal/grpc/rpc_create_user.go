@@ -49,6 +49,7 @@ func (x *UserServer) CreateUser(
 		asynq.ProcessIn(10 * time.Second),
 		asynq.Queue(task.QueueCritical),
 	}
+	// TODO: run in a transaction.
 	if err := x.taskCreator.SendVerificationEmail(
 		ctx,
 		task.VerificationEmailPayload{Email: createdUser.Email},
