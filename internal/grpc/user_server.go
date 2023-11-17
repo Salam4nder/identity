@@ -4,6 +4,7 @@ import (
 	"github.com/Salam4nder/user/internal/config"
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/grpc/gen"
+	"github.com/Salam4nder/user/internal/task"
 	"github.com/Salam4nder/user/pkg/token"
 )
 
@@ -11,14 +12,16 @@ import (
 type UserServer struct {
 	gen.UserServer
 
-	storage    db.Storage
-	tokenMaker token.Maker
-	config     config.UserService
+	storage     db.Storage
+	taskCreator task.Creator
+	tokenMaker  token.Maker
+	config      config.UserService
 }
 
 // NewUserServer returns a new instance of UserService.
 func NewUserServer(
 	store db.Storage,
+	task task.Creator,
 	cfg config.UserService,
 ) (*UserServer, error) {
 	tokenMaker, err := token.NewPasetoMaker(cfg.SymmetricKey)
@@ -27,8 +30,9 @@ func NewUserServer(
 	}
 
 	return &UserServer{
-		storage:    store,
-		tokenMaker: tokenMaker,
-		config:     cfg,
+		storage:     store,
+		taskCreator: task,
+		tokenMaker:  tokenMaker,
+		config:      cfg,
 	}, nil
 }
