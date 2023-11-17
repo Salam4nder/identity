@@ -8,7 +8,9 @@ import (
 
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/grpc/gen"
+	"github.com/Salam4nder/user/internal/task"
 	"github.com/Salam4nder/user/pkg/util"
+	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -40,6 +42,19 @@ func (x *UserServer) CreateUser(
 		log.Error().Err(err).Msg("grpc: failed to create user")
 
 		return nil, internalServerError()
+	}
+
+	opts := []asynq.Option{
+		asynq.MaxRetry(10),
+		asynq.ProcessIn(10 * time.Second),
+		asynq.Queue(task.QueueCritical),
+	}
+	if err := x.taskCreator.SendVerificationEmail(
+		ctx,
+		task.VerificationEmailPayload{Email: createdUser.Email},
+		opts...,
+	); err != nil {
+		log.Error().Err(err).Msg("grpc: failed to send verification email")
 	}
 
 	return &gen.UserID{Id: createdUser.ID.String()}, nil
