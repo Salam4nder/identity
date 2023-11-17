@@ -14,6 +14,11 @@ This will however exclude tests that require a database connection.
 For testing the database layer, please run `make test-db`  
 For viewing coverage, run `make test-cover`
 
+# Endpoints
+Easiest way to call the endpoints is by running `make evans` followed by `call`. 
+This will display the available endpoints based on reflection.
+An example is `call ReadUser`.
+
 
 ## TODO
 * TLS setup.
