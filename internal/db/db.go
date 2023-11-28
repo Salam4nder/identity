@@ -11,22 +11,36 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var _ Storage = (*SQL)(nil)
+
 // Storage has all methods to work with the database.
 type Storage interface {
+	// DB returns the underlying sql.DB.
 	DB() *sql.DB
+	// Close closes the underlying sql.DB.
 	Close() error
+	// PingContext pings the underlying sql.DB.
 	PingContext(ctx context.Context) error
 
 	// User repository
+
 	CreateUser(ctx context.Context, params CreateUserParams) (*User, error)
+	// ReadUser reads a user from the database.
 	ReadUser(ctx context.Context, id uuid.UUID) (*User, error)
+	// ReadUserByEmail reads a user from the database by email.
 	ReadUserByEmail(ctx context.Context, email string) (*User, error)
+	// UpdateUser updates a user in the database.
 	UpdateUser(ctx context.Context, params UpdateUserParams) (*User, error)
+	// DeleteUser deletes a user from the database.
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 
 	// Session repository
+
+	// CreateSession creates a new session in the database.
 	CreateSession(ctx context.Context, params CreateSessionParams) (*Session, error)
+	// ReadSession returns a session from the database.
 	ReadSession(ctx context.Context, id uuid.UUID) (*Session, error)
+	// BlockSession deactivates a session in the database.
 	BlockSession(ctx context.Context, id uuid.UUID) error
 }
 
@@ -51,7 +65,7 @@ func (x *SQL) PingContext(ctx context.Context) error {
 }
 
 // NewSQLDatabase creates a new SQLDatabase.
-func NewSQLDatabase(ctx context.Context, cfg config.Postgres) (Storage, error) {
+func NewSQLDatabase(ctx context.Context, cfg config.Postgres) (*SQL, error) {
 	db, err := sql.Open(cfg.Driver(), cfg.Addr())
 	if err != nil {
 		return nil, fmt.Errorf("db: failed to open database: %w", err)
@@ -67,23 +81,22 @@ func NewSQLDatabase(ctx context.Context, cfg config.Postgres) (Storage, error) {
 }
 
 // execTx executes a function in a transaction.
-// Need to figure out a better implementation for this.
-// func (x *SQL) execTx(ctx context.Context, fn func(tx *sql.Tx) error) error {
-// 	tx, err := x.db.BeginTx(ctx, nil)
-// 	if err != nil {
-// 		return fmt.Errorf("db: beginning transaction: %w", err)
-// 	}
+func (x *SQL) execTx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	tx, err := x.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("db: beginning transaction: %w", err)
+	}
 
-// 	if err := fn(tx); err != nil {
-// 		if err := tx.Rollback(); err != nil {
-// 			return fmt.Errorf("db: rolling back transaction: %w", err)
-// 		}
-// 		return err
-// 	}
+	if err := fn(tx); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return fmt.Errorf("db: rolling back transaction: %w", err)
+		}
+		return err
+	}
 
-// 	if err := tx.Commit(); err != nil {
-// 		return fmt.Errorf("db: committing transaction: %w", err)
-// 	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("db: committing transaction: %w", err)
+	}
 
-// 	return nil
-// }
+	return nil
+}

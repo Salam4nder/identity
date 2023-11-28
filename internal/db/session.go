@@ -150,7 +150,8 @@ func (x *SQL) BlockSession(ctx context.Context, id uuid.UUID) error {
 	_, err := x.db.ExecContext(ctx, query, id)
 	if err != nil {
 		log.Error().Err(err).Msgf("db: failed to block session %s", id)
+		return err
 	}
 
-	return err
+	return nil
 }
