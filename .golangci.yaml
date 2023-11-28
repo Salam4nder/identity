@@ -25,9 +25,10 @@ linters:
      - revive
      - unconvert
      - unparam
+     - gofumpt
 
 
 run:
-   go: '1.19'
+   go: '1.21'
    skip-dirs:
      - tests/mocks
