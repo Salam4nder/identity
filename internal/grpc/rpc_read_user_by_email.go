@@ -11,9 +11,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// GetByEmail returns a user by email. Fails if the user couldn't be not
-// found or if the request is invalid.
-func (x *UserServer) GetByEmail(
+// ReadByEmail returns a user by email.
+func (x *UserServer) ReadByEmail(
 	ctx context.Context,
 	req *gen.ReadByEmailRequest,
 ) (*gen.UserResponse, error) {

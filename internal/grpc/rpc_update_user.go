@@ -13,8 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// UpdateUser updates a user by id. Returns an error if the user couldn't be updated
-// or if the request is invalid.
+// UpdateUser updates a user by ID.
 func (x *UserServer) UpdateUser(
 	ctx context.Context,
 	req *gen.UpdateUserRequest,

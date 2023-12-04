@@ -14,7 +14,6 @@ import (
 
 // ReadUser returns a user by ID.
 func (x *UserServer) ReadUser(ctx context.Context, req *gen.UserID) (*gen.UserResponse, error) {
-	log.Info().Msg("grpc: ReadUser")
 	if req == nil {
 		return nil, requestIsNilError()
 	}
@@ -30,15 +29,12 @@ func (x *UserServer) ReadUser(ctx context.Context, req *gen.UserID) (*gen.UserRe
 
 	user, err := x.storage.ReadUser(ctx, id)
 	if err != nil {
-		switch {
-		case errors.Is(err, db.ErrUserNotFound):
+		if errors.Is(err, db.ErrUserNotFound) {
 			return nil, status.Error(codes.NotFound, err.Error())
-
-		default:
-			log.Error().Err(err).Msg("grpc: failed to read user")
-
-			return nil, internalServerError()
 		}
+		log.Error().Err(err).Msg("grpc: failed to read user")
+
+		return nil, internalServerError()
 	}
 
 	return userToProtoResponse(user), nil

@@ -8,7 +8,7 @@ import (
 	"github.com/Salam4nder/user/pkg/token"
 )
 
-// UserServer is a gRPC server for user service.
+// UserServer contains all necessary dependencies to serve user requests.
 type UserServer struct {
 	gen.UserServer
 
@@ -18,7 +18,7 @@ type UserServer struct {
 	config      config.UserService
 }
 
-// NewUserServer returns a new instance of UserService.
+// NewUserServer returns a new UserService.
 func NewUserServer(
 	store db.Storage,
 	task task.Creator,
