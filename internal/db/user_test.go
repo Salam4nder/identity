@@ -88,6 +88,13 @@ func TestSQL_CreateUser(t *testing.T) {
 			if test.preInsert != nil {
 				require.NoError(t, test.preInsert())
 			}
+			t.Cleanup(func() {
+				_, err := TestSQLConnPool.db.ExecContext(
+					ctx,
+					`DELETE FROM users`,
+				)
+				require.NoError(t, err)
+			})
 
 			ctx := context.Background()
 			got, err := TestSQLConnPool.CreateUser(ctx, test.params)
@@ -106,14 +113,6 @@ func TestSQL_CreateUser(t *testing.T) {
 				require.Equal(t, test.params.CreatedAt, got.CreatedAt)
 				require.NotEmpty(t, got.PasswordHash)
 
-				t.Cleanup(func() {
-					_, err := TestSQLConnPool.db.ExecContext(
-						ctx,
-						`DELETE FROM users WHERE id = $1`,
-						got.ID,
-					)
-					require.NoError(t, err)
-				})
 			}
 		})
 	}
@@ -128,6 +127,14 @@ func TestSQL_ReadUser(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	t.Cleanup(func() {
+		_, err := TestSQLConnPool.db.ExecContext(
+			ctx,
+			`DELETE FROM users`,
+		)
+		require.NoError(t, err)
+	})
+
 	ctx := context.Background()
 	got, err := TestSQLConnPool.ReadUser(ctx, user.ID)
 	require.NoError(t, err)
@@ -138,15 +145,6 @@ func TestSQL_ReadUser(t *testing.T) {
 	require.Equal(t, user.CreatedAt, got.CreatedAt)
 	require.Equal(t, user.PasswordHash, got.PasswordHash)
 	require.Equal(t, user.CreatedAt, got.CreatedAt)
-
-	t.Cleanup(func() {
-		_, err := TestSQLConnPool.db.ExecContext(
-			ctx,
-			`DELETE FROM users WHERE id = $1`,
-			user.ID,
-		)
-		require.NoError(t, err)
-	})
 
 	t.Run("Not found", func(t *testing.T) {
 		_, err := TestSQLConnPool.ReadUser(ctx, uuid.New())
@@ -170,6 +168,14 @@ func TestSQL_ReadUserByEmail(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	t.Cleanup(func() {
+		_, err := TestSQLConnPool.db.ExecContext(
+			ctx,
+			`DELETE FROM users`,
+		)
+		require.NoError(t, err)
+	})
+
 	ctx := context.Background()
 	got, err := TestSQLConnPool.ReadUserByEmail(ctx, user.Email)
 	require.NoError(t, err)
@@ -180,15 +186,6 @@ func TestSQL_ReadUserByEmail(t *testing.T) {
 	require.Equal(t, user.CreatedAt, got.CreatedAt)
 	require.Equal(t, user.PasswordHash, got.PasswordHash)
 	require.Equal(t, user.CreatedAt, got.CreatedAt)
-
-	t.Cleanup(func() {
-		_, err := TestSQLConnPool.db.ExecContext(
-			ctx,
-			`DELETE FROM users WHERE id = $1`,
-			user.ID,
-		)
-		require.NoError(t, err)
-	})
 
 	t.Run("Not found", func(t *testing.T) {
 		_, err := TestSQLConnPool.ReadUserByEmail(ctx, util.RandomEmail())
@@ -271,6 +268,14 @@ func TestSQL_UpdateUser(t *testing.T) {
 			preUpdateUser, err := TestSQLConnPool.CreateUser(ctx, test.preUpdateArgs)
 			require.NoError(t, err)
 
+			t.Cleanup(func() {
+				_, err := TestSQLConnPool.db.ExecContext(
+					ctx,
+					`DELETE FROM users`,
+				)
+				require.NoError(t, err)
+			})
+
 			test.args.params.ID = preUpdateUser.ID
 			got, err := TestSQLConnPool.UpdateUser(test.args.ctx, test.args.params)
 			if test.wantErr {
@@ -289,14 +294,6 @@ func TestSQL_UpdateUser(t *testing.T) {
 				require.NotEqual(t, preUpdateUser.UpdatedAt, got.UpdatedAt)
 				require.True(t, preUpdateUser.CreatedAt.Before(*got.UpdatedAt))
 			}
-			t.Cleanup(func() {
-				_, err := TestSQLConnPool.db.ExecContext(
-					ctx,
-					`DELETE FROM users WHERE id = $1`,
-					preUpdateUser.ID,
-				)
-				require.NoError(t, err)
-			})
 		})
 	}
 }

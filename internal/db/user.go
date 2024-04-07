@@ -9,6 +9,7 @@ import (
 	"github.com/Salam4nder/user/pkg/util"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // User defines a user in the database.
@@ -27,6 +28,13 @@ type CreateUserParams struct {
 	Email     string
 	Password  string
 	CreatedAt time.Time
+}
+
+func (x CreateUserParams) SpanAttributes() []attribute.KeyValue {
+	return []attribute.KeyValue{
+		attribute.String("full_name", x.FullName),
+		attribute.String("email", x.Email),
+	}
 }
 
 // CreateUser creates a new user in the database.
