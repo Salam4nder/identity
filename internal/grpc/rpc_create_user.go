@@ -17,11 +17,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// CreateUser creates a new user.
-func (x *UserServer) CreateUser(
-	ctx context.Context,
-	req *gen.CreateUserRequest,
-) (*gen.UserID, error) {
+func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest) (*gen.UserID, error) {
 	if err := validateCreateUserRequest(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -32,13 +28,12 @@ func (x *UserServer) CreateUser(
 		Password:  req.GetPassword(),
 		CreatedAt: time.Now(),
 	}
-
 	createdUser, err := x.storage.CreateUser(ctx, params)
 	if err != nil {
 		if errors.Is(err, db.ErrDuplicateEmail) {
 			return nil, status.Error(codes.AlreadyExists, err.Error())
 		}
-		log.Error().Err(err).Msg("grpc: failed to create user")
+		log.Error().Err(err).Msg("grpc: creating user")
 
 		return nil, internalServerError()
 	}
@@ -54,7 +49,7 @@ func (x *UserServer) CreateUser(
 		task.VerificationEmailPayload{Email: createdUser.Email},
 		opts...,
 	); err != nil {
-		log.Error().Err(err).Msg("grpc: failed to send verification email")
+		log.Error().Err(err).Msg("grpc: sending verification email")
 	}
 
 	return &gen.UserID{Id: createdUser.ID.String()}, nil
