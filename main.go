@@ -45,18 +45,17 @@ const (
 	// request's header is read.
 	WriteTimeout = 10 * time.Second
 	// EnvironmentDev is the development environment.
-	EnvironmentDev = "dev"
+	EnvironmentDev = "development"
+	// MigrationFolder is the folder where the migration files are stored.
+	MigrationFolder = "internal/db/migrations"
 )
 
 func main() {
-	ctx, cancel := context.WithTimeout(
-		context.Background(),
-		PingTimeout,
-	)
-	defer cancel()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
 	cfg, err := config.New()
-	exitWithError(err)
+	exitWithError(ctx, err)
 
 	// UNIX Time is faster and smaller than most timestamps
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
@@ -67,10 +66,10 @@ func main() {
 	otelShutdown, err := setupOTelSDK(ctx)
 
 	db, err := db.NewSQLDatabase(ctx, cfg.PSQL)
-	exitWithError(err)
-	migration := migration.New(db.DB(), zap.NewNop())
+	exitWithError(ctx, err)
+	migration := migration.New(db.DB(), zap.NewNop()).WithFolder(MigrationFolder)
 	if err = migration.Migrate(); err != nil {
-		exitWithError(err)
+		exitWithError(ctx, err)
 	}
 
 	// TODO: config this better.
@@ -81,14 +80,20 @@ func main() {
 	taskProcessor := task.NewRedisTaskProcessor(db, redisOpt)
 	go func() {
 		if err := taskProcessor.Process(); err != nil {
-			exitWithError(err)
+			exitWithError(ctx, err)
 		}
 	}()
 
-	userServer, err := internalGRPC.NewUserServer(db, taskCreator, cfg.Server)
-	exitWithError(err)
+	userServer, err := internalGRPC.NewUserServer(
+		db,
+		taskCreator,
+		cfg.Server.SymmetricKey,
+		15*time.Minute,
+		7*24*time.Hour,
+	)
+	exitWithError(ctx, err)
 	grpcListener, err := net.Listen("tcp", cfg.Server.GRPCAddr())
-	exitWithError(err)
+	exitWithError(ctx, err)
 	grpcServer := grpc.NewServer(
 		// grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
@@ -100,7 +105,7 @@ func main() {
 	reflection.Register(grpcServer)
 	go func() {
 		if err := grpcServer.Serve(grpcListener); err != nil {
-			exitWithError(err)
+			exitWithError(ctx, err)
 		}
 	}()
 
@@ -116,7 +121,7 @@ func main() {
 		cfg.Server.GRPCAddr(),
 		dialOpts,
 	); err != nil {
-		exitWithError(err)
+		exitWithError(ctx, err)
 	}
 
 	quit := make(chan os.Signal, 1)
@@ -126,14 +131,15 @@ func main() {
 	log.Info().Msg("signal received, shutting down...")
 	grpcServer.GracefulStop()
 	if err := otelShutdown(ctx); err != nil {
-		exitWithError(err)
+		exitWithError(ctx, err)
 	}
 	log.Info().Msg("service gracefully stopped")
 }
 
-func exitWithError(err error) {
+func exitWithError(ctx context.Context, err error) {
 	if err != nil {
 		log.Error().Err(err).Msg("main: exit with error")
+		ctx.Done()
 		os.Exit(1)
 	}
 }
