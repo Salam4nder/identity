@@ -1,22 +1,33 @@
 // Package config provides the application configuration.
-// Currently using envvar package to parse environment variables.
+// Currently using yaml package to parse environment variables.
 // Planning to switch to Viper in the future.
 package config
 
 import (
 	"fmt"
+	"os"
 	"time"
 
-	"github.com/plaid/go-envvar/envvar"
+	"github.com/rs/zerolog/log"
+	"gopkg.in/yaml.v3"
 )
 
 // Application is the application configuration.
 type Application struct {
-	Environment string      `envvar:"ENVIRONMENT"`
-	PSQL        Postgres    `envvar:"POSTGRES_"`
-	Redis       Redis       `envvar:"REDIS_"`
-	Server      Server      `envvar:"SERVER_"`
-	UserService UserService `envvar:"USER_SERVICE_"`
+	Environment string   `yaml:"environment"`
+	PSQL        Postgres `yaml:"postgres"`
+	Redis       Redis    `yaml:"redis"`
+	Server      Server   `yaml:"server"`
+}
+
+func (x Application) String() string {
+	return fmt.Sprintf(
+		"environment: %s, postgres: %v, redis: %v, server: %v",
+		x.Environment,
+		x.PSQL,
+		x.Redis,
+		x.Server,
+	)
 }
 
 // New returns a new application configuration
@@ -24,42 +35,46 @@ type Application struct {
 func New() (*Application, error) {
 	var cfg Application
 
-	if err := envvar.Parse(&cfg); err != nil {
+	f, err := os.Open("config.yaml")
+	if err != nil {
+		log.Error().Err(err).Msg("config: opening config file")
 		return nil, err
 	}
+	defer f.Close()
+
+	if err := yaml.NewDecoder(f).Decode(&cfg); err != nil {
+		log.Error().Err(err).Msg("config: decoding config file")
+		return nil, err
+	}
+
+	log.Info().Msgf("config: %s", cfg.String())
 
 	return &cfg, nil
 }
 
-// UserService holds the user service configuration.
-type UserService struct {
-	SymmetricKey         string        `envvar:"SYMMETRIC_KEY"`
-	AccessTokenDuration  time.Duration `envvar:"ACCESS_TOKEN_DURATION" default:"1h"`
-	RefreshTokenDuration time.Duration `envvar:"REFRESH_TOKEN_DURATION" default:"24h"`
-}
-
 // Postgres holds the Postgres configuration.
 type Postgres struct {
-	Host            string `envvar:"HOST" default:"postgres"`
-	Port            string `envvar:"PORT" default:"5432"`
-	Name            string `envvar:"DB" default:"user"`
-	User            string `envvar:"USER" default:"admin"`
-	Password        string `envvar:"PASSWORD" default:"password"`
-	ApplicationName string `envvar:"APPLICATION_NAME" default:"user"`
+	Host            string `yaml:"host"`
+	Port            string `yaml:"port"`
+	Name            string `yaml:"db"`
+	User            string `yaml:"user"`
+	Password        string `yaml:"password"`
+	ApplicationName string `yaml:"applicationName"`
 }
 
 // Redis holds the Redis configuration.
 type Redis struct {
-	Host string `envvar:"HOST" default:"0.0.0.0"`
-	Port string `envvar:"PORT" default:"6379"`
+	Host string `yaml:"host"`
+	Port string `yaml:"port"`
 }
 
 // Server holds the gRPC server configuration.
 type Server struct {
-	GRPCHost string `envvar:"GRPC_HOST" default:"localhost"`
-	GRPCPort string `envvar:"GRPC_PORT" default:"8080"`
-	HTTPHost string `envvar:"HTTP_HOST" default:"localhost"`
-	HTTPPort string `envvar:"HTTP_PORT" default:"8081"`
+	GRPCHost             string        `yaml:"host"`
+	GRPCPort             string        `yaml:"port"`
+	SymmetricKey         string        `yaml:"symmetricKey"`
+	AccessTokenDuration  time.Duration `yaml:"accessTokenDuration"`
+	RefreshTokenDuration time.Duration `yaml:"refreshTokenDuration"`
 }
 
 // Addr returns the mongoDB connection string.
@@ -88,9 +103,4 @@ func (x *Redis) Addr() string {
 // GRPCAddr returns the gRPC server address.
 func (x *Server) GRPCAddr() string {
 	return fmt.Sprintf("%s:%s", x.GRPCHost, x.GRPCPort)
-}
-
-// HTTPAddr returns the gRPC gateway server address.
-func (x *Server) HTTPAddr() string {
-	return fmt.Sprintf("%s:%s", x.HTTPHost, x.HTTPPort)
 }
