@@ -39,7 +39,7 @@ func (x *UserServer) LoginUser(
 
 	accessToken, accessPayload, err := x.tokenMaker.NewToken(
 		req.GetEmail(),
-		x.config.AccessTokenDuration,
+		x.accessTokenDuration,
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("grpc: failed to create access token")
@@ -49,7 +49,7 @@ func (x *UserServer) LoginUser(
 
 	refreshToken, refreshPayload, err := x.tokenMaker.NewToken(
 		req.GetEmail(),
-		x.config.RefreshTokenDuration,
+		x.refreshTokenDuration,
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("grpc: failed to create refresh token")

@@ -1,7 +1,8 @@
 package grpc
 
 import (
-	"github.com/Salam4nder/user/internal/config"
+	"time"
+
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/grpc/gen"
 	"github.com/Salam4nder/user/internal/task"
@@ -12,27 +13,33 @@ import (
 type UserServer struct {
 	gen.UserServer
 
+	accessTokenDuration  time.Duration
+	refreshTokenDuration time.Duration
+
 	storage     db.Storage
 	taskCreator task.Creator
 	tokenMaker  token.Maker
-	config      config.UserService
 }
 
 // NewUserServer returns a new UserService.
 func NewUserServer(
 	store db.Storage,
 	task task.Creator,
-	cfg config.UserService,
+	symmetricKey string,
+	accessTokenDuration time.Duration,
+	refreshTokenDuration time.Duration,
 ) (*UserServer, error) {
-	tokenMaker, err := token.NewPasetoMaker(cfg.SymmetricKey)
+	tokenMaker, err := token.NewPasetoMaker(symmetricKey)
 	if err != nil {
 		return nil, err
 	}
 
 	return &UserServer{
+		accessTokenDuration:  accessTokenDuration,
+		refreshTokenDuration: refreshTokenDuration,
+
 		storage:     store,
 		taskCreator: task,
 		tokenMaker:  tokenMaker,
-		config:      cfg,
 	}, nil
 }
