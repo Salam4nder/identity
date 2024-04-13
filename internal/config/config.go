@@ -6,7 +6,6 @@ package config
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
@@ -18,16 +17,6 @@ type Application struct {
 	PSQL        Postgres `yaml:"postgres"`
 	Redis       Redis    `yaml:"redis"`
 	Server      Server   `yaml:"server"`
-}
-
-func (x Application) String() string {
-	return fmt.Sprintf(
-		"environment: %s, postgres: %v, redis: %v, server: %v",
-		x.Environment,
-		x.PSQL,
-		x.Redis,
-		x.Server,
-	)
 }
 
 // New returns a new application configuration
@@ -46,8 +35,6 @@ func New() (*Application, error) {
 		log.Error().Err(err).Msg("config: decoding config file")
 		return nil, err
 	}
-
-	log.Info().Msgf("config: %s", cfg.String())
 
 	return &cfg, nil
 }
@@ -70,11 +57,9 @@ type Redis struct {
 
 // Server holds the gRPC server configuration.
 type Server struct {
-	GRPCHost             string        `yaml:"host"`
-	GRPCPort             string        `yaml:"port"`
-	SymmetricKey         string        `yaml:"symmetricKey"`
-	AccessTokenDuration  time.Duration `yaml:"accessTokenDuration"`
-	RefreshTokenDuration time.Duration `yaml:"refreshTokenDuration"`
+	GRPCHost     string `yaml:"host"`
+	GRPCPort     string `yaml:"port"`
+	SymmetricKey string `yaml:"symmetricKey"`
 }
 
 // Addr returns the mongoDB connection string.
