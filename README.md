@@ -4,7 +4,7 @@
 
 1. Copy contents from the `.env` file to a `dev.env` file.
 2. Fill in the values in your `dev.env`.
-3. Run `make docker` to build the API docker image.
+3. Run `make api` to build the API docker image.
 4. Run `make up` to compose up the API and all its dependencies.
 5. `make logs` to follow the application logs and its dependencies.
 6. `make down` to compose down with cleanup.
