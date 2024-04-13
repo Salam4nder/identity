@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -86,7 +85,7 @@ func main() {
 		}
 	}()
 
-	userServer, err := internalGRPC.NewUserServer(db, taskCreator, cfg.UserService)
+	userServer, err := internalGRPC.NewUserServer(db, taskCreator, cfg.Server)
 	exitWithError(err)
 	grpcListener, err := net.Listen("tcp", cfg.Server.GRPCAddr())
 	exitWithError(err)
@@ -120,34 +119,12 @@ func main() {
 		exitWithError(err)
 	}
 
-	server := &http.Server{
-		Handler:      mux,
-		Addr:         cfg.Server.HTTPAddr(),
-		ReadTimeout:  ReadTimeout,
-		WriteTimeout: WriteTimeout,
-	}
-
-	go func() {
-		if err := server.ListenAndServe(); err != nil {
-			if !errors.Is(err, http.ErrServerClosed) {
-				exitWithError(err)
-			}
-		}
-	}()
-
-	log.Info().
-		Str("address", cfg.Server.HTTPAddr()).
-		Msg("gRPC gateway is running")
-
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
 
 	log.Info().Msg("signal received, shutting down...")
 	grpcServer.GracefulStop()
-	if err := server.Shutdown(ctx); err != nil {
-		exitWithError(err)
-	}
 	if err := otelShutdown(ctx); err != nil {
 		exitWithError(err)
 	}
