@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"net"
 	"os"
@@ -10,14 +11,12 @@ import (
 	"time"
 
 	"github.com/Salam4nder/user/internal/config"
-	"github.com/Salam4nder/user/internal/db"
+	internalDB "github.com/Salam4nder/user/internal/db"
 	internalGRPC "github.com/Salam4nder/user/internal/grpc"
 	"github.com/Salam4nder/user/internal/grpc/gen"
-	"github.com/Salam4nder/user/internal/task"
 	grpcUtil "github.com/Salam4nder/user/pkg/grpc"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/stimtech/go-migration"
@@ -63,30 +62,18 @@ func main() {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
-	otelShutdown, err := setupOTelSDK(ctx)
+	otelShutdown, err := setupOTELSDK(ctx)
 
-	db, err := db.NewSQLDatabase(ctx, cfg.PSQL)
+	db, err := sql.Open(cfg.PSQL.Driver(), cfg.PSQL.Addr())
 	exitWithError(ctx, err)
-	migration := migration.New(db.DB(), zap.NewNop()).WithFolder(MigrationFolder)
+	migration := migration.New(db, zap.NewNop()).WithFolder(MigrationFolder)
 	if err = migration.Migrate(); err != nil {
 		exitWithError(ctx, err)
 	}
-
-	// TODO: config this better.
-	redisOpt := asynq.RedisClientOpt{
-		Addr: cfg.Redis.Addr(),
-	}
-	taskCreator := task.NewRedisTaskCreator(redisOpt)
-	taskProcessor := task.NewRedisTaskProcessor(db, redisOpt)
-	go func() {
-		if err := taskProcessor.Process(); err != nil {
-			exitWithError(ctx, err)
-		}
-	}()
+	storage := internalDB.New(db)
 
 	userServer, err := internalGRPC.NewUserServer(
-		db,
-		taskCreator,
+		storage,
 		cfg.Server.SymmetricKey,
 		15*time.Minute,
 		7*24*time.Hour,
@@ -144,9 +131,9 @@ func exitWithError(ctx context.Context, err error) {
 	}
 }
 
-// setupOTelSDK bootstraps the OpenTelemetry pipeline.
+// setupOTELSDK bootstraps the OpenTelemetry pipeline.
 // If it does not return an error, make sure to call shutdown for proper cleanup.
-func setupOTelSDK(ctx context.Context) (shutdown func(context.Context) error, err error) {
+func setupOTELSDK(ctx context.Context) (shutdown func(context.Context) error, err error) {
 	var shutdownFuncs []func(context.Context) error
 
 	// shutdown calls cleanup functions registered via shutdownFuncs.
