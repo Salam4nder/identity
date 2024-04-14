@@ -15,6 +15,8 @@ import (
 	internalGRPC "github.com/Salam4nder/user/internal/grpc"
 	"github.com/Salam4nder/user/internal/grpc/gen"
 	grpcUtil "github.com/Salam4nder/user/pkg/grpc"
+	"github.com/go-logr/logr"
+	"github.com/go-logr/zerologr"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/zerolog"
@@ -47,6 +49,10 @@ const (
 	EnvironmentDev = "development"
 	// MigrationFolder is the folder where the migration files are stored.
 	MigrationFolder = "internal/db/migrations"
+	// AccessTokenDuration is the duration for which the access token is valid.
+	AccessTokenDuration = 15 * time.Minute
+	// RefreshTokenDuration is the duration for which the refresh token is valid.
+	RefreshTokenDuration = 7 * 24 * time.Hour
 )
 
 func main() {
@@ -63,20 +69,26 @@ func main() {
 	}
 
 	otelShutdown, err := setupOTELSDK(ctx)
+	defer func() {
+		err = errors.Join(err, otelShutdown(context.Background()))
+	}()
 
 	db, err := sql.Open(cfg.PSQL.Driver(), cfg.PSQL.Addr())
 	exitWithError(ctx, err)
+	storage := internalDB.New(db)
+	if err = storage.PingContext(ctx /*max tries */, 5); err != nil {
+		exitWithError(ctx, err)
+	}
 	migration := migration.New(db, zap.NewNop()).WithFolder(MigrationFolder)
 	if err = migration.Migrate(); err != nil {
 		exitWithError(ctx, err)
 	}
-	storage := internalDB.New(db)
 
 	userServer, err := internalGRPC.NewUserServer(
 		storage,
 		cfg.Server.SymmetricKey,
-		15*time.Minute,
-		7*24*time.Hour,
+		AccessTokenDuration,
+		RefreshTokenDuration,
 	)
 	exitWithError(ctx, err)
 	grpcListener, err := net.Listen("tcp", cfg.Server.GRPCAddr())
@@ -90,12 +102,11 @@ func main() {
 	)
 	gen.RegisterUserServer(grpcServer, userServer)
 	reflection.Register(grpcServer)
-	go func() {
-		if err := grpcServer.Serve(grpcListener); err != nil {
-			exitWithError(ctx, err)
-		}
-	}()
 
+	srvErrChan := make(chan error, 1)
+	go func() {
+		srvErrChan <- grpcServer.Serve(grpcListener)
+	}()
 	log.Info().
 		Str("address", cfg.Server.GRPCAddr()).
 		Msg("gRPC server is running")
@@ -111,16 +122,19 @@ func main() {
 		exitWithError(ctx, err)
 	}
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-	<-quit
-
-	log.Info().Msg("signal received, shutting down...")
-	grpcServer.GracefulStop()
-	if err := otelShutdown(ctx); err != nil {
-		exitWithError(ctx, err)
+	select {
+	case err := <-srvErrChan:
+		log.Error().Err(err).Msg("main: gRPC server error")
+	case <-ctx.Done():
+		stop()
+		log.Info().Msg("signal received, shutting down...")
 	}
+	grpcServer.GracefulStop()
 	log.Info().Msg("service gracefully stopped")
+	if err != nil {
+		log.Error().Err(err).Msg("main: on shutdown")
+		os.Exit(1)
+	}
 }
 
 func exitWithError(ctx context.Context, err error) {
@@ -135,6 +149,8 @@ func exitWithError(ctx context.Context, err error) {
 // If it does not return an error, make sure to call shutdown for proper cleanup.
 func setupOTELSDK(ctx context.Context) (shutdown func(context.Context) error, err error) {
 	var shutdownFuncs []func(context.Context) error
+	var l logr.Logger = zerologr.New(&log.Logger)
+	otel.SetLogger(l)
 
 	// shutdown calls cleanup functions registered via shutdownFuncs.
 	// The errors from the calls are joined.
@@ -167,13 +183,13 @@ func setupOTELSDK(ctx context.Context) (shutdown func(context.Context) error, er
 	otel.SetTracerProvider(tracerProvider)
 
 	// Set up meter provider.
-	meterProvider, err := newMeterProvider()
-	if err != nil {
-		handleErr(err)
-		return
-	}
-	shutdownFuncs = append(shutdownFuncs, meterProvider.Shutdown)
-	otel.SetMeterProvider(meterProvider)
+	// meterProvider, err := newMeterProvider()
+	// if err != nil {
+	// 	handleErr(err)
+	// 	return
+	// }
+	// shutdownFuncs = append(shutdownFuncs, meterProvider.Shutdown)
+	// otel.SetMeterProvider(meterProvider)
 
 	return
 }
@@ -190,7 +206,10 @@ func newTraceProvider() (*trace.TracerProvider, error) {
 	if err != nil {
 		return nil, err
 	}
-	grpcExporter, err := otlptracegrpc.New(context.Background())
+	grpcExporter, err := otlptracegrpc.New(
+		context.Background(),
+		otlptracegrpc.WithInsecure(),
+	)
 
 	traceProvider := trace.NewTracerProvider(
 		trace.WithBatcher(traceExporter),
