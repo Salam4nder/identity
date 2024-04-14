@@ -5,8 +5,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
+	"time"
 
-	"github.com/Salam4nder/user/internal/config"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
@@ -20,7 +21,11 @@ type Storage interface {
 	// Close closes the underlying sql.DB.
 	Close() error
 	// PingContext pings the underlying sql.DB.
-	PingContext(ctx context.Context) error
+	PingContext(
+		ctx context.Context,
+		timeout time.Duration,
+		interrupt chan os.Signal,
+	) error
 
 	// User repository
 
@@ -49,6 +54,10 @@ type SQL struct {
 	db *sql.DB
 }
 
+func New(db *sql.DB) *SQL {
+	return &SQL{db: db}
+}
+
 // DB returns the underlying sql.DB.
 func (x *SQL) DB() *sql.DB {
 	return x.db
@@ -60,22 +69,23 @@ func (x *SQL) Close() error {
 }
 
 // PingContext pings the underlying sql.DB.
-func (x *SQL) PingContext(ctx context.Context) error {
-	return x.db.PingContext(ctx)
-}
-
-// NewSQLDatabase creates a new SQLDatabase.
-func NewSQLDatabase(ctx context.Context, cfg config.Postgres) (*SQL, error) {
-	db, err := sql.Open(cfg.Driver(), cfg.Addr())
-	if err != nil {
-		return nil, fmt.Errorf("db: failed to open database: %w", err)
+func (x *SQL) PingContext(ctx context.Context, timeout time.Duration, interrupt chan os.Signal) error {
+	log.Info().Msg("entered ping context...")
+	for {
+		select {
+		case <-time.After(2 * time.Second):
+			err := x.db.PingContext(ctx)
+			if err == nil {
+				return nil
+			}
+			log.Error().Err(err).Msgf("db: pinging database, retrying with timeout of %s...", timeout)
+		case <-ctx.Done():
+			return fmt.Errorf("db: pinging database: %w", ctx.Err())
+		case <-interrupt:
+			log.Info().Msg("db: pinging database interrupted...")
+			return nil
+		case <-time.After(timeout):
+			return fmt.Errorf("db: pinging database timed out after %s", timeout)
+		}
 	}
-
-	if err := db.PingContext(ctx); err != nil {
-		return nil, fmt.Errorf("db: pinging database: %w", err)
-	}
-
-	log.Info().Msg("db: successfully connected to database...")
-
-	return &SQL{db: db}, nil
 }
