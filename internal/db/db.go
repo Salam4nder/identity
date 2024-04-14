@@ -4,8 +4,8 @@ package db
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,11 +21,7 @@ type Storage interface {
 	// Close closes the underlying sql.DB.
 	Close() error
 	// PingContext pings the underlying sql.DB.
-	PingContext(
-		ctx context.Context,
-		timeout time.Duration,
-		interrupt chan os.Signal,
-	) error
+	PingContext(ctx context.Context, tries int) error
 
 	// User repository
 
@@ -69,23 +65,22 @@ func (x *SQL) Close() error {
 }
 
 // PingContext pings the underlying sql.DB.
-func (x *SQL) PingContext(ctx context.Context, timeout time.Duration, interrupt chan os.Signal) error {
-	log.Info().Msg("entered ping context...")
+func (x *SQL) PingContext(ctx context.Context, maxTries int) error {
+	var tries int
 	for {
+		if tries >= maxTries {
+			return errors.New("db: pinging database, max tries reached")
+		}
 		select {
 		case <-time.After(2 * time.Second):
 			err := x.db.PingContext(ctx)
 			if err == nil {
 				return nil
 			}
-			log.Error().Err(err).Msgf("db: pinging database, retrying with timeout of %s...", timeout)
+			tries++
+			log.Error().Err(err).Msgf("db: pinging database, retrying %d/%d", tries, maxTries)
 		case <-ctx.Done():
 			return fmt.Errorf("db: pinging database: %w", ctx.Err())
-		case <-interrupt:
-			log.Info().Msg("db: pinging database interrupted...")
-			return nil
-		case <-time.After(timeout):
-			return fmt.Errorf("db: pinging database timed out after %s", timeout)
 		}
 	}
 }
