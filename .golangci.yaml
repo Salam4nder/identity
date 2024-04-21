@@ -2,32 +2,52 @@ linters:
    enable:
      # Default 
      - errcheck
+     - gosimple
      - govet
      - ineffassign
      - staticcheck
-     - typecheck
      - unused
 
      # Optional linters
-     - bodyclose
+     - asciicheck
      - bidichk
+     - bodyclose
      - containedctx
      - contextcheck
+     - copyloopvar
+     - cyclop
+     - durationcheck
      - errname
      - errorlint
+     - execinquery
+     - exhaustruct
+     - exportloopref
+     - gocognit
      - gocritic
      - godot
+     - gofumpt
      - gosec
      - lll
+     - makezero
      - misspell
+     - musttag
      - noctx
+     - prealloc
+     - predeclared
+     - promlinter
+     - reassign
+     - rowserrcheck
      - revive
+     # - sloglint
+     - spancheck
+     - sqlclosecheck
      - unconvert
      - unparam
-     - gofumpt
+     - usestdlibvars
+     - wastedassign
 
 
 run:
-   go: '1.21'
+   go: '1.22'
    skip-dirs:
      - tests/mocks
