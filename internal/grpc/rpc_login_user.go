@@ -53,22 +53,20 @@ func (x *UserServer) LoginUser(
 
 	metadata := grpcUtil.MetadataFromContext(ctx)
 
-	session, err := x.storage.CreateSession(ctx, db.CreateSessionParams{
+	if err = x.storage.CreateSession(ctx, db.CreateSessionParams{
 		ID:           refreshPayload.ID,
 		Email:        user.Email,
 		ClientIP:     metadata.ClientIP,
 		UserAgent:    metadata.UserAgent,
 		RefreshToken: refreshToken,
 		ExpiresAt:    refreshPayload.ExpiresAt,
-	})
-	if err != nil {
+	}); err != nil {
 		return nil, internalServerError(err)
 	}
 
 	// reminder to fix expiration timing on refresh token
 	return &gen.LoginUserResponse{
 		User:                  userToProtoResponse(user),
-		SessionId:             session.ID.String(),
 		AccessToken:           accessToken,
 		RefreshToken:          refreshToken,
 		AccessTokenExpiresAt:  timestamppb.New(accessPayload.ExpiresAt),
