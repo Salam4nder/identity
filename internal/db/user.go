@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -25,6 +24,7 @@ type User struct {
 
 // CreateUserParams defines the parameters used to create a new user.
 type CreateUserParams struct {
+	ID        uuid.UUID
 	FullName  string
 	Email     string
 	Password  string
@@ -39,48 +39,46 @@ func (x CreateUserParams) SpanAttributes() []attribute.KeyValue {
 }
 
 // CreateUser creates a new user in the database.
-func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) (*User, error) {
-	span := trace.SpanFromContext(ctx)
-	span.AddEvent("db.CreateUser", trace.WithAttributes(params.SpanAttributes()...))
-
-	var user User
-
+func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) error {
 	query := `
-    INSERT INTO users (full_name, email, password_hash, created_at)
-    VALUES ($1, $2, $3, $4)
-    RETURNING id, full_name, email, password_hash, created_at, updated_at
+    INSERT INTO users (id, full_name, email, password_hash, created_at)
+    VALUES ($1, $2, $3, $4, $5)
     `
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(params.Password), 14)
 	if err != nil {
 		log.Error().Err(err).Msg("db: error hashing password")
-		return nil, err
+		return err
 	}
 	params.Password = string(passwordHash)
 
-	if err := x.db.QueryRowContext(
+	res, err := x.db.ExecContext(
 		ctx,
 		query,
+		params.ID,
 		params.FullName,
 		params.Email,
 		params.Password,
 		params.CreatedAt,
-	).Scan(
-		&user.ID,
-		&user.FullName,
-		&user.Email,
-		&user.PasswordHash,
-		&user.CreatedAt,
-		&user.UpdatedAt,
-	); err != nil {
+	)
+	if err != nil {
 		if IsSentinelErr(err) {
-			return nil, SentinelErr(err)
+			return SentinelErr(err)
 		}
 		log.Error().Err(err).Msg("db: error creating user")
-		return nil, err
+		return err
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		log.Error().Err(err).Msg("db: error creating user, no rows affected")
+		return err
+	}
+	if rowsAffected != 1 {
+		log.Error().Err(err).Msg("db: error creating user, multiple rows affected")
+		return ErrNoRowsAffected
 	}
 
-	return &user, nil
+	return nil
 }
 
 // ReadUser reads a user from the database.
@@ -147,39 +145,39 @@ type UpdateUserParams struct {
 }
 
 // UpdateUser updates a user in the database.
-func (x *SQL) UpdateUser(ctx context.Context, params UpdateUserParams) (*User, error) {
-	var user User
-
+func (x *SQL) UpdateUser(ctx context.Context, params UpdateUserParams) error {
 	query := `
     UPDATE users
     SET full_name = $1, email = $2, updated_at = $3
     WHERE id = $4
-    RETURNING id, full_name, email, password_hash, created_at, updated_at
     `
 
-	if err := x.db.QueryRowContext(
+	res, err := x.db.ExecContext(
 		ctx,
 		query,
 		params.FullName,
 		params.Email,
 		time.Now(),
 		params.ID,
-	).Scan(
-		&user.ID,
-		&user.FullName,
-		&user.Email,
-		&user.PasswordHash,
-		&user.CreatedAt,
-		&user.UpdatedAt,
-	); err != nil {
+	)
+	if err != nil {
 		if IsSentinelErr(err) {
-			return nil, SentinelErr(err)
+			return SentinelErr(err)
 		}
 		log.Error().Err(err).Msg("db: error updating user")
-		return nil, err
+		return err
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		log.Error().Err(err).Msg("db: error updating user, no rows affected")
+		return err
+	}
+	if rowsAffected != 1 {
+		log.Error().Err(err).Msg("db: error updating user, multiple rows affected")
+		return ErrNoRowsAffected
 	}
 
-	return &user, nil
+	return nil
 }
 
 // DeleteUser deletes a user from the database.
