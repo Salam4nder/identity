@@ -69,3 +69,13 @@ func TestMain(m *testing.M) {
 
 	os.Exit(m.Run())
 }
+
+func NewTestSQLConnPool() (*SQL, func()) {
+	return TestSQLConnPool, func() {
+		_, err := TestSQLConnPool.db.Exec("TRUNCATE DATABASE unit-test-user-db")
+		if err != nil {
+			log.Error().Err(err).
+				Msg("db main_test: failed to truncate db")
+		}
+	}
+}
