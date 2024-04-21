@@ -8,17 +8,35 @@ import (
 
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/grpc/gen"
-	"github.com/Salam4nder/user/internal/task"
 	"github.com/Salam4nder/user/pkg/util"
-	"github.com/hibiken/asynq"
-	"github.com/rs/zerolog/log"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	otelCode "go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+const (
+	serverStr  string = "UserServer"
+	handlerStr string = "CreateUser"
+)
+
+var tracer = otel.Tracer(serverStr)
+
 func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest) (*gen.UserID, error) {
+	ctx, span := tracer.Start(
+		ctx,
+		handlerStr,
+		trace.WithAttributes(attribute.String("full_name", req.FullName), attribute.String("email", req.Email)),
+	)
+	defer span.End()
+
 	if err := validateCreateUserRequest(req); err != nil {
+		span.SetStatus(otelCode.Error, "grpc: invalid request")
+		span.RecordError(err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -30,26 +48,12 @@ func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest)
 	}
 	createdUser, err := x.storage.CreateUser(ctx, params)
 	if err != nil {
+		span.SetStatus(otelCode.Error, "grpc: creating user")
+		span.RecordError(err)
 		if errors.Is(err, db.ErrDuplicateEmail) {
 			return nil, status.Error(codes.AlreadyExists, err.Error())
 		}
-		log.Error().Err(err).Msg("grpc: creating user")
-
 		return nil, internalServerError()
-	}
-
-	opts := []asynq.Option{
-		asynq.MaxRetry(10),
-		asynq.ProcessIn(10 * time.Second),
-		asynq.Queue(task.QueueCritical),
-	}
-	// TODO: run in a transaction.
-	if err := x.taskCreator.SendVerificationEmail(
-		ctx,
-		task.VerificationEmailPayload{Email: createdUser.Email},
-		opts...,
-	); err != nil {
-		log.Error().Err(err).Msg("grpc: sending verification email")
 	}
 
 	return &gen.UserID{Id: createdUser.ID.String()}, nil
@@ -60,6 +64,7 @@ func validateCreateUserRequest(req *gen.CreateUserRequest) error {
 	if req == nil {
 		return errors.New("grpc: request can not be nil")
 	}
+	requestIsNilError()
 
 	var (
 		fullNameErr error
