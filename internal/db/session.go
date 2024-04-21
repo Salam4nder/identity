@@ -36,12 +36,7 @@ type CreateSessionParams struct {
 }
 
 // CreateSession creates a new session in the database.
-func (x *SQL) CreateSession(
-	ctx context.Context,
-	params CreateSessionParams,
-) (*Session, error) {
-	var session Session
-
+func (x *SQL) CreateSession(ctx context.Context, params CreateSessionParams) error {
 	query := `
     INSERT INTO sessions (
         id,
@@ -52,26 +47,9 @@ func (x *SQL) CreateSession(
         created_at,
         expires_at,
         refresh_token
-    ) VALUES (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        $6,
-        $7,
-        $8
-    ) RETURNING
-        id,
-        email,
-        is_active,
-        client_ip,
-        user_agent,
-        created_at,
-        expires_at,
-        refresh_token
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     `
-	if err := x.db.QueryRowContext(
+	res, err := x.db.ExecContext(
 		ctx,
 		query,
 		params.ID,
@@ -82,21 +60,17 @@ func (x *SQL) CreateSession(
 		time.Now(),
 		params.ExpiresAt,
 		params.RefreshToken,
-	).Scan(
-		&session.ID,
-		&session.Email,
-		&session.IsActive,
-		&session.ClientIP,
-		&session.UserAgent,
-		&session.CreatedAt,
-		&session.ExpiresAt,
-		&session.RefreshToken,
-	); err != nil {
+	)
+	if err != nil {
 		log.Error().Err(err).Msg("db: failed to create session")
-		return nil, err
+		return err
 	}
 
-	return &session, nil
+	if rows, _ := res.RowsAffected(); rows == 0 {
+		return ErrNoRowsAffected
+	}
+
+	return nil
 }
 
 // ReadSession returns a session from the database.
