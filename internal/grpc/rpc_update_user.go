@@ -6,7 +6,7 @@ import (
 
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/grpc/gen"
-	"github.com/Salam4nder/user/pkg/util"
+	"github.com/Salam4nder/user/pkg/validation"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -73,13 +73,13 @@ func validateUpdateUserRequest(req *gen.UpdateUserRequest) error {
 	)
 
 	if req.GetFullName() != "" {
-		if err := util.ValidateFullName(req.GetFullName()); err != nil {
+		if err := validation.FullName(req.GetFullName()); err != nil {
 			fullNameErr = err
 		}
 	}
 
 	if req.GetEmail() != "" {
-		if err := util.ValidateEmail(req.GetEmail()); err != nil {
+		if err := validation.Email(req.GetEmail()); err != nil {
 			emailErr = err
 		}
 	}
