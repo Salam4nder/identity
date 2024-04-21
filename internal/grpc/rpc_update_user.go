@@ -8,7 +8,6 @@ import (
 	"github.com/Salam4nder/user/internal/grpc/gen"
 	"github.com/Salam4nder/user/pkg/util"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -30,7 +29,7 @@ func (x *UserServer) UpdateUser(
 	if authPayload.Email != req.GetEmail() {
 		return nil, status.Errorf(
 			codes.PermissionDenied,
-			"invoker is not owner of provided email",
+			"not owner of provided email",
 		)
 	}
 
@@ -52,11 +51,9 @@ func (x *UserServer) UpdateUser(
 			return nil, status.Error(codes.NotFound, err.Error())
 
 		default:
-			log.Error().Err(err).Msg("grpc: failed to update user")
-			return nil, internalServerError()
+			return nil, internalServerError(err)
 		}
 	}
-
 	return userToProtoResponse(updatedUser), nil
 }
 
