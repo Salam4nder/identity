@@ -41,7 +41,6 @@ proto:
 	rm -rf internal/grpc/gen/*.go
 	protoc --proto_path=pkg/proto --go_out=internal/grpc/gen --go_opt=paths=source_relative \
     --go-grpc_out=internal/grpc/gen --go-grpc_opt=paths=source_relative \
-	--grpc-gateway_out=internal/grpc/gen --grpc-gateway_opt=paths=source_relative \
      pkg/proto/*.proto
 
 lint:
