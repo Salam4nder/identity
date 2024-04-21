@@ -32,10 +32,10 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserClient interface {
-	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*UserID, error)
+	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	ReadUser(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*UserResponse, error)
 	ReadByEmail(ctx context.Context, in *ReadByEmailRequest, opts ...grpc.CallOption) (*UserResponse, error)
-	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UserResponse, error)
+	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	DeleteUser(ctx context.Context, in *UserID, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	LoginUser(ctx context.Context, in *LoginUserRequest, opts ...grpc.CallOption) (*LoginUserResponse, error)
 }
@@ -48,8 +48,8 @@ func NewUserClient(cc grpc.ClientConnInterface) UserClient {
 	return &userClient{cc}
 }
 
-func (c *userClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*UserID, error) {
-	out := new(UserID)
+func (c *userClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, User_CreateUser_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -75,8 +75,8 @@ func (c *userClient) ReadByEmail(ctx context.Context, in *ReadByEmailRequest, op
 	return out, nil
 }
 
-func (c *userClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UserResponse, error) {
-	out := new(UserResponse)
+func (c *userClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, User_UpdateUser_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -106,10 +106,10 @@ func (c *userClient) LoginUser(ctx context.Context, in *LoginUserRequest, opts .
 // All implementations must embed UnimplementedUserServer
 // for forward compatibility
 type UserServer interface {
-	CreateUser(context.Context, *CreateUserRequest) (*UserID, error)
+	CreateUser(context.Context, *CreateUserRequest) (*emptypb.Empty, error)
 	ReadUser(context.Context, *UserID) (*UserResponse, error)
 	ReadByEmail(context.Context, *ReadByEmailRequest) (*UserResponse, error)
-	UpdateUser(context.Context, *UpdateUserRequest) (*UserResponse, error)
+	UpdateUser(context.Context, *UpdateUserRequest) (*emptypb.Empty, error)
 	DeleteUser(context.Context, *UserID) (*emptypb.Empty, error)
 	LoginUser(context.Context, *LoginUserRequest) (*LoginUserResponse, error)
 	mustEmbedUnimplementedUserServer()
@@ -119,7 +119,7 @@ type UserServer interface {
 type UnimplementedUserServer struct {
 }
 
-func (UnimplementedUserServer) CreateUser(context.Context, *CreateUserRequest) (*UserID, error) {
+func (UnimplementedUserServer) CreateUser(context.Context, *CreateUserRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
 }
 func (UnimplementedUserServer) ReadUser(context.Context, *UserID) (*UserResponse, error) {
@@ -128,7 +128,7 @@ func (UnimplementedUserServer) ReadUser(context.Context, *UserID) (*UserResponse
 func (UnimplementedUserServer) ReadByEmail(context.Context, *ReadByEmailRequest) (*UserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReadByEmail not implemented")
 }
-func (UnimplementedUserServer) UpdateUser(context.Context, *UpdateUserRequest) (*UserResponse, error) {
+func (UnimplementedUserServer) UpdateUser(context.Context, *UpdateUserRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
 }
 func (UnimplementedUserServer) DeleteUser(context.Context, *UserID) (*emptypb.Empty, error) {
