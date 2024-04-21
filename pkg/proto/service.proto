@@ -10,38 +10,10 @@ import "login.proto";
 option go_package = "github.com/Salam4nder/user/internal/proto/gen";
 
 service User {
-    rpc CreateUser (CreateUserRequest) returns (UserID) {
-            option (google.api.http) = {
-                post: "/v1/create_user"
-                body: "*"
-            };
-        }
-    rpc ReadUser (UserID) returns (UserResponse) {
-            option (google.api.http) = {
-                get: "/v1/read_user/{id}"
-            };
-        }
-    rpc ReadByEmail (ReadByEmailRequest) returns (UserResponse) {
-            option (google.api.http) = {
-                post: "/v1/read_by_email"
-                body: "*"
-            };
-        }
-    rpc UpdateUser (UpdateUserRequest) returns (UserResponse) {
-            option (google.api.http) = {
-                patch: "/v1/update_user"
-                body: "*"
-            };
-        }
-    rpc DeleteUser (UserID) returns (google.protobuf.Empty) {
-        option (google.api.http) = {
-            delete: "/v1/delete_user/{id}"
-        };
-    }
-    rpc LoginUser (LoginUserRequest) returns (LoginUserResponse) {
-        option (google.api.http) = {
-            post: "/v1/login_user"
-            body: "*"
-        };
-    }
+    rpc CreateUser (CreateUserRequest) returns (google.protobuf.Empty)
+    rpc ReadUser (UserID) returns (UserResponse)
+    rpc ReadByEmail (ReadByEmailRequest) returns (UserResponse)
+    rpc UpdateUser (UpdateUserRequest) returns (google.protobuf.Empty)
+    rpc DeleteUser (UserID) returns (google.protobuf.Empty)
+    rpc LoginUser (LoginUserRequest) returns (LoginUserResponse)
 }
