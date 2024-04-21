@@ -6,10 +6,11 @@ import (
 	"errors"
 	"time"
 
-	"github.com/Salam4nder/user/pkg/util"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // User defines a user in the database.
@@ -39,6 +40,9 @@ func (x CreateUserParams) SpanAttributes() []attribute.KeyValue {
 
 // CreateUser creates a new user in the database.
 func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) (*User, error) {
+	span := trace.SpanFromContext(ctx)
+	span.AddEvent("db.CreateUser", trace.WithAttributes(params.SpanAttributes()...))
+
 	var user User
 
 	query := `
@@ -47,12 +51,12 @@ func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) (*User, e
     RETURNING id, full_name, email, password_hash, created_at, updated_at
     `
 
-	passwordHash, err := util.HashPassword(params.Password)
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(params.Password), 14)
 	if err != nil {
 		log.Error().Err(err).Msg("db: error hashing password")
 		return nil, err
 	}
-	params.Password = passwordHash
+	params.Password = string(passwordHash)
 
 	if err := x.db.QueryRowContext(
 		ctx,
