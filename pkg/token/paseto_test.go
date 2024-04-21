@@ -4,15 +4,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Salam4nder/user/pkg/util"
+	"github.com/Salam4nder/user/pkg/random"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPasetoMaker(t *testing.T) {
-	maker, err := NewPasetoMaker(util.RandomString(32))
+	maker, err := NewPasetoMaker(random.String(32))
 	require.NoError(t, err)
 
-	email := util.RandomEmail()
+	email := random.Email()
 	duration := time.Minute
 
 	issuedAt := time.Now()
@@ -34,10 +34,10 @@ func TestPasetoMaker(t *testing.T) {
 }
 
 func TestExpiredPasetoToken(t *testing.T) {
-	maker, err := NewPasetoMaker(util.RandomString(32))
+	maker, err := NewPasetoMaker(random.String(32))
 	require.NoError(t, err)
 
-	token, payload, err := maker.NewToken(util.RandomEmail(), -time.Minute)
+	token, payload, err := maker.NewToken(random.Email(), -time.Minute)
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
 	require.NotEmpty(t, payload)
