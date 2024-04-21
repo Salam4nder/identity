@@ -20,15 +20,21 @@ services:
     image: redis:alpine
     ports:
       - "6379:6379"
-  api:
-    image: user:latest
-    # build:
-    #  context: .
-    #  dockerfile: Dockerfile
-    env_file: dev.env
+  jaeger:
+    image: jaegertracing/all-in-one:latest
     ports:
-      - "50051:50051"
-      - "8080:8080"
-    depends_on: 
-     postgres:
-       condition: service_healthy
+      - "4317:4317"
+      - "4318:4318"
+      - "16686:16686"
+  # api:
+  #   image: user:latest
+  #   # build:
+  #   #  context: .
+  #   #  dockerfile: Dockerfile
+  #   env_file: dev.env
+  #   ports:
+  #     - "50051:50051"
+  #     - "8080:8080"
+  #   depends_on: 
+  #    postgres:
+  #      condition: service_healthy
