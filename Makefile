@@ -1,4 +1,4 @@
-.PHONY: test test-cover test-db test-db/down test-db/run run api up down logs logs-user logs-db evans proto lint nancy redis
+.PHONY: test test-cover test-db test-db/down test-db/run run api up down logs logs-user logs-db proto lint nancy redis
 
 test: 
 	go test -v ./...
@@ -37,9 +37,6 @@ logs-user:
 logs-db:
 	docker-compose logs -f postgres
 
-evans:
-	evans -r
-	
 proto:
 	rm -rf internal/grpc/gen/*.go
 	protoc --proto_path=pkg/proto --go_out=internal/grpc/gen --go_opt=paths=source_relative \
