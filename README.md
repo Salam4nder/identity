@@ -5,16 +5,16 @@ The application expects a `config.yaml` file in the root of the project.
 
 ## Run
 Run `make up` to compose up all application dependencies.
+
 Run `go run .` in the root of the application to start serving requests.
 
 You can run `make down` to compose down all the application dependencies.
-
 
 You can alternatively run the server in a contianer:
 1. Build the API it by running `make api`.
 2. Uncomment the api service in `compose.yaml`.
 3. Edit the hosts for all the dependencies `config.yaml` file. 
-4. Run `make up`
+4. Run `make up`.
 
 ## Test
 Unit test can be run with `make test` or simply with `go test ./...`  
