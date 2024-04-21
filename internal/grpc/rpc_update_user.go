@@ -10,25 +10,26 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // UpdateUser updates a user by ID.
-func (x *UserServer) UpdateUser(ctx context.Context, req *gen.UpdateUserRequest) error {
+func (x *UserServer) UpdateUser(ctx context.Context, req *gen.UpdateUserRequest) (*emptypb.Empty, error) {
 	if req == nil {
-		return requestIsNilError()
+		return &emptypb.Empty{}, requestIsNilError()
 	}
 
 	authPayload, err := x.authorizeUser(ctx)
 	if err != nil {
-		return unauthenticatedError(err)
+		return &emptypb.Empty{}, unauthenticatedError(err)
 	}
 
 	if err = validateUpdateUserRequest(req); err != nil {
-		return status.Error(codes.InvalidArgument, err.Error())
+		return &emptypb.Empty{}, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	if authPayload.Email != req.GetEmail() {
-		return status.Errorf(
+		return &emptypb.Empty{}, status.Errorf(
 			codes.PermissionDenied,
 			"not owner of provided email",
 		)
@@ -36,7 +37,7 @@ func (x *UserServer) UpdateUser(ctx context.Context, req *gen.UpdateUserRequest)
 
 	id, err := uuid.Parse(req.GetId())
 	if err != nil {
-		return status.Error(codes.InvalidArgument, "ID is invalid")
+		return &emptypb.Empty{}, status.Error(codes.InvalidArgument, "ID is invalid")
 	}
 
 	params := db.UpdateUserParams{
@@ -48,13 +49,13 @@ func (x *UserServer) UpdateUser(ctx context.Context, req *gen.UpdateUserRequest)
 	if err = x.storage.UpdateUser(ctx, params); err != nil {
 		switch {
 		case errors.Is(err, db.ErrUserNotFound):
-			return status.Error(codes.NotFound, err.Error())
+			return &emptypb.Empty{}, status.Error(codes.NotFound, err.Error())
 
 		default:
-			return internalServerError(err)
+			return &emptypb.Empty{}, internalServerError(err)
 		}
 	}
-	return nil
+	return &emptypb.Empty{}, nil
 }
 
 // validateUpdateUserRequest returns nil if the request is valid.
