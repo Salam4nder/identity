@@ -62,7 +62,7 @@ type Server struct {
 	SymmetricKey string `yaml:"symmetricKey"`
 }
 
-// Addr returns the mongoDB connection string.
+// Addr returns the PSQL connection string.
 func (x *Postgres) Addr() string {
 	return fmt.Sprintf(
 		"postgresql://%s:%s@%s:%s/%s?sslmode=disable&application_name=%s",
