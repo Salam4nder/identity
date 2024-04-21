@@ -7,7 +7,8 @@ import (
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/grpc/gen"
 	grpcUtil "github.com/Salam4nder/user/pkg/grpc"
-	"github.com/Salam4nder/user/pkg/util"
+	"github.com/Salam4nder/user/pkg/validation"
+	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -27,10 +28,10 @@ func (x *UserServer) LoginUser(
 		if errors.Is(err, db.ErrUserNotFound) {
 			return nil, status.Error(codes.NotFound, "handlers: user not found")
 		}
-		return nil, internalServerError()
+		return nil, internalServerError(err)
 	}
 
-	if err := util.ComparePasswordHash(req.Password, user.PasswordHash); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
 		return nil, status.Error(codes.Unauthenticated, "handlers: invalid password")
 	}
 
@@ -61,7 +62,7 @@ func (x *UserServer) LoginUser(
 		ExpiresAt:    refreshPayload.ExpiresAt,
 	})
 	if err != nil {
-		return nil, internalServerError()
+		return nil, internalServerError(err)
 	}
 
 	// reminder to fix expiration timing on refresh token
@@ -85,11 +86,11 @@ func validateLoginUserRequest(req *gen.LoginUserRequest) error {
 		passwordErr error
 	)
 
-	if err := util.ValidateEmail(req.GetEmail()); err != nil {
+	if err := validation.Email(req.GetEmail()); err != nil {
 		emailErr = err
 	}
 
-	if err := util.ValidatePassword(req.GetPassword()); err != nil {
+	if err := validation.Password(req.GetPassword()); err != nil {
 		passwordErr = err
 	}
 
