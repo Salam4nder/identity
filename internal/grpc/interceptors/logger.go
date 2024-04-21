@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var tracer = otel.Tracer("grpc-logging-interceptor")
+var tracer = otel.Tracer("LoggingInterceptor")
 
 // UnaryLoggerInterceptor logs gRPC requests.
 func UnaryLogger(
@@ -34,6 +34,7 @@ func UnaryLogger(
 
 	logger := log.Info()
 	if err != nil {
+		span.RecordError(err)
 		logger = log.Error().Err(err)
 	}
 
