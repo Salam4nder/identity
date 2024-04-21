@@ -25,20 +25,20 @@ type Storage interface {
 
 	// User repository
 
-	CreateUser(ctx context.Context, params CreateUserParams) (*User, error)
+	CreateUser(ctx context.Context, params CreateUserParams) error
 	// ReadUser reads a user from the database.
 	ReadUser(ctx context.Context, id uuid.UUID) (*User, error)
 	// ReadUserByEmail reads a user from the database by email.
 	ReadUserByEmail(ctx context.Context, email string) (*User, error)
 	// UpdateUser updates a user in the database.
-	UpdateUser(ctx context.Context, params UpdateUserParams) (*User, error)
+	UpdateUser(ctx context.Context, params UpdateUserParams) error
 	// DeleteUser deletes a user from the database.
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 
 	// Session repository
 
 	// CreateSession creates a new session in the database.
-	CreateSession(ctx context.Context, params CreateSessionParams) (*Session, error)
+	CreateSession(ctx context.Context, params CreateSessionParams) error
 	// ReadSession returns a session from the database.
 	ReadSession(ctx context.Context, id uuid.UUID) (*Session, error)
 	// BlockSession deactivates a session in the database.
