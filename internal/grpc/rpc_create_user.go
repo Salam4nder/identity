@@ -9,6 +9,7 @@ import (
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/grpc/gen"
 	"github.com/Salam4nder/user/pkg/validation"
+	"github.com/google/uuid"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -49,13 +50,13 @@ func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest)
 	}
 
 	params := db.CreateUserParams{
+		ID:        uuid.New(),
 		FullName:  req.GetFullName(),
 		Email:     req.GetEmail(),
 		Password:  req.GetPassword(),
 		CreatedAt: time.Now(),
 	}
-	createdUser, err := x.storage.CreateUser(ctx, params)
-	if err != nil {
+	if err := x.storage.CreateUser(ctx, params); err != nil {
 		span.SetStatus(otelCode.Error, err.Error())
 		span.RecordError(err)
 		if errors.Is(err, db.ErrDuplicateEmail) {
@@ -64,7 +65,7 @@ func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest)
 		return nil, internalServerError(err)
 	}
 
-	return &gen.UserID{Id: createdUser.ID.String()}, nil
+	return &gen.UserID{Id: params.ID.String()}, nil
 }
 
 // validateCreateUserRequest returns nil if the request is valid.
