@@ -8,7 +8,6 @@ import (
 	"github.com/Salam4nder/user/internal/grpc/gen"
 	grpcUtil "github.com/Salam4nder/user/pkg/grpc"
 	"github.com/Salam4nder/user/pkg/util"
-	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -26,15 +25,13 @@ func (x *UserServer) LoginUser(
 	user, err := x.storage.ReadUserByEmail(ctx, req.Email)
 	if err != nil {
 		if errors.Is(err, db.ErrUserNotFound) {
-			return nil, status.Error(codes.NotFound, "user not found")
+			return nil, status.Error(codes.NotFound, "handlers: user not found")
 		}
-		log.Error().Err(err).Msg("grpc: failed to read user by email")
-
 		return nil, internalServerError()
 	}
 
 	if err := util.ComparePasswordHash(req.Password, user.PasswordHash); err != nil {
-		return nil, status.Error(codes.Unauthenticated, "invalid password")
+		return nil, status.Error(codes.Unauthenticated, "handlers: invalid password")
 	}
 
 	accessToken, accessPayload, err := x.tokenMaker.NewToken(
@@ -42,8 +39,6 @@ func (x *UserServer) LoginUser(
 		x.accessTokenDuration,
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("grpc: failed to create access token")
-
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -52,8 +47,6 @@ func (x *UserServer) LoginUser(
 		x.refreshTokenDuration,
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("grpc: failed to create refresh token")
-
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -68,8 +61,6 @@ func (x *UserServer) LoginUser(
 		ExpiresAt:    refreshPayload.ExpiresAt,
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("grpc: failed to create session")
-
 		return nil, internalServerError()
 	}
 
