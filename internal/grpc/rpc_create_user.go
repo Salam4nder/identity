@@ -17,6 +17,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -35,9 +36,9 @@ func spanAttribures(req *gen.CreateUserRequest) []attribute.KeyValue {
 	}
 }
 
-func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest) (*gen.UserID, error) {
+func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest) (*emptypb.Empty, error) {
 	if req == nil {
-		return nil, requestIsNilError()
+		return &emptypb.Empty{}, requestIsNilError()
 	}
 
 	ctx, span := tracer.Start(ctx, handlerStr, trace.WithAttributes(spanAttribures(req)...))
@@ -46,7 +47,7 @@ func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest)
 	if err := validateCreateUserRequest(req); err != nil {
 		span.SetStatus(otelCode.Error, err.Error())
 		span.RecordError(err)
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return &emptypb.Empty{}, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	params := db.CreateUserParams{
@@ -60,12 +61,12 @@ func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest)
 		span.SetStatus(otelCode.Error, err.Error())
 		span.RecordError(err)
 		if errors.Is(err, db.ErrDuplicateEmail) {
-			return nil, status.Error(codes.AlreadyExists, err.Error())
+			return &emptypb.Empty{}, status.Error(codes.AlreadyExists, err.Error())
 		}
-		return nil, internalServerError(err)
+		return &emptypb.Empty{}, internalServerError(err)
 	}
 
-	return &gen.UserID{Id: params.ID.String()}, nil
+	return &emptypb.Empty{}, nil
 }
 
 // validateCreateUserRequest returns nil if the request is valid.
