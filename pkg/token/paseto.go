@@ -43,7 +43,7 @@ func (x *pasetoMaker) NewToken(
 
 // VerifyToken checks if the token is valid.
 func (x *pasetoMaker) VerifyToken(token string) (*Payload, error) {
-	payload := &Payload{}
+	payload := new(Payload)
 
 	if err := x.paseto.Decrypt(
 		token,
