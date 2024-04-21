@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Salam4nder/user/pkg/util"
+	"github.com/Salam4nder/user/pkg/random"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -25,9 +25,9 @@ func TestSQL_CreateUser(t *testing.T) {
 		{
 			name: "Success",
 			params: CreateUserParams{
-				FullName:  util.RandomString(10),
-				Email:     util.RandomEmail(),
-				Password:  util.RandomString(10),
+				FullName:  random.FullName(),
+				Email:     random.Email(),
+				Password:  random.String(10),
 				CreatedAt: time.Now().UTC(),
 			},
 		},
@@ -63,8 +63,8 @@ func TestSQL_CreateUser(t *testing.T) {
 			name: "Name exceeds 255 chars returns err",
 			params: CreateUserParams{
 				FullName:  strings.Repeat("a", 256),
-				Email:     util.RandomEmail(),
-				Password:  util.RandomString(10),
+				Email:     random.Email(),
+				Password:  random.String(10),
 				CreatedAt: time.Now().UTC(),
 			},
 			wantErr:     true,
@@ -73,9 +73,9 @@ func TestSQL_CreateUser(t *testing.T) {
 		{
 			name: "Email exceeds 255 chars returns err",
 			params: CreateUserParams{
-				FullName:  util.RandomString(10),
+				FullName:  random.FullName(),
 				Email:     strings.Repeat("a", 256),
-				Password:  util.RandomString(10),
+				Password:  random.String(10),
 				CreatedAt: time.Now().UTC(),
 			},
 			wantErr:     true,
@@ -120,9 +120,9 @@ func TestSQL_CreateUser(t *testing.T) {
 
 func TestSQL_ReadUser(t *testing.T) {
 	user, err := TestSQLConnPool.CreateUser(ctx, CreateUserParams{
-		FullName:  util.RandomString(10),
-		Email:     util.RandomEmail(),
-		Password:  util.RandomString(10),
+		FullName:  random.FullName(),
+		Email:     random.Email(),
+		Password:  random.String(10),
 		CreatedAt: time.Now().UTC(),
 	})
 	require.NoError(t, err)
@@ -161,9 +161,9 @@ func TestSQL_ReadUser(t *testing.T) {
 
 func TestSQL_ReadUserByEmail(t *testing.T) {
 	user, err := TestSQLConnPool.CreateUser(ctx, CreateUserParams{
-		FullName:  util.RandomString(10),
-		Email:     util.RandomEmail(),
-		Password:  util.RandomString(10),
+		FullName:  random.FullName(),
+		Email:     random.Email(),
+		Password:  random.String(10),
 		CreatedAt: time.Now().UTC(),
 	})
 	require.NoError(t, err)
@@ -188,7 +188,7 @@ func TestSQL_ReadUserByEmail(t *testing.T) {
 	require.Equal(t, user.CreatedAt, got.CreatedAt)
 
 	t.Run("Not found", func(t *testing.T) {
-		_, err := TestSQLConnPool.ReadUserByEmail(ctx, util.RandomEmail())
+		_, err := TestSQLConnPool.ReadUserByEmail(ctx, random.Email())
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrUserNotFound)
 	})
@@ -217,14 +217,14 @@ func TestSQL_UpdateUser(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				params: UpdateUserParams{
-					FullName: util.RandomString(10),
-					Email:    util.RandomEmail(),
+					FullName: random.FullName(),
+					Email:    random.Email(),
 				},
 			},
 			preUpdateArgs: CreateUserParams{
-				FullName:  util.RandomString(10),
-				Email:     util.RandomEmail(),
-				Password:  util.RandomString(10),
+				FullName:  random.FullName(),
+				Email:     random.Email(),
+				Password:  random.String(10),
 				CreatedAt: time.Now().UTC(),
 			},
 		},
@@ -237,9 +237,9 @@ func TestSQL_UpdateUser(t *testing.T) {
 				},
 			},
 			preUpdateArgs: CreateUserParams{
-				FullName:  util.RandomString(10),
-				Email:     util.RandomEmail(),
-				Password:  util.RandomString(10),
+				FullName:  random.FullName(),
+				Email:     random.Email(),
+				Password:  random.String(10),
 				CreatedAt: time.Now().UTC(),
 			},
 			wantErr:     true,
@@ -254,9 +254,9 @@ func TestSQL_UpdateUser(t *testing.T) {
 				},
 			},
 			preUpdateArgs: CreateUserParams{
-				FullName:  util.RandomString(10),
-				Email:     util.RandomEmail(),
-				Password:  util.RandomString(10),
+				FullName:  random.FullName(),
+				Email:     random.Email(),
+				Password:  random.String(10),
 				CreatedAt: time.Now().UTC(),
 			},
 			wantErr:     true,
@@ -300,9 +300,9 @@ func TestSQL_UpdateUser(t *testing.T) {
 
 func TestSQL_DeleteUser(t *testing.T) {
 	createdUser, err := TestSQLConnPool.CreateUser(ctx, CreateUserParams{
-		FullName:  util.RandomString(10),
-		Email:     util.RandomEmail(),
-		Password:  util.RandomString(10),
+		FullName:  random.FullName(),
+		Email:     random.Email(),
+		Password:  random.String(10),
 		CreatedAt: time.Now().UTC(),
 	})
 	require.NoError(t, err)
