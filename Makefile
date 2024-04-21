@@ -45,7 +45,7 @@ proto:
      pkg/proto/*.proto
 
 lint:
-	docker run -t --rm -v $(pwd):/app -v ~/.cache/golangci-lint/v1.57.2:/root/.cache -w /app golangci/golangci-lint:v1.57.2 golangci-lint run -v
+	docker run -t --rm -v $(shell pwd):/app -v ~/.cache/golangci-lint/v1.57.2:/root/.cache -w /app golangci/golangci-lint:v1.57.2 golangci-lint run -v
 
 nancy:
 	go list -json -deps ./... | docker run --rm -i sonatypecommunity/nancy:latest sleuth
