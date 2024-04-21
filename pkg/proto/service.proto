@@ -2,18 +2,17 @@ syntax = "proto3";
 
 package gen;
 
-import "google/api/annotations.proto";
-import "google/protobuf/empty.proto";
 import "user.proto";
 import "login.proto";
+import "google/protobuf/empty.proto";
 
 option go_package = "github.com/Salam4nder/user/internal/proto/gen";
 
 service User {
-    rpc CreateUser (CreateUserRequest) returns (google.protobuf.Empty)
-    rpc ReadUser (UserID) returns (UserResponse)
-    rpc ReadByEmail (ReadByEmailRequest) returns (UserResponse)
-    rpc UpdateUser (UpdateUserRequest) returns (google.protobuf.Empty)
-    rpc DeleteUser (UserID) returns (google.protobuf.Empty)
-    rpc LoginUser (LoginUserRequest) returns (LoginUserResponse)
+    rpc CreateUser (CreateUserRequest) returns (google.protobuf.Empty){}
+    rpc ReadUser (UserID) returns (UserResponse){}
+    rpc ReadByEmail (ReadByEmailRequest) returns (UserResponse){}
+    rpc UpdateUser (UpdateUserRequest) returns (google.protobuf.Empty){}
+    rpc DeleteUser (UserID) returns (google.protobuf.Empty){}
+    rpc LoginUser (LoginUserRequest) returns (LoginUserResponse){}
 }
