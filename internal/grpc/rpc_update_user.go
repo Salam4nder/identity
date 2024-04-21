@@ -13,21 +13,22 @@ import (
 )
 
 // UpdateUser updates a user by ID.
-func (x *UserServer) UpdateUser(
-	ctx context.Context,
-	req *gen.UpdateUserRequest,
-) (*gen.UserResponse, error) {
+func (x *UserServer) UpdateUser(ctx context.Context, req *gen.UpdateUserRequest) error {
+	if req == nil {
+		return requestIsNilError()
+	}
+
 	authPayload, err := x.authorizeUser(ctx)
 	if err != nil {
-		return nil, unauthenticatedError(err)
+		return unauthenticatedError(err)
 	}
 
 	if err = validateUpdateUserRequest(req); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	if authPayload.Email != req.GetEmail() {
-		return nil, status.Errorf(
+		return status.Errorf(
 			codes.PermissionDenied,
 			"not owner of provided email",
 		)
@@ -35,7 +36,7 @@ func (x *UserServer) UpdateUser(
 
 	id, err := uuid.Parse(req.GetId())
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "ID is invalid")
+		return status.Error(codes.InvalidArgument, "ID is invalid")
 	}
 
 	params := db.UpdateUserParams{
@@ -44,25 +45,20 @@ func (x *UserServer) UpdateUser(
 		Email:    req.GetEmail(),
 	}
 
-	updatedUser, err := x.storage.UpdateUser(ctx, params)
-	if err != nil {
+	if err = x.storage.UpdateUser(ctx, params); err != nil {
 		switch {
 		case errors.Is(err, db.ErrUserNotFound):
-			return nil, status.Error(codes.NotFound, err.Error())
+			return status.Error(codes.NotFound, err.Error())
 
 		default:
-			return nil, internalServerError(err)
+			return internalServerError(err)
 		}
 	}
-	return userToProtoResponse(updatedUser), nil
+	return nil
 }
 
 // validateUpdateUserRequest returns nil if the request is valid.
 func validateUpdateUserRequest(req *gen.UpdateUserRequest) error {
-	if req == nil {
-		return errors.New("request can not be nil")
-	}
-
 	if req.Id == "" {
 		return errors.New("ID can not be empty")
 	}
