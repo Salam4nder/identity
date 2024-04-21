@@ -12,6 +12,7 @@ var (
 	ErrDuplicateEmail = errors.New("db: duplicate email")
 	ErrStringTooLong  = errors.New("db: string too long")
 	ErrUserNotFound   = errors.New("db: user not found")
+	ErrNoRowsAffected = errors.New("db: no rows affected")
 )
 
 // IsSentinelErr is a sentinel error.
