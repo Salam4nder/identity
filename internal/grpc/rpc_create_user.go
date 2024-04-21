@@ -8,7 +8,7 @@ import (
 
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/grpc/gen"
-	"github.com/Salam4nder/user/pkg/util"
+	"github.com/Salam4nder/user/pkg/validation"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -53,7 +53,7 @@ func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest)
 		if errors.Is(err, db.ErrDuplicateEmail) {
 			return nil, status.Error(codes.AlreadyExists, err.Error())
 		}
-		return nil, internalServerError()
+		return nil, internalServerError(err)
 	}
 
 	return &gen.UserID{Id: createdUser.ID.String()}, nil
@@ -72,15 +72,15 @@ func validateCreateUserRequest(req *gen.CreateUserRequest) error {
 		passwordErr error
 	)
 
-	if err := util.ValidateFullName(req.GetFullName()); err != nil {
+	if err := validation.FullName(req.GetFullName()); err != nil {
 		fullNameErr = fmt.Errorf("grpc: full_name %w", err)
 	}
 
-	if err := util.ValidateEmail(req.GetEmail()); err != nil {
+	if err := validation.Email(req.GetEmail()); err != nil {
 		emailErr = fmt.Errorf("grpc: email %w", err)
 	}
 
-	if err := util.ValidatePassword(req.GetPassword()); err != nil {
+	if err := validation.Password(req.GetPassword()); err != nil {
 		passwordErr = fmt.Errorf("grpc: password %w", err)
 	}
 
