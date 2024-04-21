@@ -26,16 +26,24 @@ const (
 
 var tracer = otel.Tracer(serverStr)
 
+func spanAttribures(req *gen.CreateUserRequest) []attribute.KeyValue {
+	return []attribute.KeyValue{
+		attribute.String("full_name", req.FullName),
+		attribute.String("email", req.Email),
+		attribute.Int("password_length", len(req.Password)),
+	}
+}
+
 func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest) (*gen.UserID, error) {
-	ctx, span := tracer.Start(
-		ctx,
-		handlerStr,
-		trace.WithAttributes(attribute.String("full_name", req.FullName), attribute.String("email", req.Email)),
-	)
+	if req == nil {
+		requestIsNilError()
+	}
+
+	ctx, span := tracer.Start(ctx, handlerStr, trace.WithAttributes(spanAttribures(req)...))
 	defer span.End()
 
 	if err := validateCreateUserRequest(req); err != nil {
-		span.SetStatus(otelCode.Error, "grpc: invalid request")
+		span.SetStatus(otelCode.Error, err.Error())
 		span.RecordError(err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -48,7 +56,7 @@ func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest)
 	}
 	createdUser, err := x.storage.CreateUser(ctx, params)
 	if err != nil {
-		span.SetStatus(otelCode.Error, "grpc: creating user")
+		span.SetStatus(otelCode.Error, err.Error())
 		span.RecordError(err)
 		if errors.Is(err, db.ErrDuplicateEmail) {
 			return nil, status.Error(codes.AlreadyExists, err.Error())
@@ -61,11 +69,6 @@ func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest)
 
 // validateCreateUserRequest returns nil if the request is valid.
 func validateCreateUserRequest(req *gen.CreateUserRequest) error {
-	if req == nil {
-		return errors.New("grpc: request can not be nil")
-	}
-	requestIsNilError()
-
 	var (
 		fullNameErr error
 		emailErr    error
