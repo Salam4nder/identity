@@ -14,9 +14,10 @@ import (
 	internalDB "github.com/Salam4nder/user/internal/db"
 	internalGRPC "github.com/Salam4nder/user/internal/grpc"
 	"github.com/Salam4nder/user/internal/grpc/gen"
-	grpcUtil "github.com/Salam4nder/user/pkg/grpc"
+	"github.com/Salam4nder/user/internal/grpc/interceptors"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zerologr"
+	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/zerolog"
@@ -24,11 +25,13 @@ import (
 	"github.com/stimtech/go-migration"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
-	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
+
+	// "go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
+	// "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -36,35 +39,38 @@ import (
 )
 
 const (
-	// PingTimeout is the maximum duration for waiting on ping.
-	PingTimeout = 5 * time.Second
-	// ReadTimeout is the maximum duration for reading the entire
-	// request, including the body.
-	ReadTimeout = 10 * time.Second
-	// WriteTimeout is the maximum duration before timing out
-	// writes of the response. It is reset whenever a new
-	// request's header is read.
-	WriteTimeout = 10 * time.Second
-	// EnvironmentDev is the development environment.
-	EnvironmentDev = "development"
-	// MigrationFolder is the folder where the migration files are stored.
-	MigrationFolder = "internal/db/migrations"
-	// AccessTokenDuration is the duration for which the access token is valid.
-	AccessTokenDuration = 15 * time.Minute
-	// RefreshTokenDuration is the duration for which the refresh token is valid.
-	RefreshTokenDuration = 7 * 24 * time.Hour
+	// TODO(kg): Move most of these to config.
+
+	// serviceName is the name of the service.
+	serviceName string = "user"
+	// serviceVersion is the version of the service.
+	serviceVersion string = "1.0.0"
+	// pingTimeout is the maximum duration for waiting on ping.
+	pingTimeout = 5 * time.Second
+	// migrationFolder is the folder where the migration files are stored.
+	migrationFolder = "internal/db/migrations"
+	// accessTokenDuration is the duration for which the access token is valid.
+	accessTokenDuration = 15 * time.Minute
+	// refreshTokenDuration is the duration for which the refresh token is valid.
+	refreshTokenDuration = 7 * 24 * time.Hour
 )
+
+// ServiceID is the unique identifier of the service.
+// It is generated and set at runtime.
+var ServiceID string = ""
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
+	ServiceID = uuid.New().String()
 
 	cfg, err := config.New()
 	exitWithError(ctx, err)
 
 	// UNIX Time is faster and smaller than most timestamps
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	if cfg.Environment == EnvironmentDev {
+	if cfg.Environment == "dev" {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
@@ -76,10 +82,10 @@ func main() {
 	db, err := sql.Open(cfg.PSQL.Driver(), cfg.PSQL.Addr())
 	exitWithError(ctx, err)
 	storage := internalDB.New(db)
-	if err = storage.PingContext(ctx /*max tries */, 5); err != nil {
+	if err = storage.PingContext(ctx, 5 /*max tries*/); err != nil {
 		exitWithError(ctx, err)
 	}
-	migration := migration.New(db, zap.NewNop()).WithFolder(MigrationFolder)
+	migration := migration.New(db, zap.NewNop()).WithFolder(migrationFolder)
 	if err = migration.Migrate(); err != nil {
 		exitWithError(ctx, err)
 	}
@@ -87,8 +93,8 @@ func main() {
 	userServer, err := internalGRPC.NewUserServer(
 		storage,
 		cfg.Server.SymmetricKey,
-		AccessTokenDuration,
-		RefreshTokenDuration,
+		accessTokenDuration,
+		refreshTokenDuration,
 	)
 	exitWithError(ctx, err)
 	grpcListener, err := net.Listen("tcp", cfg.Server.GRPCAddr())
@@ -96,7 +102,7 @@ func main() {
 	grpcServer := grpc.NewServer(
 		// grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
-			grpcUtil.LoggerInterceptor,
+			interceptors.UnaryLogger,
 			recovery.UnaryServerInterceptor(),
 		),
 	)
@@ -127,10 +133,10 @@ func main() {
 		log.Error().Err(err).Msg("main: gRPC server error")
 	case <-ctx.Done():
 		stop()
-		log.Info().Msg("signal received, shutting down...")
+		log.Info().Msg("main: signal received, shutting down...")
 	}
 	grpcServer.GracefulStop()
-	log.Info().Msg("service gracefully stopped")
+	log.Info().Msg("main: service gracefully stopped")
 	if err != nil {
 		log.Error().Err(err).Msg("main: on shutdown")
 		os.Exit(1)
@@ -202,30 +208,37 @@ func newPropagator() propagation.TextMapPropagator {
 }
 
 func newTraceProvider() (*trace.TracerProvider, error) {
-	traceExporter, err := stdouttrace.New(stdouttrace.WithPrettyPrint())
-	if err != nil {
-		return nil, err
-	}
 	grpcExporter, err := otlptracegrpc.New(
 		context.Background(),
 		otlptracegrpc.WithInsecure(),
 	)
-
-	traceProvider := trace.NewTracerProvider(
-		trace.WithBatcher(traceExporter),
-		trace.WithBatcher(grpcExporter),
-	)
-	return traceProvider, nil
-}
-
-func newMeterProvider() (*metric.MeterProvider, error) {
-	metricExporter, err := stdoutmetric.New()
 	if err != nil {
 		return nil, err
 	}
 
-	meterProvider := metric.NewMeterProvider(
-		metric.WithReader(metric.NewPeriodicReader(metricExporter)),
+	res := resource.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceNameKey.String(serviceName),
+		semconv.ServiceVersionKey.String(serviceVersion),
+		semconv.ServiceInstanceIDKey.String(ServiceID),
 	)
-	return meterProvider, nil
+
+	traceProvider := trace.NewTracerProvider(
+		trace.WithResource(&resource.Resource{}),
+		trace.WithBatcher(grpcExporter),
+		trace.WithResource(res),
+	)
+	return traceProvider, nil
 }
+
+// func newMeterProvider() (*metric.MeterProvider, error) {
+// 	metricExporter, err := stdoutmetric.New()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	meterProvider := metric.NewMeterProvider(
+// 		metric.WithReader(metric.NewPeriodicReader(metricExporter)),
+// 	)
+// 	return meterProvider, nil
+// }
