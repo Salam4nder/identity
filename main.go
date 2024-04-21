@@ -19,7 +19,6 @@ import (
 	"github.com/go-logr/zerologr"
 	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/stimtech/go-migration"
@@ -34,7 +33,6 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -114,17 +112,6 @@ func main() {
 	log.Info().
 		Str("address", cfg.Server.GRPCAddr()).
 		Msg("gRPC server is running")
-
-	mux := runtime.NewServeMux()
-	dialOpts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-	if err = gen.RegisterUserHandlerFromEndpoint(
-		ctx,
-		mux,
-		cfg.Server.GRPCAddr(),
-		dialOpts,
-	); err != nil {
-		exitWithError(ctx, err)
-	}
 
 	select {
 	case err := <-srvErrChan:
