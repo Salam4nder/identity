@@ -21,7 +21,7 @@ type Metadata struct {
 
 // MetadataFromContext returns metadata from the context.
 func MetadataFromContext(ctx context.Context) *Metadata {
-	mtdt := &Metadata{}
+	mtdt := new(Metadata)
 
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
 		if userAgents := md.Get(grpcGatewayUserAgentHeader); len(userAgents) > 0 {
