@@ -28,8 +28,8 @@ func (rec *ResponseRecorder) Write(body []byte) (int, error) {
 	return rec.ResponseWriter.Write(body)
 }
 
-// HTTPLogger logs HTTP requests. Used for gRPC Gateway.
-func HTTPLogger(handler http.Handler) http.Handler {
+// MiddlewareLogger logs HTTP requests. Used for gRPC Gateway.
+func MiddlewareLogger(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		startTime := time.Now()
 

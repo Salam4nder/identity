@@ -36,7 +36,7 @@ func spanAttribures(req *gen.CreateUserRequest) []attribute.KeyValue {
 
 func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest) (*gen.UserID, error) {
 	if req == nil {
-		requestIsNilError()
+		return nil, requestIsNilError()
 	}
 
 	ctx, span := tracer.Start(ctx, handlerStr, trace.WithAttributes(spanAttribures(req)...))

@@ -26,9 +26,9 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 
-	// "go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
-	// "go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
@@ -45,8 +45,6 @@ const (
 	serviceName string = "user"
 	// serviceVersion is the version of the service.
 	serviceVersion string = "1.0.0"
-	// pingTimeout is the maximum duration for waiting on ping.
-	pingTimeout = 5 * time.Second
 	// migrationFolder is the folder where the migration files are stored.
 	migrationFolder = "internal/db/migrations"
 	// accessTokenDuration is the duration for which the access token is valid.
@@ -57,7 +55,7 @@ const (
 
 // ServiceID is the unique identifier of the service.
 // It is generated and set at runtime.
-var ServiceID string = ""
+var ServiceID string
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -139,7 +137,6 @@ func main() {
 	log.Info().Msg("main: service gracefully stopped")
 	if err != nil {
 		log.Error().Err(err).Msg("main: on shutdown")
-		os.Exit(1)
 	}
 }
 
@@ -180,7 +177,7 @@ func setupOTELSDK(ctx context.Context) (shutdown func(context.Context) error, er
 	otel.SetTextMapPropagator(prop)
 
 	// Set up trace provider.
-	tracerProvider, err := newTraceProvider()
+	tracerProvider, err := newTraceProvider(ctx)
 	if err != nil {
 		handleErr(err)
 		return
@@ -189,13 +186,13 @@ func setupOTELSDK(ctx context.Context) (shutdown func(context.Context) error, er
 	otel.SetTracerProvider(tracerProvider)
 
 	// Set up meter provider.
-	// meterProvider, err := newMeterProvider()
-	// if err != nil {
-	// 	handleErr(err)
-	// 	return
-	// }
-	// shutdownFuncs = append(shutdownFuncs, meterProvider.Shutdown)
-	// otel.SetMeterProvider(meterProvider)
+	meterProvider, err := newMeterProvider()
+	if err != nil {
+		handleErr(err)
+		return
+	}
+	shutdownFuncs = append(shutdownFuncs, meterProvider.Shutdown)
+	otel.SetMeterProvider(meterProvider)
 
 	return
 }
@@ -207,9 +204,9 @@ func newPropagator() propagation.TextMapPropagator {
 	)
 }
 
-func newTraceProvider() (*trace.TracerProvider, error) {
+func newTraceProvider(ctx context.Context) (*trace.TracerProvider, error) {
 	grpcExporter, err := otlptracegrpc.New(
-		context.Background(),
+		ctx,
 		otlptracegrpc.WithInsecure(),
 	)
 	if err != nil {
@@ -231,14 +228,14 @@ func newTraceProvider() (*trace.TracerProvider, error) {
 	return traceProvider, nil
 }
 
-// func newMeterProvider() (*metric.MeterProvider, error) {
-// 	metricExporter, err := stdoutmetric.New()
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func newMeterProvider() (*metric.MeterProvider, error) {
+	metricExporter, err := stdoutmetric.New()
+	if err != nil {
+		return nil, err
+	}
 
-// 	meterProvider := metric.NewMeterProvider(
-// 		metric.WithReader(metric.NewPeriodicReader(metricExporter)),
-// 	)
-// 	return meterProvider, nil
-// }
+	meterProvider := metric.NewMeterProvider(
+		metric.WithReader(metric.NewPeriodicReader(metricExporter)),
+	)
+	return meterProvider, nil
+}
