@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log/slog"
 	"net"
 	"os"
 	"os/signal"
@@ -15,6 +16,7 @@ import (
 	internalGRPC "github.com/Salam4nder/user/internal/grpc"
 	"github.com/Salam4nder/user/internal/grpc/gen"
 	"github.com/Salam4nder/user/internal/grpc/interceptors"
+	"github.com/Salam4nder/user/pkg/logger"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zerologr"
 	"github.com/google/uuid"
@@ -24,8 +26,7 @@ import (
 	"github.com/stimtech/go-migration"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-
-	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
+	"go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -51,24 +52,27 @@ const (
 	refreshTokenDuration = 7 * 24 * time.Hour
 )
 
-// ServiceID is the unique identifier of the service.
-// It is generated and set at runtime.
-var ServiceID string
+// serviceID is the unique identifier of the service.
+var serviceID string = uuid.New().String()
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	ServiceID = uuid.New().String()
-
 	cfg, err := config.New()
 	exitWithError(ctx, err)
+
+	var defaultLogger *slog.Logger
 
 	// UNIX Time is faster and smaller than most timestamps
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	if cfg.Environment == "dev" {
+		defaultLogger = slog.New(logger.NewOtelLogger(slog.New(logger.NewTintHandler(os.Stdout, nil))))
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	} else {
+		defaultLogger = slog.New(logger.NewOtelLogger(slog.New(slog.NewJSONHandler(os.Stdout, nil))))
 	}
+	slog.SetDefault(defaultLogger)
 
 	otelShutdown, err := setupOTELSDK(ctx)
 	defer func() {
@@ -204,11 +208,10 @@ func newTraceProvider(ctx context.Context) (*trace.TracerProvider, error) {
 		semconv.SchemaURL,
 		semconv.ServiceNameKey.String(serviceName),
 		semconv.ServiceVersionKey.String(serviceVersion),
-		semconv.ServiceInstanceIDKey.String(ServiceID),
+		semconv.ServiceInstanceIDKey.String(serviceID),
 	)
 
 	traceProvider := trace.NewTracerProvider(
-		trace.WithResource(&resource.Resource{}),
 		trace.WithBatcher(grpcExporter),
 		trace.WithResource(res),
 	)
@@ -216,13 +219,18 @@ func newTraceProvider(ctx context.Context) (*trace.TracerProvider, error) {
 }
 
 func newMeterProvider() (*metric.MeterProvider, error) {
-	metricExporter, err := stdoutmetric.New()
+	prom, err := prometheus.New()
 	if err != nil {
 		return nil, err
 	}
 
 	meterProvider := metric.NewMeterProvider(
-		metric.WithReader(metric.NewPeriodicReader(metricExporter)),
+		metric.WithReader(prom),
+		metric.WithResource(resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceNameKey.String(serviceName),
+			semconv.ServiceInstanceIDKey.String(serviceVersion),
+		)),
 	)
 	return meterProvider, nil
 }
