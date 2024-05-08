@@ -41,12 +41,17 @@ func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest)
 		return &emptypb.Empty{}, requestIsNilError()
 	}
 
+	var err error
 	ctx, span := tracer.Start(ctx, handlerStr, trace.WithAttributes(spanAttribures(req)...))
-	defer span.End()
+	defer func() {
+		if err != nil {
+			span.SetStatus(otelCode.Error, err.Error())
+			span.RecordError(err)
+		}
+		span.End()
+	}()
 
-	if err := validateCreateUserRequest(req); err != nil {
-		span.SetStatus(otelCode.Error, err.Error())
-		span.RecordError(err)
+	if err = validateCreateUserRequest(req); err != nil {
 		return &emptypb.Empty{}, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -57,9 +62,7 @@ func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest)
 		Password:  req.GetPassword(),
 		CreatedAt: time.Now(),
 	}
-	if err := x.storage.CreateUser(ctx, params); err != nil {
-		span.SetStatus(otelCode.Error, err.Error())
-		span.RecordError(err)
+	if err = x.storage.CreateUser(ctx, params); err != nil {
 		if errors.Is(err, db.ErrDuplicateEmail) {
 			return &emptypb.Empty{}, status.Error(codes.AlreadyExists, err.Error())
 		}
