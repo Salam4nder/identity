@@ -6,6 +6,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -70,9 +71,11 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func NewTestSQLConnPool() (*SQL, func()) {
+// NewTestSQLConnPool returns a new SQL connection pool for testing.
+// [tablename] is the name of the table to truncate after each test.
+func NewTestSQLConnPool(tablename string) (*SQL, func()) {
 	return TestSQLConnPool, func() {
-		_, err := TestSQLConnPool.db.Exec("TRUNCATE DATABASE unit-test-user-db")
+		_, err := TestSQLConnPool.db.Exec(fmt.Sprintf("TRUNCATE %s CASCADE", tablename))
 		if err != nil {
 			log.Error().Err(err).
 				Msg("db main_test: failed to truncate db")
