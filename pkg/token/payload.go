@@ -25,8 +25,8 @@ func NewPayload(email string, duration time.Duration) *Payload {
 }
 
 // Valid checks if the token payload is valid.
-func (payload *Payload) Valid() error {
-	if time.Now().After(payload.ExpiresAt) {
+func (x *Payload) Valid() error {
+	if time.Now().After(x.ExpiresAt) {
 		return ErrExpiredToken
 	}
 
