@@ -11,23 +11,45 @@ import (
 )
 
 func TestCreate(t *testing.T) {
-	db, cleanup := NewTestSQLConnPool()
-	t.Cleanup(cleanup)
+	dbSess, sessCleanup := NewTestSQLConnPool("sessions")
+	t.Cleanup(sessCleanup)
+
+	dbUser, userCleanup := NewTestSQLConnPool("users")
+	t.Cleanup(userCleanup)
 
 	t.Run("ok", func(t *testing.T) {
-		err := db.CreateSession(context.Background(), CreateSessionParams{
+		email := random.Email()
+		err := dbUser.CreateUser(context.Background(), CreateUserParams{
+			ID:       uuid.New(),
+			Email:    email,
+			Password: random.String(32),
+		})
+		require.NoError(t, err)
+
+		err = dbSess.CreateSession(context.Background(), CreateSessionParams{
 			ID:           uuid.New(),
-			Email:        random.Email(),
+			Email:        email,
 			ClientIP:     random.String(15),
 			UserAgent:    random.String(20),
 			RefreshToken: random.String(32),
 			ExpiresAt:    time.Now().Add(time.Hour),
 		})
 		require.NoError(t, err)
+
+		t.Cleanup(sessCleanup)
+		t.Cleanup(userCleanup)
 	})
 
 	t.Run("missing fields", func(t *testing.T) {
-		err := db.CreateSession(context.Background(), CreateSessionParams{})
+		email := random.Email()
+		err := dbUser.CreateUser(context.Background(), CreateUserParams{
+			ID:       uuid.New(),
+			Email:    email,
+			Password: random.String(32),
+		})
+		require.NoError(t, err)
+
+		err = dbSess.CreateSession(context.Background(), CreateSessionParams{})
 		require.Error(t, err)
 	})
 }
