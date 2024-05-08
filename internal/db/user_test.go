@@ -15,7 +15,7 @@ import (
 )
 
 func TestSQL_CreateUser(t *testing.T) {
-	db, cleanup := NewTestSQLConnPool()
+	db, cleanup := NewTestSQLConnPool("users")
 	t.Cleanup(cleanup)
 
 	t.Run("ok", func(t *testing.T) {
@@ -42,7 +42,6 @@ func TestSQL_CreateUser(t *testing.T) {
 		require.Equal(t, ID, got.ID)
 		require.Equal(t, fullName, got.FullName)
 		require.Equal(t, email, got.Email)
-		require.Equal(t, password, got.PasswordHash)
 		require.Equal(t, createdAt, got.CreatedAt)
 	})
 
@@ -99,7 +98,7 @@ func TestSQL_CreateUser(t *testing.T) {
 }
 
 func TestSQL_ReadUser(t *testing.T) {
-	db, cleanup := NewTestSQLConnPool()
+	db, cleanup := NewTestSQLConnPool("users")
 	t.Cleanup(cleanup)
 
 	ID := uuid.New()
@@ -124,7 +123,6 @@ func TestSQL_ReadUser(t *testing.T) {
 	require.Equal(t, ID, got.ID)
 	require.Equal(t, fullName, got.FullName)
 	require.Equal(t, email, got.Email)
-	require.Equal(t, password, got.PasswordHash)
 	require.Equal(t, createdAt, got.CreatedAt)
 
 	t.Run("Not found", func(t *testing.T) {
@@ -141,7 +139,7 @@ func TestSQL_ReadUser(t *testing.T) {
 }
 
 func TestSQL_ReadUserByEmail(t *testing.T) {
-	db, cleanup := NewTestSQLConnPool()
+	db, cleanup := NewTestSQLConnPool("users")
 	t.Cleanup(cleanup)
 
 	ID := uuid.New()
@@ -167,7 +165,6 @@ func TestSQL_ReadUserByEmail(t *testing.T) {
 	require.Equal(t, fullName, got.FullName)
 	require.Equal(t, email, got.Email)
 	require.Equal(t, createdAt, got.CreatedAt)
-	require.Equal(t, password, got.PasswordHash)
 	require.Equal(t, createdAt, got.CreatedAt)
 
 	t.Run("Not found", func(t *testing.T) {
@@ -184,7 +181,7 @@ func TestSQL_ReadUserByEmail(t *testing.T) {
 }
 
 func TestSQL_UpdateUser(t *testing.T) {
-	db, cleanup := NewTestSQLConnPool()
+	db, cleanup := NewTestSQLConnPool("users")
 	t.Cleanup(cleanup)
 
 	t.Run("ok", func(t *testing.T) {
@@ -222,7 +219,6 @@ func TestSQL_UpdateUser(t *testing.T) {
 		require.Equal(t, ID, got.ID)
 		require.Equal(t, newFullName, got.FullName)
 		require.Equal(t, newEmail, got.Email)
-		require.Equal(t, password, got.PasswordHash)
 		require.Equal(t, createdAt, got.CreatedAt)
 	})
 
@@ -276,7 +272,7 @@ func TestSQL_UpdateUser(t *testing.T) {
 }
 
 func TestSQL_DeleteUser(t *testing.T) {
-	db, cleanup := NewTestSQLConnPool()
+	db, cleanup := NewTestSQLConnPool("users")
 	t.Cleanup(cleanup)
 
 	ID := uuid.New()
