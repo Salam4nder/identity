@@ -8,9 +8,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/crypto/bcrypt"
 )
+
+var tracer = otel.Tracer("db")
 
 // User defines a user in the database.
 type User struct {
@@ -40,6 +44,16 @@ func (x CreateUserParams) SpanAttributes() []attribute.KeyValue {
 
 // CreateUser creates a new user in the database.
 func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) error {
+	var err error
+	ctx, span := tracer.Start(ctx, "CreateUser")
+	defer func() {
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			span.RecordError(err)
+		}
+		span.End()
+	}()
+
 	query := `
     INSERT INTO users (id, full_name, email, password_hash, created_at)
     VALUES ($1, $2, $3, $4, $5)
@@ -70,7 +84,7 @@ func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) error {
 	}
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		log.Error().Err(err).Msg("db: error creating user, no rows affected")
+		log.Error().Err(err).Msg("db: error creating user, getting rows affected")
 		return err
 	}
 	if rowsAffected != 1 {
