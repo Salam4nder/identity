@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"errors"
 	"fmt"
 	"net/mail"
 	"regexp"
@@ -11,31 +12,22 @@ var (
 	isValidFullName = regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString
 
 	// ErrInvalidEmail is returned when the email is invalid.
-	ErrInvalidEmail = fmt.Errorf(
-		"util: email validation failed, provided email is not a valid email address",
-	)
+	ErrInvalidEmail = errors.New("validation: provided email is not a valid email address")
 	// ErrInvalidUsername is returned when the username is invalid.
-	ErrInvalidUsername = fmt.Errorf(
-		"util: username validaton failed, " +
-			"must contain only letters, digits, or underscore",
-	)
+	ErrInvalidUsername = errors.New("validation: username must contain only letters, digits, or underscore")
 	// ErrInvalidFullName is returned when the full name is invalid.
-	ErrInvalidFullName = fmt.Errorf(
-		"util: full name validation failed, must contain only letters or spaces",
-	)
+	ErrInvalidFullName = errors.New("validation: full name must contain only letters or spaces")
 	// ErrInvalidPassword is returned when the password is invalid.
-	ErrInvalidPassword = fmt.Errorf(
-		"util: password validation failed, " +
-			"must contain at least one uppercase letter, one lowercase letter and one digit",
-	)
+	ErrInvalidPassword = errors.New("validation: password must contain an uppercase and lowercase letter and a digit")
 )
 
 // StringLen checks if the given string is between the given min and max.
-func StringLen(value string, minLength int, maxLength int) error {
+func StringLen(value string, minLength int, maxLength int, entity string) error {
 	n := len(value)
 	if n < minLength || n > maxLength {
 		return fmt.Errorf(
-			"util: validation failed, must contain from %d-%d characters",
+			"validation: %s must contain from %d-%d characters",
+			entity,
 			minLength,
 			maxLength,
 		)
@@ -46,7 +38,7 @@ func StringLen(value string, minLength int, maxLength int) error {
 
 // Username checks if the given username is valid.
 func Username(value string) error {
-	if err := StringLen(value, 3, 100); err != nil {
+	if err := StringLen(value, 3, 100, "username"); err != nil {
 		return err
 	}
 
@@ -59,7 +51,7 @@ func Username(value string) error {
 
 // FullName checks if the given full name is valid.
 func FullName(value string) error {
-	if err := StringLen(value, 3, 100); err != nil {
+	if err := StringLen(value, 3, 100, "full_name"); err != nil {
 		return err
 	}
 
@@ -72,12 +64,12 @@ func FullName(value string) error {
 
 // Password checks if the given password is valid.
 func Password(value string) error {
-	if err := StringLen(value, 6, 100); err != nil {
+	if err := StringLen(value, 6, 100, "password"); err != nil {
 		return err
 	}
 
 	// Password must contain at least one uppercase letter,
-	// one lowercase letter and one digit
+	// one lowercase letter and one digit.
 	if !regexp.MustCompile(`[a-z]`).MatchString(value) ||
 		!regexp.MustCompile(`[A-Z]`).MatchString(value) ||
 		!regexp.MustCompile(`[0-9]`).MatchString(value) {
@@ -89,7 +81,7 @@ func Password(value string) error {
 
 // Email checks if the given email is valid.
 func Email(value string) error {
-	if err := StringLen(value, 3, 200); err != nil {
+	if err := StringLen(value, 3, 200, "email"); err != nil {
 		return err
 	}
 
@@ -102,5 +94,5 @@ func Email(value string) error {
 
 // Secret checks if the given secret is valid.
 func Secret(value string) error {
-	return StringLen(value, 32, 128)
+	return StringLen(value, 32, 128, "secret")
 }
