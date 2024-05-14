@@ -8,19 +8,19 @@ import (
 
 func TestStringLen(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
-		if err := StringLen(strings.Repeat("a", 100), 1, 100); err != nil {
+		if err := StringLen(strings.Repeat("a", 100), 1, 100, "test"); err != nil {
 			t.Errorf("ValidateString failed: %s", err)
 		}
 	})
 
 	t.Run("Empty string", func(t *testing.T) {
-		if err := StringLen("", 1, 100); err == nil {
+		if err := StringLen("", 1, 100, "test"); err == nil {
 			t.Errorf("ValidateString failed: %s", err)
 		}
 	})
 
 	t.Run("Too short", func(t *testing.T) {
-		if err := StringLen("a", 2, 100); err == nil {
+		if err := StringLen("a", 2, 100, "test"); err == nil {
 			t.Errorf("ValidateString(\"a\") failed: %s", err)
 		}
 	})
