@@ -4,45 +4,23 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/grpc/gen"
 	"github.com/Salam4nder/user/pkg/validation"
 	"github.com/google/uuid"
-
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	otelCode "go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-const (
-	serverStr  string = "UserServer"
-	handlerStr string = "CreateUser"
-)
-
-var tracer = otel.Tracer(serverStr)
-
-func spanAttribures(req *gen.CreateUserRequest) []attribute.KeyValue {
-	return []attribute.KeyValue{
-		attribute.String("full_name", req.FullName),
-		attribute.String("email", req.Email),
-		attribute.Int("password_length", len(req.Password)),
-	}
-}
-
 func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest) (*emptypb.Empty, error) {
-	if req == nil {
-		return &emptypb.Empty{}, requestIsNilError()
-	}
-
 	var err error
-	ctx, span := tracer.Start(ctx, handlerStr, trace.WithAttributes(spanAttribures(req)...))
+	ctx, span := tracer.Start(ctx, "rpc.CreateUser")
 	defer func() {
 		if err != nil {
 			span.SetStatus(otelCode.Error, err.Error())
@@ -50,6 +28,12 @@ func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest)
 		}
 		span.End()
 	}()
+	attrs, err := GenSpanAttributes(req)
+	if err == nil {
+		span.SetAttributes(attrs...)
+	} else {
+		slog.Warn("CreateUser: GenSpanAttributes", "err", err.Error())
+	}
 
 	if err = validateCreateUserRequest(req); err != nil {
 		return &emptypb.Empty{}, status.Error(codes.InvalidArgument, err.Error())
@@ -64,9 +48,9 @@ func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest)
 	}
 	if err = x.storage.CreateUser(ctx, params); err != nil {
 		if errors.Is(err, db.ErrDuplicateEmail) {
-			return &emptypb.Empty{}, status.Error(codes.AlreadyExists, err.Error())
+			return nil, status.Error(codes.AlreadyExists, err.Error())
 		}
-		return &emptypb.Empty{}, internalServerError(err)
+		return nil, internalServerError()
 	}
 
 	return &emptypb.Empty{}, nil
@@ -74,6 +58,9 @@ func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest)
 
 // validateCreateUserRequest returns nil if the request is valid.
 func validateCreateUserRequest(req *gen.CreateUserRequest) error {
+	if req == nil {
+		return requestIsNilError()
+	}
 	var (
 		fullNameErr error
 		emailErr    error
