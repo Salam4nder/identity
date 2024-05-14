@@ -25,9 +25,6 @@ Running `go test./...` will exclude tests that require a db connection.
 Running `make test-db` will only run tests that require a db connection.
 
 
-For testing the database layer, please run `make test-db`.
-For viewing coverage, run `make test-cover`.
-
 ## Lint
 Run `make lint` to run the linter engine. Linters are described in the `.golangci.yaml` file.
 
