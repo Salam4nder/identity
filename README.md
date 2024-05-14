@@ -17,8 +17,13 @@ You can alternatively run the server in a contianer:
 4. Run `make up`.
 
 ## Test
-Unit test can be run with `make test` or simply with `go test ./...`.
-This will however exclude tests that require a database connection.  
+Run all tests with `make test`. This will spin up a required Postgres container defined in `internal/db/compose.yaml`. 
+
+Running `go test./...` will exclude tests that require a db connection.
+
+
+Running `make test-db` will only run tests that require a db connection.
+
 
 For testing the database layer, please run `make test-db`.
 For viewing coverage, run `make test-cover`.
