@@ -49,7 +49,7 @@ func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) error {
 	var (
 		err   error
 		res   sql.Result
-		query string = `
+		query = `
     INSERT INTO users (id, full_name, email, password_hash, created_at)
     VALUES ($1, $2, $3, $4, $5)
     `
@@ -107,7 +107,7 @@ func (x *SQL) ReadUser(ctx context.Context, id uuid.UUID) (*User, error) {
 	var (
 		err   error
 		user  User
-		query string = `
+		query = `
         SELECT id, full_name, email, password_hash, created_at, updated_at
         FROM users
         WHERE id = $1
@@ -149,7 +149,7 @@ func (x *SQL) ReadUserByEmail(ctx context.Context, email string) (*User, error) 
 	var (
 		err   error
 		user  User
-		query string = `
+		query = `
         SELECT id, full_name, email, password_hash, created_at, updated_at
         FROM users
         WHERE email = $1
