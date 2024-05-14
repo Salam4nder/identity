@@ -17,12 +17,8 @@ import (
 	"github.com/Salam4nder/user/internal/grpc/gen"
 	"github.com/Salam4nder/user/internal/grpc/interceptors"
 	"github.com/Salam4nder/user/pkg/logger"
-	"github.com/go-logr/logr"
-	"github.com/go-logr/zerologr"
 	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"github.com/stimtech/go-migration"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -62,17 +58,12 @@ func main() {
 	cfg, err := config.New()
 	exitWithError(ctx, err)
 
-	var defaultLogger *slog.Logger
-
 	// UNIX Time is faster and smaller than most timestamps
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	if cfg.Environment == "dev" {
-		defaultLogger = slog.New(logger.NewOtelLogger(slog.New(logger.NewTintHandler(os.Stdout, nil))))
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+		slog.SetDefault(slog.New(logger.NewOtelHandler(logger.NewTintHandler(os.Stdout, nil))))
 	} else {
-		defaultLogger = slog.New(logger.NewOtelLogger(slog.New(slog.NewJSONHandler(os.Stdout, nil))))
+		slog.SetDefault(slog.New(logger.NewOtelHandler(slog.NewJSONHandler(os.Stdout, nil))))
 	}
-	slog.SetDefault(defaultLogger)
 
 	otelShutdown, err := setupOTELSDK(ctx)
 	defer func() {
@@ -102,8 +93,8 @@ func main() {
 	grpcServer := grpc.NewServer(
 		// grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
-			interceptors.UnaryLogger,
 			recovery.UnaryServerInterceptor(),
+			interceptors.UnaryLoggerInterceptor,
 		),
 	)
 	gen.RegisterUserServer(grpcServer, userServer)
@@ -113,27 +104,25 @@ func main() {
 	go func() {
 		srvErrChan <- grpcServer.Serve(grpcListener)
 	}()
-	log.Info().
-		Str("address", cfg.Server.GRPCAddr()).
-		Msg("gRPC server is running")
+	slog.InfoContext(ctx, "gRPC server is running", "address", cfg.Server.GRPCAddr())
 
 	select {
 	case err := <-srvErrChan:
-		log.Error().Err(err).Msg("main: gRPC server error")
+		slog.ErrorContext(ctx, "gRPC server error", "error", err)
 	case <-ctx.Done():
 		stop()
-		log.Info().Msg("main: signal received, shutting down...")
+		slog.InfoContext(ctx, "context done, shutting down...")
 	}
 	grpcServer.GracefulStop()
-	log.Info().Msg("main: service gracefully stopped")
+	slog.InfoContext(ctx, "gRPC server stopped")
 	if err != nil {
-		log.Error().Err(err).Msg("main: on shutdown")
+		slog.ErrorContext(ctx, "main: exit with error", "error", err)
 	}
 }
 
 func exitWithError(ctx context.Context, err error) {
 	if err != nil {
-		log.Error().Err(err).Msg("main: exit with error")
+		slog.ErrorContext(ctx, "main: exit with error", "error", err)
 		ctx.Done()
 		os.Exit(1)
 	}
@@ -143,8 +132,6 @@ func exitWithError(ctx context.Context, err error) {
 // If it does not return an error, make sure to call shutdown for proper cleanup.
 func setupOTELSDK(ctx context.Context) (shutdown func(context.Context) error, err error) {
 	var shutdownFuncs []func(context.Context) error
-	var l logr.Logger = zerologr.New(&log.Logger)
-	otel.SetLogger(l)
 
 	// shutdown calls cleanup functions registered via shutdownFuncs.
 	// The errors from the calls are joined.
