@@ -9,26 +9,16 @@ import (
 	"github.com/Salam4nder/user/internal/grpc/gen"
 	"github.com/Salam4nder/user/pkg/validation"
 	"github.com/google/uuid"
-	otelCode "go.opentelemetry.io/otel/codes"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // UpdateUser updates a user by ID.
 func (x *UserServer) UpdateUser(ctx context.Context, req *gen.UpdateUserRequest) (*emptypb.Empty, error) {
-	var err error
 	ctx, span := tracer.Start(ctx, "rpc.UpdateUser")
-	defer func() {
-		if err != nil {
-			span.SetStatus(otelCode.Error, err.Error())
-			span.RecordError(err)
-		}
-		span.End()
-	}()
+	defer span.End()
 
 	if req == nil {
-		return &emptypb.Empty{}, requestIsNilError()
+		return nil, requestIsNilError(span)
 	}
 
 	atts, err := GenSpanAttributes(req)
@@ -40,23 +30,20 @@ func (x *UserServer) UpdateUser(ctx context.Context, req *gen.UpdateUserRequest)
 
 	authPayload, err := x.authorizeUser(ctx)
 	if err != nil {
-		return &emptypb.Empty{}, unauthenticatedError(err)
+		return nil, unauthenticatedError(err, span, "no permission to access rpc")
 	}
 
 	if err = validateUpdateUserRequest(req); err != nil {
-		return &emptypb.Empty{}, status.Error(codes.InvalidArgument, err.Error())
+		return nil, invalidArgumentError(err, span, err.Error())
 	}
 
 	if authPayload.Email != req.GetEmail() {
-		return &emptypb.Empty{}, status.Errorf(
-			codes.PermissionDenied,
-			"not owner of provided email",
-		)
+		return nil, unauthenticatedError(errors.New("email does not match"), span, "no permission to access rpc")
 	}
 
 	id, err := uuid.Parse(req.GetId())
 	if err != nil {
-		return &emptypb.Empty{}, status.Error(codes.InvalidArgument, "ID is invalid")
+		return nil, invalidArgumentError(err, span, "invalid ID")
 	}
 
 	params := db.UpdateUserParams{
@@ -64,15 +51,11 @@ func (x *UserServer) UpdateUser(ctx context.Context, req *gen.UpdateUserRequest)
 		FullName: req.GetFullName(),
 		Email:    req.GetEmail(),
 	}
-
 	if err = x.storage.UpdateUser(ctx, params); err != nil {
-		switch {
-		case errors.Is(err, db.ErrUserNotFound):
-			return &emptypb.Empty{}, status.Error(codes.NotFound, err.Error())
-
-		default:
-			return &emptypb.Empty{}, internalServerError()
+		if errors.Is(err, db.ErrUserNotFound) {
+			return nil, notFoundError(err, span, "user not found")
 		}
+		return nil, internalServerError(err, span)
 	}
 	return &emptypb.Empty{}, nil
 }

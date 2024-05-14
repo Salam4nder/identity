@@ -8,25 +8,16 @@ import (
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/grpc/gen"
 	"github.com/google/uuid"
-	otelCode "go.opentelemetry.io/otel/codes"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // DeleteUser deletes a user by ID.
 func (x *UserServer) DeleteUser(ctx context.Context, req *gen.UserID) (*emptypb.Empty, error) {
-	var err error
 	ctx, span := tracer.Start(ctx, "rpc.DeleteUser")
-	defer func() {
-		if err != nil {
-			span.SetStatus(otelCode.Error, err.Error())
-			span.RecordError(err)
-		}
-		span.End()
-	}()
+	defer span.End()
+
 	if req == nil {
-		return nil, requestIsNilError()
+		return nil, requestIsNilError(span)
 	}
 
 	attrs, err := GenSpanAttributes(req)
@@ -37,21 +28,21 @@ func (x *UserServer) DeleteUser(ctx context.Context, req *gen.UserID) (*emptypb.
 	}
 
 	if req.GetId() == "" {
-		return nil, status.Error(codes.InvalidArgument, "ID can not be empty")
+		return nil, invalidArgumentError(errors.New("ID is required"), span, "ID is required")
 	}
 
 	id, err := uuid.Parse(req.GetId())
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "ID is invalid")
+		return nil, invalidArgumentError(err, span, "invalid ID")
 	}
 
 	if err = x.storage.DeleteUser(ctx, id); err != nil {
 		switch {
 		case errors.Is(err, db.ErrUserNotFound):
-			return nil, status.Error(codes.NotFound, err.Error())
+			return nil, notFoundError(err, span, "user not found")
 
 		default:
-			return nil, internalServerError()
+			return nil, internalServerError(err, span)
 		}
 	}
 

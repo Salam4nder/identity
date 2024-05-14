@@ -9,24 +9,14 @@ import (
 	"github.com/Salam4nder/user/internal/grpc/gen"
 	grpcUtil "github.com/Salam4nder/user/pkg/grpc"
 	"github.com/Salam4nder/user/pkg/validation"
-	otelCode "go.opentelemetry.io/otel/codes"
 	"golang.org/x/crypto/bcrypt"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // LoginUser logs in a user and returns a session and a token payload.
 func (x *UserServer) LoginUser(ctx context.Context, req *gen.LoginUserRequest) (*gen.LoginUserResponse, error) {
-	var err error
 	ctx, span := tracer.Start(ctx, "rpc.LoginUser")
-	defer func() {
-		if err != nil {
-			span.SetStatus(otelCode.Error, err.Error())
-			span.RecordError(err)
-		}
-		span.End()
-	}()
+	defer span.End()
 
 	attrs, err := GenSpanAttributes(req)
 	if err == nil {
@@ -36,19 +26,19 @@ func (x *UserServer) LoginUser(ctx context.Context, req *gen.LoginUserRequest) (
 	}
 
 	if err = validateLoginUserRequest(req); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, invalidArgumentError(err, span, err.Error())
 	}
 
 	user, err := x.storage.ReadUserByEmail(ctx, req.Email)
 	if err != nil {
 		if errors.Is(err, db.ErrUserNotFound) {
-			return nil, status.Error(codes.NotFound, "User not found.")
+			return nil, notFoundError(err, span, "user not found")
 		}
-		return nil, internalServerError()
+		return nil, internalServerError(err, span)
 	}
 
 	if err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
-		return nil, status.Error(codes.Unauthenticated, "invalid password")
+		return nil, unauthenticatedError(err, span, "invalid password")
 	}
 
 	accessToken, accessPayload, err := x.tokenMaker.NewToken(
@@ -56,7 +46,7 @@ func (x *UserServer) LoginUser(ctx context.Context, req *gen.LoginUserRequest) (
 		x.accessTokenDuration,
 	)
 	if err != nil {
-		return nil, internalServerError()
+		return nil, internalServerError(err, span)
 	}
 
 	refreshToken, refreshPayload, err := x.tokenMaker.NewToken(
@@ -64,7 +54,7 @@ func (x *UserServer) LoginUser(ctx context.Context, req *gen.LoginUserRequest) (
 		x.refreshTokenDuration,
 	)
 	if err != nil {
-		return nil, internalServerError()
+		return nil, internalServerError(err, span)
 	}
 
 	metadata := grpcUtil.MetadataFromContext(ctx)
@@ -77,7 +67,7 @@ func (x *UserServer) LoginUser(ctx context.Context, req *gen.LoginUserRequest) (
 		RefreshToken: refreshToken,
 		ExpiresAt:    refreshPayload.ExpiresAt,
 	}); err != nil {
-		return nil, internalServerError()
+		return nil, internalServerError(err, span)
 	}
 
 	// reminder to fix expiration timing on refresh token

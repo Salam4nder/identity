@@ -3,7 +3,6 @@ package grpc
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -11,31 +10,26 @@ import (
 	"github.com/Salam4nder/user/internal/grpc/gen"
 	"github.com/Salam4nder/user/pkg/validation"
 	"github.com/google/uuid"
-	otelCode "go.opentelemetry.io/otel/codes"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest) (*emptypb.Empty, error) {
-	var err error
 	ctx, span := tracer.Start(ctx, "rpc.CreateUser")
-	defer func() {
-		if err != nil {
-			span.SetStatus(otelCode.Error, err.Error())
-			span.RecordError(err)
-		}
-		span.End()
-	}()
+	defer span.End()
+
+	if req == nil {
+		return nil, requestIsNilError(span)
+	}
+
 	attrs, err := GenSpanAttributes(req)
 	if err == nil {
 		span.SetAttributes(attrs...)
 	} else {
-		slog.Warn("CreateUser: GenSpanAttributes", "err", err.Error())
+		slog.Warn("grpc.CreateUser: GenSpanAttributes", "err", err.Error())
 	}
 
 	if err = validateCreateUserRequest(req); err != nil {
-		return &emptypb.Empty{}, status.Error(codes.InvalidArgument, err.Error())
+		return nil, invalidArgumentError(err, span, err.Error())
 	}
 
 	params := db.CreateUserParams{
@@ -47,9 +41,9 @@ func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest)
 	}
 	if err = x.storage.CreateUser(ctx, params); err != nil {
 		if errors.Is(err, db.ErrDuplicateEmail) {
-			return nil, status.Error(codes.AlreadyExists, err.Error())
+			return nil, alreadyExistsError(err, span, "user with the provided email already exists")
 		}
-		return nil, internalServerError()
+		return nil, internalServerError(err, span)
 	}
 
 	return &emptypb.Empty{}, nil
@@ -57,9 +51,6 @@ func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest)
 
 // validateCreateUserRequest returns nil if the request is valid.
 func validateCreateUserRequest(req *gen.CreateUserRequest) error {
-	if req == nil {
-		return requestIsNilError()
-	}
 	var (
 		fullNameErr error
 		emailErr    error
@@ -67,15 +58,15 @@ func validateCreateUserRequest(req *gen.CreateUserRequest) error {
 	)
 
 	if err := validation.FullName(req.GetFullName()); err != nil {
-		fullNameErr = fmt.Errorf("grpc: full_name %w", err)
+		fullNameErr = err
 	}
 
 	if err := validation.Email(req.GetEmail()); err != nil {
-		emailErr = fmt.Errorf("grpc: email %w", err)
+		emailErr = err
 	}
 
 	if err := validation.Password(req.GetPassword()); err != nil {
-		passwordErr = fmt.Errorf("grpc: password %w", err)
+		passwordErr = err
 	}
 
 	return errors.Join(fullNameErr, emailErr, passwordErr)
