@@ -1,3 +1,6 @@
+//go:build testdb
+// +build testdb
+
 package db
 
 import (

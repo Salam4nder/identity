@@ -282,7 +282,7 @@ func TestSQL_DeleteUser(t *testing.T) {
 		FullName:  random.FullName(),
 		Email:     random.Email(),
 		Password:  random.String(10),
-		CreatedAt: time.Now().UTC(),
+		CreatedAt: time.Now(),
 	})
 	require.NoError(t, err)
 
@@ -293,6 +293,6 @@ func TestSQL_DeleteUser(t *testing.T) {
 	t.Run("Not found", func(t *testing.T) {
 		err := db.DeleteUser(ctx, ID)
 		require.Error(t, err)
-		require.ErrorIs(t, err, ErrUserNotFound)
+		require.ErrorIs(t, err, ErrNoRowsAffected)
 	})
 }
