@@ -9,8 +9,8 @@ func requestIsNilError() error {
 	return status.Error(codes.InvalidArgument, "request is nil")
 }
 
-func internalServerError(err error) error {
-	return status.Error(codes.Internal, err.Error())
+func internalServerError() error {
+	return status.Error(codes.Internal, "internal server error, please contact support with the trace ID")
 }
 
 func unauthenticatedError(err error) error {
