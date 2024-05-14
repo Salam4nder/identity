@@ -7,12 +7,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/Salam4nder/user/internal/config"
-	"github.com/rs/zerolog"
+	"github.com/Salam4nder/user/pkg/logger"
 	"github.com/rs/zerolog/log"
 	"github.com/stimtech/go-migration"
 	"go.uber.org/zap"
@@ -29,7 +30,7 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	slog.SetDefault(slog.New(logger.NewTintHandler(os.Stdout, nil)))
 
 	cfg := config.Postgres{
 		Host:     "localhost",

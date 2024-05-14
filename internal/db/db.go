@@ -6,10 +6,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rs/zerolog/log"
 )
 
 var _ Storage = (*SQL)(nil)
@@ -78,7 +78,7 @@ func (x *SQL) PingContext(ctx context.Context, maxTries int) error {
 				return nil
 			}
 			tries++
-			log.Error().Err(err).Msgf("db: pinging database, retrying %d/%d", tries, maxTries)
+			slog.ErrorContext(ctx, "db: pinging database", "try", tries, "maxTries", maxTries)
 		case <-ctx.Done():
 			return fmt.Errorf("db: pinging database: %w", ctx.Err())
 		}
