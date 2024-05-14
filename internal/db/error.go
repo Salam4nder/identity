@@ -9,10 +9,11 @@ import (
 
 // Common db errors.
 var (
-	ErrDuplicateEmail = errors.New("db: duplicate email")
-	ErrStringTooLong  = errors.New("db: string too long")
-	ErrUserNotFound   = errors.New("db: user not found")
-	ErrNoRowsAffected = errors.New("db: no rows affected")
+	ErrDuplicateEmail       = errors.New("db: duplicate email")
+	ErrStringTooLong        = errors.New("db: string too long")
+	ErrUserNotFound         = errors.New("db: user not found")
+	ErrNoRowsAffected       = errors.New("db: no rows affected")
+	ErrMultipleRowsAffected = errors.New("db: multiple rows affected")
 )
 
 // IsSentinelErr is a sentinel error.
