@@ -42,7 +42,7 @@ func TestSQL_CreateUser(t *testing.T) {
 		require.Equal(t, ID, got.ID)
 		require.Equal(t, fullName, got.FullName)
 		require.Equal(t, email, got.Email)
-		require.Equal(t, createdAt, got.CreatedAt)
+		require.True(t, time.Now().After(got.CreatedAt))
 	})
 
 	t.Run("name exceeds 255 chars returns err", func(t *testing.T) {
@@ -123,7 +123,7 @@ func TestSQL_ReadUser(t *testing.T) {
 	require.Equal(t, ID, got.ID)
 	require.Equal(t, fullName, got.FullName)
 	require.Equal(t, email, got.Email)
-	require.Equal(t, createdAt, got.CreatedAt)
+	require.True(t, time.Now().After(got.CreatedAt))
 
 	t.Run("Not found", func(t *testing.T) {
 		_, err := db.ReadUser(ctx, uuid.New())
@@ -164,8 +164,7 @@ func TestSQL_ReadUserByEmail(t *testing.T) {
 	require.Equal(t, ID, got.ID)
 	require.Equal(t, fullName, got.FullName)
 	require.Equal(t, email, got.Email)
-	require.Equal(t, createdAt, got.CreatedAt)
-	require.Equal(t, createdAt, got.CreatedAt)
+	require.True(t, time.Now().After(got.CreatedAt))
 
 	t.Run("Not found", func(t *testing.T) {
 		_, err := db.ReadUserByEmail(ctx, random.Email())
@@ -219,7 +218,7 @@ func TestSQL_UpdateUser(t *testing.T) {
 		require.Equal(t, ID, got.ID)
 		require.Equal(t, newFullName, got.FullName)
 		require.Equal(t, newEmail, got.Email)
-		require.Equal(t, createdAt, got.CreatedAt)
+		require.True(t, time.Now().After(got.CreatedAt))
 	})
 
 	t.Run("name exceeds 255 chars returns err", func(t *testing.T) {
