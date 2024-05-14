@@ -1,7 +1,7 @@
 .PHONY: test test-cover test-db test-db/down test-db/run run api up down logs logs-user logs-db proto lint nancy redis
 
 test: 
-	go test -v ./...
+	go test -v ./... && $(MAKE) test-db
 
 test-cover:
 	go tool cover -html=coverage.out
