@@ -15,12 +15,10 @@ linters:
      - containedctx
      - contextcheck
      - copyloopvar
-     - cyclop
      - durationcheck
      - errname
      - errorlint
      - execinquery
-     - exhaustruct
      - exportloopref
      - gocognit
      - gocritic
@@ -38,7 +36,7 @@ linters:
      - reassign
      - rowserrcheck
      - revive
-     # - sloglint
+     - sloglint
      - spancheck
      - sqlclosecheck
      - unconvert
