@@ -11,6 +11,7 @@ import (
 	otelCode "go.opentelemetry.io/otel/codes"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // ReadUser returns a user by ID.
@@ -53,5 +54,10 @@ func (x *UserServer) ReadUser(ctx context.Context, req *gen.UserID) (*gen.UserRe
 		return nil, internalServerError()
 	}
 
-	return userToProtoResponse(user), nil
+	return &gen.UserResponse{
+		Id:        user.ID.String(),
+		FullName:  user.FullName,
+		Email:     user.Email,
+		CreatedAt: timestamppb.New(user.CreatedAt),
+	}, nil
 }

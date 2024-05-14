@@ -82,7 +82,12 @@ func (x *UserServer) LoginUser(ctx context.Context, req *gen.LoginUserRequest) (
 
 	// reminder to fix expiration timing on refresh token
 	return &gen.LoginUserResponse{
-		User:                  userToProtoResponse(user),
+		User: &gen.UserResponse{
+			Id:        user.ID.String(),
+			FullName:  user.FullName,
+			Email:     user.Email,
+			CreatedAt: timestamppb.New(user.CreatedAt),
+		},
 		AccessToken:           accessToken,
 		RefreshToken:          refreshToken,
 		AccessTokenExpiresAt:  timestamppb.New(accessPayload.ExpiresAt),

@@ -15,7 +15,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest) (*emptypb.Empty, error) {
@@ -80,13 +79,4 @@ func validateCreateUserRequest(req *gen.CreateUserRequest) error {
 	}
 
 	return errors.Join(fullNameErr, emailErr, passwordErr)
-}
-
-func userToProtoResponse(user *db.User) *gen.UserResponse {
-	return &gen.UserResponse{
-		Id:        user.ID.String(),
-		FullName:  user.FullName,
-		Email:     user.Email,
-		CreatedAt: timestamppb.New(user.CreatedAt),
-	}
 }

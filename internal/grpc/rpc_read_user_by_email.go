@@ -8,6 +8,7 @@ import (
 	"github.com/Salam4nder/user/internal/grpc/gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // ReadByEmail returns a user by email.
@@ -34,5 +35,10 @@ func (x *UserServer) ReadByEmail(
 		}
 	}
 
-	return userToProtoResponse(user), nil
+	return &gen.UserResponse{
+		Id:        user.ID.String(),
+		FullName:  user.FullName,
+		Email:     user.Email,
+		CreatedAt: timestamppb.New(user.CreatedAt),
+	}, nil
 }
