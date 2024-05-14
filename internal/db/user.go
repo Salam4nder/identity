@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -37,15 +37,25 @@ type CreateUserParams struct {
 
 func (x CreateUserParams) SpanAttributes() []attribute.KeyValue {
 	return []attribute.KeyValue{
+		attribute.String("user_id", x.ID.String()),
 		attribute.String("full_name", x.FullName),
 		attribute.String("email", x.Email),
+		attribute.Int("password_length", len(x.Password)),
 	}
 }
 
 // CreateUser creates a new user in the database.
 func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) error {
-	var err error
-	ctx, span := tracer.Start(ctx, "CreateUser")
+	var (
+		err   error
+		res   sql.Result
+		query string = `
+    INSERT INTO users (id, full_name, email, password_hash, created_at)
+    VALUES ($1, $2, $3, $4, $5)
+    `
+	)
+
+	ctx, span := tracer.Start(ctx, "db.CreateUser", trace.WithAttributes(params.SpanAttributes()...))
 	defer func() {
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
@@ -53,20 +63,15 @@ func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) error {
 		}
 		span.End()
 	}()
-
-	query := `
-    INSERT INTO users (id, full_name, email, password_hash, created_at)
-    VALUES ($1, $2, $3, $4, $5)
-    `
+	span.SetAttributes(attribute.String("query", query))
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(params.Password), 14)
 	if err != nil {
-		log.Error().Err(err).Msg("db: error hashing password")
 		return err
 	}
 	params.Password = string(passwordHash)
 
-	res, err := x.db.ExecContext(
+	res, err = x.db.ExecContext(
 		ctx,
 		query,
 		params.ID,
@@ -79,17 +84,19 @@ func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) error {
 		if IsSentinelErr(err) {
 			return SentinelErr(err)
 		}
-		log.Error().Err(err).Msg("db: error creating user")
 		return err
 	}
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		log.Error().Err(err).Msg("db: error creating user, getting rows affected")
 		return err
 	}
 	if rowsAffected != 1 {
-		log.Error().Err(err).Msg("db: error creating user, multiple rows affected")
-		return ErrNoRowsAffected
+		switch rowsAffected {
+		case 0:
+			return ErrNoRowsAffected
+		default:
+			return ErrMultipleRowsAffected
+		}
 	}
 
 	return nil
@@ -97,15 +104,30 @@ func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) error {
 
 // ReadUser reads a user from the database.
 func (x *SQL) ReadUser(ctx context.Context, id uuid.UUID) (*User, error) {
-	var user User
+	var (
+		err   error
+		user  User
+		query string = `
+        SELECT id, full_name, email, password_hash, created_at, updated_at
+        FROM users
+        WHERE id = $1
+        `
+	)
 
-	query := `
-    SELECT id, full_name, email, password_hash, created_at, updated_at
-    FROM users
-    WHERE id = $1
-    `
+	ctx, span := tracer.Start(ctx, "db.ReadUser")
+	defer func() {
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			span.RecordError(err)
+		}
+		span.End()
+	}()
+	span.SetAttributes(
+		attribute.String("query", query),
+		attribute.String("user_id", id.String()),
+	)
 
-	if err := x.db.QueryRowContext(ctx, query, id).Scan(
+	if err = x.db.QueryRowContext(ctx, query, id).Scan(
 		&user.ID,
 		&user.FullName,
 		&user.Email,
@@ -116,7 +138,6 @@ func (x *SQL) ReadUser(ctx context.Context, id uuid.UUID) (*User, error) {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrUserNotFound
 		}
-		log.Error().Err(err).Msg("db: error reading user")
 		return nil, err
 	}
 
@@ -125,15 +146,30 @@ func (x *SQL) ReadUser(ctx context.Context, id uuid.UUID) (*User, error) {
 
 // ReadUserByEmail reads a user from the database by email.
 func (x *SQL) ReadUserByEmail(ctx context.Context, email string) (*User, error) {
-	var user User
+	var (
+		err   error
+		user  User
+		query string = `
+        SELECT id, full_name, email, password_hash, created_at, updated_at
+        FROM users
+        WHERE email = $1
+        `
+	)
 
-	query := `
-    SELECT id, full_name, email, password_hash, created_at, updated_at
-    FROM users
-    WHERE email = $1
-    `
+	ctx, span := tracer.Start(ctx, "db.ReadUserByEmail")
+	defer func() {
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			span.RecordError(err)
+		}
+		span.End()
+	}()
+	span.SetAttributes(
+		attribute.String("query", query),
+		attribute.String("email", email),
+	)
 
-	if err := x.db.QueryRowContext(ctx, query, email).Scan(
+	if err = x.db.QueryRowContext(ctx, query, email).Scan(
 		&user.ID,
 		&user.FullName,
 		&user.Email,
@@ -144,7 +180,6 @@ func (x *SQL) ReadUserByEmail(ctx context.Context, email string) (*User, error) 
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrUserNotFound
 		}
-		log.Error().Err(err).Msg("db: error reading user")
 		return nil, err
 	}
 
@@ -158,15 +193,37 @@ type UpdateUserParams struct {
 	Email    string
 }
 
+func (x UpdateUserParams) SpanAttributes() []attribute.KeyValue {
+	return []attribute.KeyValue{
+		attribute.String("user_id", x.ID.String()),
+		attribute.String("full_name", x.FullName),
+		attribute.String("email", x.Email),
+	}
+}
+
 // UpdateUser updates a user in the database.
 func (x *SQL) UpdateUser(ctx context.Context, params UpdateUserParams) error {
-	query := `
-    UPDATE users
-    SET full_name = $1, email = $2, updated_at = $3
-    WHERE id = $4
-    `
+	var (
+		err   error
+		res   sql.Result
+		query string = `
+        UPDATE users
+        SET full_name = $1, email = $2, updated_at = $3
+        WHERE id = $4
+        `
+	)
 
-	res, err := x.db.ExecContext(
+	ctx, span := tracer.Start(ctx, "db.UpdateUser", trace.WithAttributes(params.SpanAttributes()...))
+	defer func() {
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			span.RecordError(err)
+		}
+		span.End()
+	}()
+	span.SetAttributes(attribute.String("query", query))
+
+	res, err = x.db.ExecContext(
 		ctx,
 		query,
 		params.FullName,
@@ -178,17 +235,19 @@ func (x *SQL) UpdateUser(ctx context.Context, params UpdateUserParams) error {
 		if IsSentinelErr(err) {
 			return SentinelErr(err)
 		}
-		log.Error().Err(err).Msg("db: error updating user")
 		return err
 	}
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		log.Error().Err(err).Msg("db: error updating user, no rows affected")
 		return err
 	}
 	if rowsAffected != 1 {
-		log.Error().Err(err).Msg("db: error updating user, multiple rows affected")
-		return ErrNoRowsAffected
+		switch rowsAffected {
+		case 0:
+			return ErrNoRowsAffected
+		default:
+			return ErrMultipleRowsAffected
+		}
 	}
 
 	return nil
@@ -196,26 +255,47 @@ func (x *SQL) UpdateUser(ctx context.Context, params UpdateUserParams) error {
 
 // DeleteUser deletes a user from the database.
 func (x *SQL) DeleteUser(ctx context.Context, id uuid.UUID) error {
-	query := `
-    DELETE FROM users
-    WHERE id = $1
-    `
+	var (
+		err   error
+		res   sql.Result
+		query string = `
+        DELETE FROM users
+        WHERE id = $1
+        `
+	)
 
-	result, err := x.db.ExecContext(ctx, query, id)
+	ctx, span := tracer.Start(ctx, "db.DeleteUser")
+	defer func() {
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			span.RecordError(err)
+		}
+		span.End()
+	}()
+	span.SetAttributes(
+		attribute.String("user_id", id.String()),
+		attribute.String("query", query),
+	)
+
+	res, err = x.db.ExecContext(ctx, query, id)
 	if err != nil {
 		if IsSentinelErr(err) {
 			return SentinelErr(err)
 		}
-		log.Error().Err(err).Msg("db: error deleting user")
 		return err
 	}
 
-	if rowsAffected, _ := result.RowsAffected(); rowsAffected != 1 {
-		if rowsAffected > 1 {
-			log.Error().Err(err).Msg("db: error deleting user, multiple rows affected")
-			return err
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected != 1 {
+		switch rowsAffected {
+		case 0:
+			return ErrNoRowsAffected
+		default:
+			return ErrMultipleRowsAffected
 		}
-		return ErrUserNotFound
 	}
 
 	return nil
