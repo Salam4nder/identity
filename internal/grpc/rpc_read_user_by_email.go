@@ -30,7 +30,7 @@ func (x *UserServer) ReadByEmail(
 			return nil, status.Error(codes.NotFound, err.Error())
 
 		default:
-			return nil, internalServerError(err)
+			return nil, internalServerError()
 		}
 	}
 
