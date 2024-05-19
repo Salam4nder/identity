@@ -58,7 +58,6 @@ func main() {
 	cfg, err := config.New()
 	exitWithError(ctx, err)
 
-	// UNIX Time is faster and smaller than most timestamps
 	if cfg.Environment == "dev" {
 		slog.SetDefault(slog.New(logger.NewOtelHandler(logger.NewTintHandler(os.Stdout, nil))))
 	} else {
