@@ -30,6 +30,8 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	healthgen "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -56,7 +58,7 @@ func main() {
 	defer stop()
 
 	cfg, err := config.New()
-	exitWithError(ctx, err)
+	exitOnError(ctx, err)
 
 	if cfg.Environment == "dev" {
 		slog.SetDefault(slog.New(logger.NewOtelHandler(logger.NewTintHandler(os.Stdout, nil))))
@@ -70,25 +72,18 @@ func main() {
 	}()
 
 	db, err := sql.Open(cfg.PSQL.Driver(), cfg.PSQL.Addr())
-	exitWithError(ctx, err)
+	exitOnError(ctx, err)
 	storage := internalDB.New(db)
 	if err = storage.PingContext(ctx, 5 /*max tries*/); err != nil {
-		exitWithError(ctx, err)
+		exitOnError(ctx, err)
 	}
 	migration := migration.New(db, zap.NewNop()).WithFolder(migrationFolder)
 	if err = migration.Migrate(); err != nil {
-		exitWithError(ctx, err)
+		exitOnError(ctx, err)
 	}
 
-	userServer, err := internalGRPC.NewUserServer(
-		storage,
-		cfg.Server.SymmetricKey,
-		accessTokenDuration,
-		refreshTokenDuration,
-	)
-	exitWithError(ctx, err)
 	grpcListener, err := net.Listen("tcp", cfg.Server.GRPCAddr())
-	exitWithError(ctx, err)
+	exitOnError(ctx, err)
 	grpcServer := grpc.NewServer(
 		// grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
@@ -96,8 +91,20 @@ func main() {
 			interceptors.UnaryLoggerInterceptor,
 		),
 	)
+	healthServer := health.NewServer()
+	healthgen.RegisterHealthServer(grpcServer, healthServer)
+	userServer, err := internalGRPC.NewUserServer(
+		storage,
+		healthServer,
+		cfg.Server.SymmetricKey,
+		accessTokenDuration,
+		refreshTokenDuration,
+	)
+	exitOnError(ctx, err)
 	gen.RegisterUserServer(grpcServer, userServer)
 	reflection.Register(grpcServer)
+
+	go userServer.MonitorHealth(ctx)
 
 	srvErrChan := make(chan error, 1)
 	go func() {
@@ -109,19 +116,19 @@ func main() {
 	case err := <-srvErrChan:
 		slog.ErrorContext(ctx, "gRPC server error", "error", err)
 	case <-ctx.Done():
-		stop()
-		slog.InfoContext(ctx, "context done, shutting down...")
+		slog.InfoContext(ctx, "main: context done, shutting down...")
 	}
 	grpcServer.GracefulStop()
 	slog.InfoContext(ctx, "gRPC server stopped")
+
 	if err != nil {
-		slog.ErrorContext(ctx, "main: exit with error", "error", err)
+		slog.ErrorContext(ctx, "main: error upon exit", "error", err)
 	}
 }
 
-func exitWithError(ctx context.Context, err error) {
+func exitOnError(ctx context.Context, err error) {
 	if err != nil {
-		slog.ErrorContext(ctx, "main: exit with error", "error", err)
+		slog.ErrorContext(ctx, "main: exit on error", "error", err)
 		ctx.Done()
 		os.Exit(1)
 	}

@@ -20,11 +20,13 @@ type Storage interface {
 	DB() *sql.DB
 	// Close closes the underlying sql.DB.
 	Close() error
-	// PingContext pings the underlying sql.DB.
+	// PingContext pings the underlying sql.DB with n tries.
+	// Returns nil if the database is reachable.
 	PingContext(ctx context.Context, tries int) error
 
 	// User repository
 
+	// CreateUser creates a new user in the database.
 	CreateUser(ctx context.Context, params CreateUserParams) error
 	// ReadUser reads a user from the database.
 	ReadUser(ctx context.Context, id uuid.UUID) (*User, error)
