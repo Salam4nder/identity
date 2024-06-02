@@ -13,6 +13,8 @@ import (
 
 	"github.com/Salam4nder/user/internal/config"
 	internalDB "github.com/Salam4nder/user/internal/db"
+	"github.com/Salam4nder/user/internal/email"
+	"github.com/Salam4nder/user/internal/event"
 	internalGRPC "github.com/Salam4nder/user/internal/grpc"
 	"github.com/Salam4nder/user/internal/grpc/gen"
 	"github.com/Salam4nder/user/internal/grpc/interceptors"
@@ -20,6 +22,7 @@ import (
 	"github.com/Salam4nder/user/pkg/logger"
 	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
+	"github.com/nats-io/nats.go"
 	"github.com/stimtech/go-migration"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -41,6 +44,8 @@ const (
 	accessTokenDuration = 15 * time.Minute
 	// refreshTokenDuration is the duration for which the refresh token is valid.
 	refreshTokenDuration = 7 * 24 * time.Hour
+	// natsTimeout is the timeout for the NATS connection.
+	natsTimeout = 5 * time.Second
 )
 
 // serviceID is the unique identifier of the service.
@@ -79,6 +84,21 @@ func main() {
 		exitOnError(ctx, err)
 	}
 
+	// NATS.
+	natsClient, err := nats.Connect(
+		cfg.NATS.Addr(),
+		nats.Timeout(natsTimeout),
+		nats.RetryOnFailedConnect(true),
+		nats.MaxReconnects(20),
+	)
+	exitOnError(ctx, err)
+	natsChan := make(chan *nats.Msg, 64)
+	userSub, err := natsClient.ChanSubscribe(event.UserRegistered, natsChan)
+	exitOnError(ctx, err)
+
+	worker := event.NewWorker(email.NewNoOpSender())
+	go worker.Work(ctx, natsChan)
+
 	grpcListener, err := net.Listen("tcp", cfg.Server.GRPCAddr())
 	exitOnError(ctx, err)
 	grpcServer := grpc.NewServer(
@@ -93,6 +113,7 @@ func main() {
 	userServer, err := internalGRPC.NewUserServer(
 		storage,
 		healthServer,
+		natsClient,
 		cfg.Server.SymmetricKey,
 		accessTokenDuration,
 		refreshTokenDuration,
@@ -117,6 +138,8 @@ func main() {
 	}
 	grpcServer.GracefulStop()
 	err = errors.Join(err, db.Close())
+	err = errors.Join(err, userSub.Unsubscribe())
+	natsClient.Close()
 
 	if err != nil {
 		slog.ErrorContext(ctx, "main: error upon exit", "error", err)
