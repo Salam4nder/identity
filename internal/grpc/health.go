@@ -24,6 +24,12 @@ func (x *UserServer) MonitorHealth(ctx context.Context) {
 					slog.Warn("health: pinging storage failed, setting health status to not serving")
 				}
 			}
+			if !x.natsConn.IsConnected() {
+				unhealthy = true
+				if ctx.Err() == nil {
+					slog.Warn("health: nats is not connected, setting health status to not serving")
+				}
+			}
 			if unhealthy {
 				// Empty string means the whole service.
 				x.health.SetServingStatus("", grpc_health_v1.HealthCheckResponse_NOT_SERVING)
