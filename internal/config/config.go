@@ -12,7 +12,7 @@ import (
 type Application struct {
 	Environment string   `yaml:"environment"`
 	PSQL        Postgres `yaml:"postgres"`
-	Redis       Redis    `yaml:"redis"`
+	NATS        NATS     `yaml:"nats"`
 	Server      Server   `yaml:"server"`
 }
 
@@ -46,8 +46,8 @@ type Postgres struct {
 	ApplicationName string `yaml:"applicationName"`
 }
 
-// Redis holds the Redis configuration.
-type Redis struct {
+// NATS holds the NATS configuration.
+type NATS struct {
 	Host string `yaml:"host"`
 	Port string `yaml:"port"`
 }
@@ -77,9 +77,9 @@ func (x *Postgres) Driver() string {
 	return "postgres"
 }
 
-// Addr returns the Redis connection string.
-func (x *Redis) Addr() string {
-	return fmt.Sprintf("%s:%s", x.Host, x.Port)
+// Addr returns the NATS connection string.
+func (x NATS) Addr() string {
+	return fmt.Sprintf("nats://%s:%s", x.Host, x.Port)
 }
 
 // GRPCAddr returns the gRPC server address.
