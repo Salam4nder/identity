@@ -6,6 +6,7 @@ import (
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/grpc/gen"
 	"github.com/Salam4nder/user/pkg/token"
+	"github.com/nats-io/nats.go"
 	"google.golang.org/grpc/health"
 )
 
@@ -19,12 +20,14 @@ type UserServer struct {
 	storage    db.Storage
 	tokenMaker token.Maker
 	health     *health.Server
+	natsConn   *nats.Conn
 }
 
 // NewUserServer returns a new UserService.
 func NewUserServer(
 	store db.Storage,
 	health *health.Server,
+	natsConn *nats.Conn,
 	symmetricKey string,
 	accessTokenDuration time.Duration,
 	refreshTokenDuration time.Duration,
@@ -41,5 +44,6 @@ func NewUserServer(
 		storage:    store,
 		tokenMaker: tokenMaker,
 		health:     health,
+		natsConn:   natsConn,
 	}, nil
 }
