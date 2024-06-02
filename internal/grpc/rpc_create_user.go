@@ -1,12 +1,16 @@
 package grpc
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
 	"errors"
 	"log/slog"
 	"time"
 
 	"github.com/Salam4nder/user/internal/db"
+	"github.com/Salam4nder/user/internal/email"
+	"github.com/Salam4nder/user/internal/event"
 	"github.com/Salam4nder/user/internal/grpc/gen"
 	"github.com/Salam4nder/user/pkg/validation"
 	"github.com/google/uuid"
@@ -25,7 +29,7 @@ func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest)
 	if err == nil {
 		span.SetAttributes(attrs...)
 	} else {
-		slog.Warn("grpc.CreateUser: GenSpanAttributes", "err", err.Error())
+		slog.WarnContext(ctx, "grpc.CreateUser: GenSpanAttributes", "err", err.Error())
 	}
 
 	if err = validateCreateUserRequest(req); err != nil {
@@ -44,6 +48,20 @@ func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest)
 			return nil, alreadyExistsError(err, span, "user with the provided email already exists")
 		}
 		return nil, internalServerError(err, span)
+	}
+
+	m := email.Email{
+		To:      req.GetEmail(),
+		From:    email.TestFrom,
+		Subject: email.TestSubject,
+		Body:    email.TestBody,
+	}
+	var buf bytes.Buffer
+	if err = gob.NewEncoder(&buf).Encode(m); err != nil {
+		slog.WarnContext(ctx, "grpc.CreateUser: gob.NewEncoder", "err", err.Error())
+	}
+	if err = x.natsConn.Publish(event.UserRegistered, buf.Bytes()); err != nil {
+		slog.WarnContext(ctx, "grpc.CreateUser: nats.Publish", "err", err.Error())
 	}
 
 	return &emptypb.Empty{}, nil
