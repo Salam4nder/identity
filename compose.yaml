@@ -16,10 +16,11 @@ services:
       interval: 5s
       timeout: 10s
       retries: 5
-  redis:
-    image: redis:alpine
+  nats:
+    image: nats
     ports:
-      - "6379:6379"
+      - "8222:8222"
+      - "4222:4222"
   jaeger:
     image: jaegertracing/all-in-one:latest
     ports:
