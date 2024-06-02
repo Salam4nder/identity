@@ -74,7 +74,12 @@ func newPropagator() propagation.TextMapPropagator {
 	)
 }
 
-func newTraceProvider(ctx context.Context, serviceName, serviceVersion, serviceID string) (*trace.TracerProvider, error) {
+func newTraceProvider(
+	ctx context.Context,
+	serviceName,
+	serviceVersion,
+	serviceID string,
+) (*trace.TracerProvider, error) {
 	grpcExporter, err := otlptracegrpc.New(
 		ctx,
 		// TODO(kg): Use secure connection.
