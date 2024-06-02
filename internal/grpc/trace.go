@@ -11,7 +11,7 @@ import (
 var tracer = otel.Tracer("rpc")
 
 // GenerateSpanAttributes returns span attributes for generated request structs.
-// Not the prettiest solution.
+// Experimental solution, not the prettiest.
 func GenSpanAttributes(param any) ([]attribute.KeyValue, error) {
 	if param == nil {
 		return nil, errors.New("param is nil")
