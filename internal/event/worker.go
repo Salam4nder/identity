@@ -30,16 +30,22 @@ func (x *Worker) Work(ctx context.Context, natsCh chan *nats.Msg) {
 			var m email.Email
 			if err := gob.NewDecoder(bytes.NewReader(msg.Data)).Decode(&m); err != nil {
 				slog.WarnContext(ctx, "event: failed to decode message", "error", err)
-				msg.Ack()
+				if err = msg.Ack(); err != nil {
+					slog.WarnContext(ctx, "event: failed to ack message", "error", err)
+				}
 				continue
 			}
-			x.mailSender.SendEmail(ctx, email.Email{
+			if err := x.mailSender.SendEmail(ctx, email.Email{
 				To:      m.To,
 				Subject: m.Subject,
 				Body:    m.Body,
 				From:    m.From,
-			})
-			msg.Ack()
+			}); err != nil {
+				slog.WarnContext(ctx, "event: failed to send email", "error", err)
+			}
+			if err := msg.Ack(); err != nil {
+				slog.WarnContext(ctx, "event: failed to ack message", "error", err)
+			}
 		}
 	}
 }
