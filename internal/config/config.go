@@ -1,13 +1,10 @@
-// Package config provides the application configuration.
-// Currently using yaml package to parse environment variables.
-// Planning to switch to Viper in the future.
 package config
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 
-	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 )
 
@@ -26,13 +23,13 @@ func New() (*Application, error) {
 
 	f, err := os.Open("config.yaml")
 	if err != nil {
-		log.Error().Err(err).Msg("config: opening config file")
+		slog.Error("config: opening config file", "err", err)
 		return nil, err
 	}
 	defer f.Close()
 
 	if err := yaml.NewDecoder(f).Decode(&cfg); err != nil {
-		log.Error().Err(err).Msg("config: decoding config file")
+		slog.Error("config: decoding config file", "err", err)
 		return nil, err
 	}
 
