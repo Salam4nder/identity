@@ -13,6 +13,6 @@ server:
   symmetricKey: 12345678912345678912345678912345
   accessTokenDuration: 10
   refreshTokenDuration: 24
-redis:
+nats:
   host: localhost
-  port: 6379
+  port: 4222
