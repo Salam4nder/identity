@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,11 +19,13 @@ import (
 	internalGRPC "github.com/Salam4nder/user/internal/grpc"
 	"github.com/Salam4nder/user/internal/grpc/gen"
 	"github.com/Salam4nder/user/internal/grpc/interceptors"
+	"github.com/Salam4nder/user/internal/metrics"
 	"github.com/Salam4nder/user/internal/otel"
 	"github.com/Salam4nder/user/pkg/logger"
 	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/nats-io/nats.go"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/stimtech/go-migration"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -39,7 +42,7 @@ const (
 	// serviceVersion is the version of the service.
 	serviceVersion string = "1.0.0"
 	// migrationFolder is the folder where the migration files are stored.
-	migrationFolder = "internal/db/migrations"
+	migrationFolder = "/app/db/migrations"
 	// accessTokenDuration is the duration for which the access token is valid.
 	accessTokenDuration = 15 * time.Minute
 	// refreshTokenDuration is the duration for which the refresh token is valid.
@@ -129,6 +132,15 @@ func main() {
 		srvErrChan <- grpcServer.Serve(grpcListener)
 	}()
 	slog.InfoContext(ctx, "main: gRPC server is running", "address", cfg.Server.GRPCAddr())
+
+	if err = metrics.Register(); err != nil {
+		exitOnError(ctx, err)
+	}
+	http.Handle("/metrics", promhttp.Handler())
+	go func() {
+		srvErrChan <- http.ListenAndServe("0.0.0.0:8090", nil)
+	}()
+	slog.InfoContext(ctx, "main: serving metrics on ", "address", ":8090")
 
 	select {
 	case err := <-srvErrChan:
