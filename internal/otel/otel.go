@@ -84,6 +84,7 @@ func newTraceProvider(
 		ctx,
 		// TODO(kg): Use secure connection.
 		otlptracegrpc.WithInsecure(),
+		otlptracegrpc.WithEndpoint("jaeger:4317"),
 	)
 	if err != nil {
 		return nil, err
