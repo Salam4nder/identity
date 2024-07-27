@@ -12,6 +12,7 @@ import (
 	"github.com/Salam4nder/user/internal/email"
 	"github.com/Salam4nder/user/internal/event"
 	"github.com/Salam4nder/user/internal/grpc/gen"
+	"github.com/Salam4nder/user/internal/metrics"
 	"github.com/Salam4nder/user/pkg/validation"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -63,6 +64,8 @@ func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest)
 	if err = x.natsConn.Publish(event.UserRegistered, buf.Bytes()); err != nil {
 		slog.WarnContext(ctx, "grpc.CreateUser: nats.Publish", "err", err.Error())
 	}
+	metrics.UsersActive.Inc()
+	metrics.UsersRegistered.Inc()
 
 	return &emptypb.Empty{}, nil
 }
