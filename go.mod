@@ -9,6 +9,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/nats-io/nats.go v1.35.0
 	github.com/o1egl/paseto v1.0.0
+	github.com/prometheus/client_golang v1.19.1
 	github.com/rs/zerolog v1.29.1
 	github.com/stimtech/go-migration v1.0.0
 	github.com/stretchr/testify v1.9.0
@@ -42,7 +43,6 @@ require (
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/prometheus/client_golang v1.19.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.53.0 // indirect
 	github.com/prometheus/procfs v0.14.0 // indirect
