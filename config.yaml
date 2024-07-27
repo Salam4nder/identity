@@ -1,18 +1,18 @@
 # environment options: dev, prod
 environment: dev
 postgres:
-  host: localhost
+  host: postgres
   port: 5432
   db: users-db
   user: user
   password : password
   applicationName: user-service
 server:
-  host: localhost
+  host: 0.0.0.0
   port: 50051
   symmetricKey: 12345678912345678912345678912345
   accessTokenDuration: 10
   refreshTokenDuration: 24
 nats:
-  host: localhost
+  host: nats
   port: 4222
