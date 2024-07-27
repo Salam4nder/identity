@@ -19,8 +19,8 @@ import (
 	internalGRPC "github.com/Salam4nder/user/internal/grpc"
 	"github.com/Salam4nder/user/internal/grpc/gen"
 	"github.com/Salam4nder/user/internal/grpc/interceptors"
-	"github.com/Salam4nder/user/internal/metrics"
-	"github.com/Salam4nder/user/internal/otel"
+	"github.com/Salam4nder/user/internal/observability/metrics"
+	"github.com/Salam4nder/user/internal/observability/otel"
 	"github.com/Salam4nder/user/pkg/logger"
 	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
@@ -137,8 +137,12 @@ func main() {
 		exitOnError(ctx, err)
 	}
 	http.Handle("/metrics", promhttp.Handler())
+	promSrv := http.Server{
+		Addr:        "0.0.0.0:8090",
+		ReadTimeout: time.Second * 10,
+	}
 	go func() {
-		srvErrChan <- http.ListenAndServe("0.0.0.0:8090", nil)
+		srvErrChan <- promSrv.ListenAndServe()
 	}()
 	slog.InfoContext(ctx, "main: serving metrics on ", "address", ":8090")
 

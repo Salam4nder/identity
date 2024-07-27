@@ -10,7 +10,7 @@ var (
 	UsersRegistered = prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: "user",
 		Subsystem: "api",
-		Name:      "users_registered",
+		Name:      "users_registered_total",
 		Help:      "Number of registered users - increases on user creation",
 	})
 

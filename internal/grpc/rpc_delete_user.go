@@ -7,7 +7,7 @@ import (
 
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/grpc/gen"
-	"github.com/Salam4nder/user/internal/metrics"
+	"github.com/Salam4nder/user/internal/observability/metrics"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
