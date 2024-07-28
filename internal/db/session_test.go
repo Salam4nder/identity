@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Salam4nder/user/pkg/password"
 	"github.com/Salam4nder/user/pkg/random"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -25,7 +26,7 @@ func TestCreate(t *testing.T) {
 		err := dbUser.CreateUser(context.Background(), CreateUserParams{
 			ID:       uuid.New(),
 			Email:    email,
-			Password: random.String(32),
+			Password: password.SafeString(random.String(32)),
 		})
 		require.NoError(t, err)
 
@@ -48,7 +49,7 @@ func TestCreate(t *testing.T) {
 		err := dbUser.CreateUser(context.Background(), CreateUserParams{
 			ID:       uuid.New(),
 			Email:    email,
-			Password: random.String(32),
+			Password: password.SafeString(random.String(32)),
 		})
 		require.NoError(t, err)
 
