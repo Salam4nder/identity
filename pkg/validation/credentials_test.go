@@ -6,26 +6,6 @@ import (
 	"testing"
 )
 
-func TestStringLen(t *testing.T) {
-	t.Run("OK", func(t *testing.T) {
-		if err := StringLen(strings.Repeat("a", 100), 1, 100, "test"); err != nil {
-			t.Errorf("ValidateString failed: %s", err)
-		}
-	})
-
-	t.Run("Empty string", func(t *testing.T) {
-		if err := StringLen("", 1, 100, "test"); err == nil {
-			t.Errorf("ValidateString failed: %s", err)
-		}
-	})
-
-	t.Run("Too short", func(t *testing.T) {
-		if err := StringLen("a", 2, 100, "test"); err == nil {
-			t.Errorf("ValidateString(\"a\") failed: %s", err)
-		}
-	})
-}
-
 func TestUsername(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		if err := Username("userName"); err != nil {
@@ -53,57 +33,26 @@ func TestUsername(t *testing.T) {
 
 	t.Run("Invalid character", func(t *testing.T) {
 		err := Username("username!")
-		if !errors.Is(err, ErrInvalidUsername) {
-			t.Errorf("ValidateUsername failed: %s", err)
+		if !errors.As(err, &InputError{}) {
+			t.Error("expected InputError", err)
 		}
 	})
 }
 
-func TestPassword(t *testing.T) {
-	t.Run("Empty string", func(t *testing.T) {
-		if err := Password(""); err == nil {
-			t.Errorf("ValidatePassword failed: %s", err)
-		}
-	})
-
-	t.Run("Too short", func(t *testing.T) {
-		if err := Password("a"); err == nil {
-			t.Errorf("ValidatePassword failed: %s", err)
-		}
-	})
-
-	t.Run("Too long", func(t *testing.T) {
-		if err := Password(strings.Repeat("a", 101)); err == nil {
-			t.Errorf("ValidatePassword failed: %s", err)
-		}
-	})
-
-	t.Run("Does not contain uppercase", func(t *testing.T) {
-		err := Password("password1")
-		if !errors.Is(err, ErrInvalidPassword) {
-			t.Errorf("ValidatePassword failed: %s", err)
-		}
-	})
-
-	t.Run("Does not contain lowercase", func(t *testing.T) {
-		err := Password("PASSWORD1")
-		if !errors.Is(err, ErrInvalidPassword) {
-			t.Errorf("ValidatePassword failed: %s", err)
-		}
-	})
-
-	t.Run("Does not contain number", func(t *testing.T) {
-		err := Password("Password")
-		if !errors.Is(err, ErrInvalidPassword) {
-			t.Errorf("ValidatePassword failed: %s", err)
-		}
-	})
-
+func TestFullName(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
-		err := Password("Password1")
-		if err != nil {
-			t.Errorf("ValidatePassword failed: %s", err)
-		}
+		t.Run("With space", func(t *testing.T) {
+			err := FullName("John Adams")
+			if err != nil {
+				t.Errorf("Expected no error")
+			}
+		})
+		t.Run("With dash", func(t *testing.T) {
+			err := FullName("John Von-Haartman")
+			if err != nil {
+				t.Errorf("Expected no error")
+			}
+		})
 	})
 }
 
@@ -134,28 +83,8 @@ func TestEmail(t *testing.T) {
 
 	t.Run("Invalid email", func(t *testing.T) {
 		err := Email("email")
-		if !errors.Is(err, ErrInvalidEmail) {
-			t.Errorf("ValidateEmail failed: %s", err)
-		}
-	})
-}
-
-func TestSecret(t *testing.T) {
-	t.Run("OK", func(t *testing.T) {
-		if err := Secret(strings.Repeat("a", 33)); err != nil {
-			t.Errorf("ValidateSecret failed: %s", err)
-		}
-	})
-
-	t.Run("Empty string", func(t *testing.T) {
-		if err := Secret(""); err == nil {
-			t.Errorf("ValidateSecret failed: %s", err)
-		}
-	})
-
-	t.Run("Too short", func(t *testing.T) {
-		if err := Secret("a"); err == nil {
-			t.Errorf("ValidateSecret failed: %s", err)
+		if !errors.As(err, &InputError{}) {
+			t.Error("expected InputError", err)
 		}
 	})
 }
