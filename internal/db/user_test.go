@@ -30,10 +30,10 @@ func TestCreateUser(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		t.Cleanup(cleanup)
 
-		err := db.CreateUser(ctx, randomParams)
+		err := CreateUser(ctx, db, randomParams)
 		require.NoError(t, err)
 
-		got, err := db.ReadUser(ctx, randomParams.ID)
+		got, err := ReadUser(ctx, db, randomParams.ID)
 		require.NoError(t, err)
 		require.NotNil(t, got)
 		require.Equal(t, randomParams.ID, got.ID)
@@ -52,7 +52,7 @@ func TestCreateUser(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		randomParams.FullName = strings.Repeat("a", 256)
-		err := db.CreateUser(ctx, randomParams)
+		err := CreateUser(ctx, db, randomParams)
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrStringTooLong)
 
@@ -64,7 +64,7 @@ func TestCreateUser(t *testing.T) {
 
 		randomParams.Email = strings.Repeat("a", 256)
 
-		err := db.CreateUser(ctx, randomParams)
+		err := CreateUser(ctx, db, randomParams)
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrStringTooLong)
 		randomParams.Email = random.Email()
@@ -73,7 +73,7 @@ func TestCreateUser(t *testing.T) {
 	t.Run("duplicate email returns error", func(t *testing.T) {
 		t.Cleanup(cleanup)
 
-		err := db.CreateUser(ctx, CreateUserParams{
+		err := CreateUser(ctx, db, CreateUserParams{
 			ID:        uuid.New(),
 			FullName:  "Same User",
 			Email:     "email@email.com",
@@ -82,7 +82,7 @@ func TestCreateUser(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		err = db.CreateUser(ctx, CreateUserParams{
+		err = CreateUser(ctx, db, CreateUserParams{
 			ID:        uuid.New(),
 			FullName:  "Same Email User",
 			Email:     "email@email.com",
@@ -106,21 +106,21 @@ func TestReadUser(t *testing.T) {
 		CreatedAt: time.Now().UTC(),
 	}
 
-	err := db.CreateUser(ctx, randomParams)
+	err := CreateUser(ctx, db, randomParams)
 	require.NoError(t, err)
 
-	got, err := db.ReadUser(ctx, randomParams.ID)
+	got, err := ReadUser(ctx, db, randomParams.ID)
 	require.NoError(t, err)
 	require.NotNil(t, got)
 
 	t.Run("Not found", func(t *testing.T) {
-		_, err := db.ReadUser(ctx, uuid.New())
+		_, err := ReadUser(ctx, db, uuid.New())
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrUserNotFound)
 	})
 
 	t.Run("InputError on nil UUID", func(t *testing.T) {
-		_, err := db.ReadUser(ctx, uuid.Nil)
+		_, err := ReadUser(ctx, db, uuid.Nil)
 		require.Error(t, err)
 		require.ErrorAs(t, err, &InputError{})
 	})
@@ -138,10 +138,10 @@ func TestReadUserByEmail(t *testing.T) {
 		CreatedAt: time.Now().UTC(),
 	}
 
-	err := db.CreateUser(ctx, randomParams)
+	err := CreateUser(ctx, db, randomParams)
 	require.NoError(t, err)
 
-	got, err := db.ReadUserByEmail(ctx, randomParams.Email)
+	got, err := ReadUserByEmail(ctx, db, randomParams.Email)
 	require.NoError(t, err)
 	require.NotNil(t, got)
 	require.Equal(t, randomParams.ID, got.ID)
@@ -150,19 +150,19 @@ func TestReadUserByEmail(t *testing.T) {
 	require.True(t, time.Now().After(got.CreatedAt))
 
 	t.Run("Not found", func(t *testing.T) {
-		_, err := db.ReadUserByEmail(ctx, random.Email())
+		_, err := ReadUserByEmail(ctx, db, random.Email())
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrUserNotFound)
 	})
 
 	t.Run("Email is empty", func(t *testing.T) {
-		_, err := db.ReadUserByEmail(ctx, "")
+		_, err := ReadUserByEmail(ctx, db, "")
 		require.Error(t, err)
 		require.ErrorAs(t, err, &InputError{})
 	})
 
 	t.Run("Email is not found", func(t *testing.T) {
-		_, err := db.ReadUserByEmail(ctx, "ass@ass.com")
+		_, err := ReadUserByEmail(ctx, db, "ass@ass.com")
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrUserNotFound)
 	})
@@ -186,17 +186,17 @@ func TestSQL_UpdateUser(t *testing.T) {
 		newFullName := "New Name"
 		newEmail := "new@email.com"
 
-		err := db.CreateUser(ctx, randomParams)
+		err := CreateUser(ctx, db, randomParams)
 		require.NoError(t, err)
 
-		err = db.UpdateUser(ctx, UpdateUserParams{
+		err = UpdateUser(ctx, db, UpdateUserParams{
 			ID:       randomParams.ID,
 			FullName: newFullName,
 			Email:    newEmail,
 		})
 		require.NoError(t, err)
 
-		got, err := db.ReadUser(ctx, randomParams.ID)
+		got, err := ReadUser(ctx, db, randomParams.ID)
 		require.NoError(t, err)
 		require.NotNil(t, got)
 		require.Equal(t, randomParams.ID, got.ID)
@@ -209,7 +209,7 @@ func TestSQL_UpdateUser(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		ID := uuid.New()
-		err := db.CreateUser(ctx, CreateUserParams{
+		err := CreateUser(ctx, db, CreateUserParams{
 			ID:        ID,
 			FullName:  random.FullName(),
 			Email:     random.Email(),
@@ -218,7 +218,7 @@ func TestSQL_UpdateUser(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		err = db.UpdateUser(ctx, UpdateUserParams{
+		err = UpdateUser(ctx, db, UpdateUserParams{
 			ID:       ID,
 			FullName: strings.Repeat("a", 256),
 			Email:    random.Email(),
@@ -232,7 +232,7 @@ func TestSQL_UpdateUser(t *testing.T) {
 
 		ID := uuid.New()
 
-		err := db.CreateUser(ctx, CreateUserParams{
+		err := CreateUser(ctx, db, CreateUserParams{
 			ID:        ID,
 			FullName:  random.FullName(),
 			Email:     random.Email(),
@@ -241,7 +241,7 @@ func TestSQL_UpdateUser(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		err = db.UpdateUser(ctx, UpdateUserParams{
+		err = UpdateUser(ctx, db, UpdateUserParams{
 			ID:       ID,
 			FullName: random.FullName(),
 			Email:    strings.Repeat("a", 256),
@@ -257,7 +257,7 @@ func TestSQL_DeleteUser(t *testing.T) {
 
 	ID := uuid.New()
 
-	err := db.CreateUser(ctx, CreateUserParams{
+	err := CreateUser(ctx, db, CreateUserParams{
 		ID:        ID,
 		FullName:  random.FullName(),
 		Email:     random.Email(),
@@ -266,11 +266,11 @@ func TestSQL_DeleteUser(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = db.DeleteUser(ctx, ID)
+	err = DeleteUser(ctx, db, ID)
 	require.NoError(t, err)
 
 	t.Run("Not found", func(t *testing.T) {
-		err := db.DeleteUser(ctx, ID)
+		err := DeleteUser(ctx, db, ID)
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrNoRowsAffected)
 	})

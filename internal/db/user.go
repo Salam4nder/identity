@@ -45,7 +45,7 @@ func (x CreateUserParams) SpanAttributes() []attribute.KeyValue {
 }
 
 // CreateUser creates a new user in the database.
-func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) error {
+func CreateUser(ctx context.Context, db *sql.DB, params CreateUserParams) error {
 	ctx, span := tracer.Start(ctx, "db.CreateUser", trace.WithAttributes(params.SpanAttributes()...))
 	defer span.End()
 
@@ -55,7 +55,7 @@ func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) error {
     `
 	span.SetAttributes(attribute.String("query", query))
 
-	res, err := x.db.ExecContext(
+	res, err := db.ExecContext(
 		ctx,
 		query,
 		params.ID,
@@ -91,7 +91,7 @@ func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) error {
 }
 
 // ReadUser reads a user from the database.
-func (x *SQL) ReadUser(ctx context.Context, id uuid.UUID) (*User, error) {
+func ReadUser(ctx context.Context, db *sql.DB, id uuid.UUID) (*User, error) {
 	ctx, span := tracer.Start(ctx, "db.ReadUser")
 	defer span.End()
 	span.SetAttributes(attribute.String("id", id.String()))
@@ -108,7 +108,7 @@ func (x *SQL) ReadUser(ctx context.Context, id uuid.UUID) (*User, error) {
 	span.SetAttributes(attribute.String("query", query))
 
 	var user User
-	if err := x.db.QueryRowContext(ctx, query, id).Scan(
+	if err := db.QueryRowContext(ctx, query, id).Scan(
 		&user.ID,
 		&user.FullName,
 		&user.Email,
@@ -128,7 +128,7 @@ func (x *SQL) ReadUser(ctx context.Context, id uuid.UUID) (*User, error) {
 }
 
 // ReadUserByEmail reads a user from the database by email.
-func (x *SQL) ReadUserByEmail(ctx context.Context, email string) (*User, error) {
+func ReadUserByEmail(ctx context.Context, db *sql.DB, email string) (*User, error) {
 	ctx, span := tracer.Start(ctx, "db.ReadUserByEmail")
 	defer span.End()
 
@@ -147,7 +147,7 @@ func (x *SQL) ReadUserByEmail(ctx context.Context, email string) (*User, error) 
 	)
 
 	var user User
-	if err := x.db.QueryRowContext(ctx, query, email).Scan(
+	if err := db.QueryRowContext(ctx, query, email).Scan(
 		&user.ID,
 		&user.FullName,
 		&user.Email,
@@ -182,7 +182,7 @@ func (x UpdateUserParams) SpanAttributes() []attribute.KeyValue {
 }
 
 // UpdateUser updates a user in the database.
-func (x *SQL) UpdateUser(ctx context.Context, params UpdateUserParams) error {
+func UpdateUser(ctx context.Context, db *sql.DB, params UpdateUserParams) error {
 	ctx, span := tracer.Start(ctx, "db.UpdateUser", trace.WithAttributes(params.SpanAttributes()...))
 	defer span.End()
 
@@ -193,7 +193,7 @@ func (x *SQL) UpdateUser(ctx context.Context, params UpdateUserParams) error {
         `
 	span.SetAttributes(attribute.String("query", query))
 
-	res, err := x.db.ExecContext(
+	res, err := db.ExecContext(
 		ctx,
 		query,
 		params.FullName,
@@ -228,7 +228,7 @@ func (x *SQL) UpdateUser(ctx context.Context, params UpdateUserParams) error {
 }
 
 // DeleteUser deletes a user from the database.
-func (x *SQL) DeleteUser(ctx context.Context, id uuid.UUID) error {
+func DeleteUser(ctx context.Context, db *sql.DB, id uuid.UUID) error {
 	ctx, span := tracer.Start(ctx, "db.DeleteUser")
 	defer span.End()
 
@@ -241,7 +241,7 @@ func (x *SQL) DeleteUser(ctx context.Context, id uuid.UUID) error {
 		attribute.String("query", query),
 	)
 
-	res, err := x.db.ExecContext(ctx, query, id)
+	res, err := db.ExecContext(ctx, query, id)
 	if err != nil {
 		if IsSentinelErr(err) {
 			return SentinelErr(err)
