@@ -99,8 +99,8 @@ func main() {
 	userSub, err := natsClient.ChanSubscribe(event.UserRegistered, natsChan)
 	exitOnError(ctx, err)
 
-	worker := event.NewWorker(email.NewNoOpSender())
-	go worker.Work(ctx, natsChan)
+	// Worker
+	go event.NewWorker(email.NewNoOpSender()).Work(ctx, natsChan)
 
 	grpcListener, err := net.Listen("tcp", cfg.Server.GRPCAddr())
 	exitOnError(ctx, err)
