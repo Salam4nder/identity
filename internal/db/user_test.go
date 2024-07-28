@@ -12,6 +12,7 @@ import (
 	"github.com/Salam4nder/user/pkg/random"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestCreateUser(t *testing.T) {
@@ -38,7 +39,13 @@ func TestCreateUser(t *testing.T) {
 		require.Equal(t, randomParams.ID, got.ID)
 		require.Equal(t, randomParams.FullName, got.FullName)
 		require.Equal(t, randomParams.Email, got.Email)
+		require.NotEqual(t, randomParams.Password, got.PasswordHash)
 		require.True(t, time.Now().After(got.CreatedAt))
+
+		require.NoError(
+			t,
+			bcrypt.CompareHashAndPassword([]byte(got.PasswordHash), []byte(randomParams.Password)),
+		)
 	})
 
 	t.Run("name exceeds 255 chars returns err", func(t *testing.T) {
