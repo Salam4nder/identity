@@ -6,12 +6,12 @@ import (
 	"errors"
 	"time"
 
+	"github.com/Salam4nder/user/pkg/password"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var tracer = otel.Tracer("db")
@@ -31,7 +31,7 @@ type CreateUserParams struct {
 	ID        uuid.UUID
 	FullName  string
 	Email     string
-	Password  string
+	Password  password.SafeString
 	CreatedAt time.Time
 }
 
@@ -48,14 +48,6 @@ func (x CreateUserParams) SpanAttributes() []attribute.KeyValue {
 func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) error {
 	ctx, span := tracer.Start(ctx, "db.CreateUser", trace.WithAttributes(params.SpanAttributes()...))
 	defer span.End()
-
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(params.Password), 14)
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		span.RecordError(err)
-		return err
-	}
-	params.Password = string(passwordHash)
 
 	query := `
     INSERT INTO users (id, full_name, email, password_hash, created_at)
@@ -102,16 +94,18 @@ func (x *SQL) CreateUser(ctx context.Context, params CreateUserParams) error {
 func (x *SQL) ReadUser(ctx context.Context, id uuid.UUID) (*User, error) {
 	ctx, span := tracer.Start(ctx, "db.ReadUser")
 	defer span.End()
+	span.SetAttributes(attribute.String("id", id.String()))
+
+	if id == uuid.Nil {
+		return nil, InputError{Field: "id", Value: id.String()}
+	}
 
 	query := `
         SELECT id, full_name, email, password_hash, created_at, updated_at
         FROM users
         WHERE id = $1
         `
-	span.SetAttributes(
-		attribute.String("query", query),
-		attribute.String("user_id", id.String()),
-	)
+	span.SetAttributes(attribute.String("query", query))
 
 	var user User
 	if err := x.db.QueryRowContext(ctx, query, id).Scan(
@@ -137,6 +131,10 @@ func (x *SQL) ReadUser(ctx context.Context, id uuid.UUID) (*User, error) {
 func (x *SQL) ReadUserByEmail(ctx context.Context, email string) (*User, error) {
 	ctx, span := tracer.Start(ctx, "db.ReadUserByEmail")
 	defer span.End()
+
+	if email == "" {
+		return nil, InputError{Field: "email", Value: email}
+	}
 
 	query := `
         SELECT id, full_name, email, password_hash, created_at, updated_at
