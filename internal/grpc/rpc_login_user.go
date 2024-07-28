@@ -70,7 +70,7 @@ func (x *UserServer) LoginUser(ctx context.Context, req *gen.LoginUserRequest) (
 		return nil, internalServerError(err, span)
 	}
 
-	// reminder to fix expiration timing on refresh token
+	// TODO(kg): Fix refresh token expiration.
 	return &gen.LoginUserResponse{
 		User: &gen.UserResponse{
 			Id:        user.ID.String(),
@@ -90,18 +90,9 @@ func validateLoginUserRequest(req *gen.LoginUserRequest) error {
 		return errors.New("request can not be nil")
 	}
 
-	var (
-		emailErr    error
-		passwordErr error
-	)
-
 	if err := validation.Email(req.GetEmail()); err != nil {
-		emailErr = err
+		return err
 	}
 
-	if err := validation.Password(req.GetPassword()); err != nil {
-		passwordErr = err
-	}
-
-	return errors.Join(emailErr, passwordErr)
+	return nil
 }
