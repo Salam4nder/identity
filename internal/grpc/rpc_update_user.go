@@ -28,18 +28,15 @@ func (x *UserServer) UpdateUser(ctx context.Context, req *gen.UpdateUserRequest)
 		slog.Warn("UpdateUser: GenSpanAttributes", "err", err)
 	}
 
-	authPayload, err := x.authorizeUser(ctx)
-	if err != nil {
-		return nil, unauthenticatedError(err, span, "no permission to access rpc")
-	}
+	// TODO(kg): refactor the auth.
 
 	if err = validateUpdateUserRequest(req); err != nil {
 		return nil, invalidArgumentError(err, span, err.Error())
 	}
 
-	if authPayload.Email != req.GetEmail() {
-		return nil, unauthenticatedError(errors.New("email does not match"), span, "no permission to access rpc")
-	}
+	// if authPayload.Email != req.GetEmail() {
+	// 	return nil, unauthenticatedError(errors.New("email does not match"), span, "no permission to access rpc")
+	// }
 
 	id, err := uuid.Parse(req.GetId())
 	if err != nil {
@@ -51,7 +48,7 @@ func (x *UserServer) UpdateUser(ctx context.Context, req *gen.UpdateUserRequest)
 		FullName: req.GetFullName(),
 		Email:    req.GetEmail(),
 	}
-	if err = x.storage.UpdateUser(ctx, params); err != nil {
+	if err = db.UpdateUser(ctx, x.db, params); err != nil {
 		if errors.Is(err, db.ErrUserNotFound) {
 			return nil, notFoundError(err, span, "user not found")
 		}

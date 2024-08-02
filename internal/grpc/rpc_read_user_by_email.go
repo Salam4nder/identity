@@ -21,7 +21,7 @@ func (x *UserServer) ReadByEmail(ctx context.Context, req *gen.ReadByEmailReques
 		return nil, invalidArgumentError(errors.New("email is required"), span, "email is required")
 	}
 
-	user, err := x.storage.ReadUserByEmail(ctx, req.GetEmail())
+	user, err := db.ReadUserByEmail(ctx, x.db, req.GetEmail())
 	if err != nil {
 		if errors.Is(err, db.ErrUserNotFound) {
 			return nil, notFoundError(err, span, "user not found")

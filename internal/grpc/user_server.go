@@ -1,9 +1,9 @@
 package grpc
 
 import (
-	"time"
+	"database/sql"
 
-	"github.com/Salam4nder/user/internal/db"
+	"github.com/Salam4nder/user/internal/auth"
 	"github.com/Salam4nder/user/internal/grpc/gen"
 	"github.com/Salam4nder/user/pkg/token"
 	"github.com/nats-io/nats.go"
@@ -14,36 +14,28 @@ import (
 type UserServer struct {
 	gen.UserServer
 
-	accessTokenDuration  time.Duration
-	refreshTokenDuration time.Duration
-
-	storage    db.Storage
+	strategy   auth.Authenticator
 	tokenMaker token.Maker
 	health     *health.Server
 	natsConn   *nats.Conn
+	// TODO(kg): This is kind of ass.
+	// It is here for now so we can monitor it's health with the [MoniterHealth] method.
+	db *sql.DB
 }
 
 // NewUserServer returns a new UserService.
 func NewUserServer(
-	store db.Storage,
 	health *health.Server,
 	natsConn *nats.Conn,
-	symmetricKey string,
-	accessTokenDuration time.Duration,
-	refreshTokenDuration time.Duration,
+	strategy auth.Authenticator,
+	tokenMaker token.Maker,
+	db *sql.DB,
 ) (*UserServer, error) {
-	tokenMaker, err := token.NewPasetoMaker(symmetricKey)
-	if err != nil {
-		return nil, err
-	}
-
 	return &UserServer{
-		accessTokenDuration:  accessTokenDuration,
-		refreshTokenDuration: refreshTokenDuration,
-
-		storage:    store,
+		strategy:   strategy,
 		tokenMaker: tokenMaker,
 		health:     health,
 		natsConn:   natsConn,
+		db:         db,
 	}, nil
 }

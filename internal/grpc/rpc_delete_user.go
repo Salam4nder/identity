@@ -37,7 +37,7 @@ func (x *UserServer) DeleteUser(ctx context.Context, req *gen.UserID) (*emptypb.
 		return nil, invalidArgumentError(err, span, "invalid ID")
 	}
 
-	if err = x.storage.DeleteUser(ctx, id); err != nil {
+	if err = db.DeleteUser(ctx, x.db, id); err != nil {
 		switch {
 		case errors.Is(err, db.ErrUserNotFound):
 			return nil, notFoundError(err, span, "user not found")

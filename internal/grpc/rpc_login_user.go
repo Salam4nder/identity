@@ -7,7 +7,6 @@ import (
 
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/grpc/gen"
-	grpcUtil "github.com/Salam4nder/user/pkg/grpc"
 	"github.com/Salam4nder/user/pkg/validation"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -29,7 +28,7 @@ func (x *UserServer) LoginUser(ctx context.Context, req *gen.LoginUserRequest) (
 		return nil, invalidArgumentError(err, span, err.Error())
 	}
 
-	user, err := x.storage.ReadUserByEmail(ctx, req.Email)
+	user, err := db.ReadUserByEmail(ctx, x.db, req.Email)
 	if err != nil {
 		if errors.Is(err, db.ErrUserNotFound) {
 			return nil, notFoundError(err, span, "user not found")
@@ -41,34 +40,7 @@ func (x *UserServer) LoginUser(ctx context.Context, req *gen.LoginUserRequest) (
 		return nil, unauthenticatedError(err, span, "invalid password")
 	}
 
-	accessToken, accessPayload, err := x.tokenMaker.NewToken(
-		req.GetEmail(),
-		x.accessTokenDuration,
-	)
-	if err != nil {
-		return nil, internalServerError(err, span)
-	}
-
-	refreshToken, refreshPayload, err := x.tokenMaker.NewToken(
-		req.GetEmail(),
-		x.refreshTokenDuration,
-	)
-	if err != nil {
-		return nil, internalServerError(err, span)
-	}
-
-	metadata := grpcUtil.MetadataFromContext(ctx)
-
-	if err = x.storage.CreateSession(ctx, db.CreateSessionParams{
-		ID:           refreshPayload.ID,
-		Email:        user.Email,
-		ClientIP:     metadata.ClientIP,
-		UserAgent:    metadata.UserAgent,
-		RefreshToken: refreshToken,
-		ExpiresAt:    refreshPayload.ExpiresAt,
-	}); err != nil {
-		return nil, internalServerError(err, span)
-	}
+	//TODO(kg): Refactor this.
 
 	// TODO(kg): Fix refresh token expiration.
 	return &gen.LoginUserResponse{
@@ -78,10 +50,10 @@ func (x *UserServer) LoginUser(ctx context.Context, req *gen.LoginUserRequest) (
 			Email:     user.Email,
 			CreatedAt: timestamppb.New(user.CreatedAt),
 		},
-		AccessToken:           accessToken,
-		RefreshToken:          refreshToken,
-		AccessTokenExpiresAt:  timestamppb.New(accessPayload.ExpiresAt),
-		RefreshTokenExpiresAt: timestamppb.New(refreshPayload.ExpiresAt),
+		// AccessToken:           accessToken,
+		// RefreshToken:          refreshToken,
+		// AccessTokenExpiresAt:  timestamppb.New(accessPayload.ExpiresAt),
+		// RefreshTokenExpiresAt: timestamppb.New(refreshPayload.ExpiresAt),
 	}, nil
 }
 

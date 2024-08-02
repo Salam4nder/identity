@@ -38,7 +38,7 @@ func (x *UserServer) ReadUser(ctx context.Context, req *gen.UserID) (*gen.UserRe
 		return nil, invalidArgumentError(err, span, "ID is invalid")
 	}
 
-	user, err := x.storage.ReadUser(ctx, id)
+	user, err := db.ReadUser(ctx, x.db, id)
 	if err != nil {
 		if errors.Is(err, db.ErrUserNotFound) {
 			return nil, notFoundError(err, span, "user not found")
