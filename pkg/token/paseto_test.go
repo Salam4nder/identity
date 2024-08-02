@@ -3,47 +3,70 @@ package token
 import (
 	"testing"
 	"time"
-
-	"github.com/Salam4nder/user/pkg/random"
-	"github.com/stretchr/testify/require"
 )
 
-func TestPasetoMaker(t *testing.T) {
-	maker, err := NewPasetoMaker(random.String(32))
-	require.NoError(t, err)
+func bootstrap(t *testing.T) *PasetoMaker {
+	t.Helper()
 
-	email := random.Email()
-	duration := time.Minute
+	t.Run("invalid symmetric key", func(t *testing.T) {
+		var bb []byte
+		for range 31 {
+			bb = append(bb, byte('s'))
+		}
+		_, err := BootstrapPasetoMaker(
+			time.Second*10,
+			time.Minute,
+			bb,
+		)
+		if err == nil {
+			t.Error("expected err with invalid symmetric key")
+		}
+	})
 
-	issuedAt := time.Now()
-	expiredAt := issuedAt.Add(duration)
-
-	token, payload, err := maker.NewToken(email, duration)
-	require.NoError(t, err)
-	require.NotEmpty(t, token)
-	require.NotEmpty(t, payload)
-
-	payload, err = maker.VerifyToken(token)
-	require.NoError(t, err)
-	require.NotEmpty(t, token)
-
-	require.NotZero(t, payload.ID)
-	require.Equal(t, email, payload.Email)
-	require.WithinDuration(t, issuedAt, payload.IssuedAt, time.Second)
-	require.WithinDuration(t, expiredAt, payload.ExpiresAt, time.Second)
+	var b []byte
+	for range 32 {
+		b = append(b, byte('s'))
+	}
+	maker, err := BootstrapPasetoMaker(
+		time.Second*10,
+		time.Minute,
+		b,
+	)
+	if err != nil {
+		t.Errorf("expected no err, got %s", err.Error())
+	}
+	return maker
 }
 
-func TestExpiredPasetoToken(t *testing.T) {
-	maker, err := NewPasetoMaker(random.String(32))
-	require.NoError(t, err)
+func TestMakeAccessToken(t *testing.T) {
+	b := bootstrap(t)
+	s := b.MakeAccessToken()
+	if s == "" {
+		t.Error("token is empty")
+	}
+}
 
-	token, payload, err := maker.NewToken(random.Email(), -time.Minute)
-	require.NoError(t, err)
-	require.NotEmpty(t, token)
-	require.NotEmpty(t, payload)
+func TestMakeRefreshToken(t *testing.T) {
+	b := bootstrap(t)
+	s := b.MakeRefreshToken()
+	if s == "" {
+		t.Error("token is empty")
+	}
+}
 
-	payload, err = maker.VerifyToken(token)
-	require.Error(t, err)
-	require.EqualError(t, err, ErrExpiredToken.Error())
-	require.Nil(t, payload)
+func TestVerify(t *testing.T) {
+	t.Run("OK", func(t *testing.T) {
+		b := bootstrap(t)
+		s := b.MakeAccessToken()
+		if err := b.Verify((s)); err != nil {
+			t.Errorf("expected no error, got %s", err.Error())
+		}
+	})
+
+	t.Run("invalid returns error", func(t *testing.T) {
+		b := bootstrap(t)
+		if err := b.Verify(fromString("ass")); err == nil {
+			t.Error("expected error")
+		}
+	})
 }
