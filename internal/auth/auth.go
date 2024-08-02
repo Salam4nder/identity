@@ -3,7 +3,7 @@ package auth
 import "context"
 
 type Authenticator interface {
-	Authenticate(ctx context.Context, in Input) (Output, error)
+	Authenticate(context.Context, Input) (Output, error)
 }
 
 type Input interface {
@@ -11,4 +11,5 @@ type Input interface {
 }
 
 type Output interface {
+	Noop()
 }
