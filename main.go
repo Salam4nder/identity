@@ -12,8 +12,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Salam4nder/user/internal/auth/noop"
 	"github.com/Salam4nder/user/internal/config"
-	internalDB "github.com/Salam4nder/user/internal/db"
+	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/email"
 	"github.com/Salam4nder/user/internal/event"
 	internalGRPC "github.com/Salam4nder/user/internal/grpc"
@@ -22,6 +23,7 @@ import (
 	"github.com/Salam4nder/user/internal/observability/metrics"
 	"github.com/Salam4nder/user/internal/observability/otel"
 	"github.com/Salam4nder/user/pkg/logger"
+	"github.com/Salam4nder/user/pkg/token"
 	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/nats-io/nats.go"
@@ -41,14 +43,12 @@ const (
 	serviceName string = "user"
 	// serviceVersion is the version of the service.
 	serviceVersion string = "1.0.0"
-	// migrationFolder is the folder where the migration files are stored.
-	migrationFolder = "/app/db/migrations"
-	// accessTokenDuration is the duration for which the access token is valid.
-	accessTokenDuration = 15 * time.Minute
-	// refreshTokenDuration is the duration for which the refresh token is valid.
+
+	// TODO(kg):  Move these to config.
+	accessTokenDuration  = 15 * time.Minute
 	refreshTokenDuration = 7 * 24 * time.Hour
-	// natsTimeout is the timeout for the NATS connection.
-	natsTimeout = 5 * time.Second
+	migrationFolder      = "/app/db/migrations"
+	natsTimeout          = 5 * time.Second
 )
 
 // serviceID is the unique identifier of the service.
@@ -76,13 +76,12 @@ func main() {
 		err = errors.Join(err, otelShutdown(context.Background()))
 	}()
 
-	db, err := sql.Open(cfg.PSQL.Driver(), cfg.PSQL.Addr())
+	psqlDB, err := sql.Open(cfg.PSQL.Driver(), cfg.PSQL.Addr())
 	exitOnError(ctx, err)
-	storage := internalDB.New(db)
-	if err = storage.PingContext(ctx, 5 /*max tries*/); err != nil {
+	if err = db.HealthCheck(ctx, psqlDB, 5 /*max tries*/); err != nil {
 		exitOnError(ctx, err)
 	}
-	migration := migration.New(db, zap.NewNop()).WithFolder(migrationFolder)
+	migration := migration.New(psqlDB, zap.NewNop()).WithFolder(migrationFolder)
 	if err = migration.Migrate(); err != nil {
 		exitOnError(ctx, err)
 	}
@@ -99,8 +98,17 @@ func main() {
 	userSub, err := natsClient.ChanSubscribe(event.UserRegistered, natsChan)
 	exitOnError(ctx, err)
 
-	// Worker
+	// Worker.
 	go event.NewWorker(email.NewNoOpSender()).Work(ctx, natsChan)
+
+	// Token maker.
+	tokenMaker, err := token.BootstrapPasetoMaker(
+		accessTokenDuration,
+		refreshTokenDuration,
+		[]byte(cfg.Server.SymmetricKey))
+	if err != nil {
+		exitOnError(ctx, err)
+	}
 
 	grpcListener, err := net.Listen("tcp", cfg.Server.GRPCAddr())
 	exitOnError(ctx, err)
@@ -114,12 +122,12 @@ func main() {
 	healthServer := health.NewServer()
 	healthgen.RegisterHealthServer(grpcServer, healthServer)
 	userServer, err := internalGRPC.NewUserServer(
-		storage,
 		healthServer,
 		natsClient,
-		cfg.Server.SymmetricKey,
-		accessTokenDuration,
-		refreshTokenDuration,
+		// TODO(kg): naming on this.
+		noop.New(),
+		tokenMaker,
+		psqlDB,
 	)
 	exitOnError(ctx, err)
 	gen.RegisterUserServer(grpcServer, userServer)
@@ -153,7 +161,7 @@ func main() {
 		slog.InfoContext(ctx, "main: context done, shutting down...")
 	}
 	grpcServer.GracefulStop()
-	err = errors.Join(err, db.Close())
+	err = errors.Join(err, psqlDB.Close())
 	err = errors.Join(err, userSub.Unsubscribe())
 	natsClient.Close()
 
