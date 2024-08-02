@@ -4,59 +4,62 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aead/chacha20poly1305"
-	"github.com/o1egl/paseto"
+	"aidanwoods.dev/go-paseto"
 )
 
-// pasetoMaker is a PASETO token maker.
-type pasetoMaker struct {
-	paseto       *paseto.V2
-	symmetricKey []byte
+var _ Maker = (*PasetoMaker)(nil)
+
+// PasetoMaker makes PASETO tokens.
+type PasetoMaker struct {
+	accessDur    time.Duration
+	refreshDur   time.Duration
+	symmetricKey paseto.V4SymmetricKey
+	parser       *paseto.Parser
 }
 
-// NewPasetoMaker creates a new PasetoMaker.
-func NewPasetoMaker(symmetricKey string) (Maker, error) {
-	if len(symmetricKey) != chacha20poly1305.KeySize {
-		return nil, fmt.Errorf(
-			"invalid key size: must be exactly %d characters",
-			chacha20poly1305.KeySize)
+func BootstrapPasetoMaker(
+	accessDur, refreshDur time.Duration,
+	symmetricKey []byte,
+) (*PasetoMaker, error) {
+	k, err := paseto.V4SymmetricKeyFromBytes(symmetricKey)
+	if err != nil {
+		return nil, fmt.Errorf("token: creating symmetric key, %w", err)
 	}
 
-	maker := &pasetoMaker{
-		paseto:       paseto.NewV2(),
-		symmetricKey: []byte(symmetricKey),
-	}
+	p := paseto.MakeParser([]paseto.Rule{
+		paseto.NotExpired(),
+		paseto.ValidAt(time.Now()),
+	},
+	)
 
-	return maker, nil
+	return &PasetoMaker{
+		accessDur:    accessDur,
+		refreshDur:   refreshDur,
+		symmetricKey: k,
+		parser:       &p,
+	}, nil
 }
 
-// NewToken creates a new token for a specific email and duration.
-func (x *pasetoMaker) NewToken(
-	email string,
-	duration time.Duration,
-) (string, *Payload, error) {
-	payload := NewPayload(email, duration)
-
-	token, err := x.paseto.Encrypt(x.symmetricKey, payload, nil)
-	return token, payload, err
+func (x *PasetoMaker) MakeAccessToken() SafeString {
+	token := paseto.NewToken()
+	token.SetIssuedAt(time.Now())
+	token.SetNotBefore(time.Now())
+	token.SetExpiration(time.Now().Add(x.accessDur))
+	return fromString(token.V4Encrypt(x.symmetricKey, nil))
 }
 
-// VerifyToken checks if the token is valid.
-func (x *pasetoMaker) VerifyToken(token string) (*Payload, error) {
-	payload := new(Payload)
+func (x *PasetoMaker) MakeRefreshToken() SafeString {
+	token := paseto.NewToken()
+	token.SetIssuedAt(time.Now())
+	token.SetNotBefore(time.Now())
+	token.SetExpiration(time.Now().Add(x.refreshDur))
+	return fromString(token.V4Encrypt(x.symmetricKey, nil))
+}
 
-	if err := x.paseto.Decrypt(
-		token,
-		x.symmetricKey,
-		payload,
-		nil,
-	); err != nil {
-		return nil, ErrInvalidToken
+func (x *PasetoMaker) Verify(t SafeString) error {
+	_, err := x.parser.ParseV4Local(x.symmetricKey, string(t), nil)
+	if err != nil {
+		return fmt.Errorf("token: verifying token, %w", err)
 	}
-
-	if err := payload.Valid(); err != nil {
-		return nil, err
-	}
-
-	return payload, nil
+	return nil
 }
