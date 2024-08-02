@@ -49,7 +49,7 @@ func (x *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest)
 		Password:  pw,
 		CreatedAt: time.Now(),
 	}
-	if err = x.storage.CreateUser(ctx, params); err != nil {
+	if err = db.CreateUser(ctx, x.db, params); err != nil {
 		if errors.Is(err, db.ErrDuplicateEmail) {
 			return nil, alreadyExistsError(err, span, "user with the provided email already exists")
 		}
