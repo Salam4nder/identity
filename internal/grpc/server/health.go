@@ -9,8 +9,8 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
-// MonitorHealth will ping all [UserServer] dependencies every 5 seconds and update the health status.
-func (x *UserServer) MonitorHealth(ctx context.Context) {
+// MonitorHealth will ping all [Identity] dependencies every 5 seconds and update the health status.
+func (x *Identity) MonitorHealth(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
