@@ -122,14 +122,14 @@ func main() {
 	healthServer := health.NewServer()
 	healthgen.RegisterHealthServer(grpcServer, healthServer)
 	userServer, err := server.NewUserServer(
+		psqlDB,
 		healthServer,
 		natsClient,
 		strategy.NewNoOp(),
 		tokenMaker,
-		psqlDB,
 	)
 	exitOnError(ctx, err)
-	gen.RegisterUserServer(grpcServer, userServer)
+	gen.RegisterIdentityServer(grpcServer, userServer)
 	reflection.Register(grpcServer)
 
 	go userServer.MonitorHealth(ctx)
