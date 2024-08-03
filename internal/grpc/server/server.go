@@ -10,28 +10,26 @@ import (
 	"google.golang.org/grpc/health"
 )
 
-// UserServer contains all necessary dependencies to serve user requests.
-type UserServer struct {
-	gen.UserServer
+// Identity contains all necessary dependencies to serve gRPC requests.
+type Identity struct {
+	gen.IdentityServer
 
-	strategy   auth.Strategy
-	tokenMaker token.Maker
+	db         *sql.DB
 	health     *health.Server
 	natsConn   *nats.Conn
-	// TODO(kg): This is kind of ass.
-	// It is here for now so we can monitor it's health with the [MoniterHealth] method.
-	db *sql.DB
+	strategy   auth.Strategy
+	tokenMaker token.Maker
 }
 
 // NewUserServer returns a new UserService.
 func NewUserServer(
+	db *sql.DB,
 	health *health.Server,
 	natsConn *nats.Conn,
 	strategy auth.Strategy,
 	tokenMaker token.Maker,
-	db *sql.DB,
-) (*UserServer, error) {
-	return &UserServer{
+) (*Identity, error) {
+	return &Identity{
 		strategy:   strategy,
 		tokenMaker: tokenMaker,
 		health:     health,
