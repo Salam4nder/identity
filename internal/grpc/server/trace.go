@@ -8,7 +8,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-var tracer = otel.Tracer("rpc")
+var tracer = otel.Tracer("server")
 
 // GenerateSpanAttributes returns span attributes for generated request structs.
 // Experimental solution, not the prettiest.
