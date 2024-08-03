@@ -2,17 +2,35 @@ syntax = "proto3";
 
 package gen;
 
-import "user.proto";
-import "login.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/Salam4nder/user/internal/proto/gen";
+option go_package = "github.com/Salam4nder/user/proto/gen";
 
-service User {
-    rpc CreateUser (CreateUserRequest) returns (google.protobuf.Empty){}
-    rpc ReadUser (UserID) returns (UserResponse){}
-    rpc ReadByEmail (ReadByEmailRequest) returns (UserResponse){}
-    rpc UpdateUser (UpdateUserRequest) returns (google.protobuf.Empty){}
-    rpc DeleteUser (UserID) returns (google.protobuf.Empty){}
-    rpc LoginUser (LoginUserRequest) returns (LoginUserResponse){}
+message Credentials {
+    string email = 1;
+    string password = 2;
+}
+
+message Number {
+    uint64 Numbers = 1;
+}
+
+message Input {
+    oneof data {
+        Credentials credentials = 1;
+        Number number = 2;
+    }
+}
+
+message AuthenticateResponse {
+    string id = 1;
+    string access_token = 2;
+    string refresh_token = 3;
+    google.protobuf.Timestamp created_at = 4;
+}
+
+service Identity {
+    rpc Register (Input) returns (google.protobuf.Empty){}
+    rpc Authenticate (Input) returns (AuthenticateResponse){}
 }
