@@ -3,6 +3,8 @@ package email
 import (
 	"context"
 	"log/slog"
+
+	"go.opentelemetry.io/otel"
 )
 
 const (
@@ -11,6 +13,8 @@ const (
 	TestBody    = "Do the following step to verify your identity."
 	TestFrom    = "fugaziindustries@proton.me"
 )
+
+var tracer = otel.Tracer("email")
 
 type Email struct {
 	To      string
@@ -33,6 +37,9 @@ func NewNoOpSender() *NoOpSender {
 
 // SendEmail logs the email to the console.
 func (x *NoOpSender) SendEmail(ctx context.Context, email Email) error {
+	ctx, span := tracer.Start(ctx, "SendEmail")
+	defer span.End()
+
 	slog.InfoContext(
 		ctx,
 		"no-op mailer: sending email",
