@@ -14,7 +14,7 @@ import (
 type UserServer struct {
 	gen.UserServer
 
-	strategy   auth.Authenticator
+	strategy   auth.Strategy
 	tokenMaker token.Maker
 	health     *health.Server
 	natsConn   *nats.Conn
@@ -27,7 +27,7 @@ type UserServer struct {
 func NewUserServer(
 	health *health.Server,
 	natsConn *nats.Conn,
-	strategy auth.Authenticator,
+	strategy auth.Strategy,
 	tokenMaker token.Maker,
 	db *sql.DB,
 ) (*UserServer, error) {
