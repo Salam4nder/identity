@@ -1,4 +1,4 @@
-package grpc
+package server
 
 import (
 	"bytes"
@@ -11,10 +11,10 @@ import (
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/email"
 	"github.com/Salam4nder/user/internal/event"
-	"github.com/Salam4nder/user/internal/grpc/gen"
 	"github.com/Salam4nder/user/internal/observability/metrics"
 	"github.com/Salam4nder/user/pkg/password"
 	"github.com/Salam4nder/user/pkg/validation"
+	"github.com/Salam4nder/user/proto/gen"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/emptypb"
 )

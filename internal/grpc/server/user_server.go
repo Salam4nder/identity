@@ -1,11 +1,11 @@
-package grpc
+package server
 
 import (
 	"database/sql"
 
 	"github.com/Salam4nder/user/internal/auth"
-	"github.com/Salam4nder/user/internal/grpc/gen"
-	"github.com/Salam4nder/user/pkg/token"
+	"github.com/Salam4nder/user/internal/token"
+	"github.com/Salam4nder/user/proto/gen"
 	"github.com/nats-io/nats.go"
 	"google.golang.org/grpc/health"
 )

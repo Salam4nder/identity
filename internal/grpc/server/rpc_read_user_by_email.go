@@ -1,11 +1,11 @@
-package grpc
+package server
 
 import (
 	"context"
 	"errors"
 
 	"github.com/Salam4nder/user/internal/db"
-	"github.com/Salam4nder/user/internal/grpc/gen"
+	"github.com/Salam4nder/user/proto/gen"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 

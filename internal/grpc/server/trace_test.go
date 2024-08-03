@@ -1,10 +1,10 @@
-package grpc
+package server
 
 import (
 	"testing"
 
-	"github.com/Salam4nder/user/internal/grpc/gen"
 	"github.com/Salam4nder/user/pkg/random"
+	"github.com/Salam4nder/user/proto/gen"
 )
 
 func TestGenSpanAttributes(t *testing.T) {

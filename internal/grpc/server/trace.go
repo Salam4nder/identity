@@ -1,9 +1,9 @@
-package grpc
+package server
 
 import (
 	"errors"
 
-	"github.com/Salam4nder/user/internal/grpc/gen"
+	"github.com/Salam4nder/user/proto/gen"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 )

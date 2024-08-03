@@ -1,4 +1,4 @@
-package grpc
+package server
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/Salam4nder/user/internal/db"
-	"github.com/Salam4nder/user/internal/grpc/gen"
+	"github.com/Salam4nder/user/proto/gen"
 	"github.com/google/uuid"
 	otelCode "go.opentelemetry.io/otel/codes"
 	"google.golang.org/protobuf/types/known/timestamppb"

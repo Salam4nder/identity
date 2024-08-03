@@ -1,5 +1,5 @@
 // response.go contains common response functions with tracing.
-package grpc
+package server
 
 import (
 	otelCode "go.opentelemetry.io/otel/codes"
