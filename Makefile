@@ -38,10 +38,10 @@ logs-db:
 	docker-compose logs -f postgres
 
 proto:
-	rm -rf internal/grpc/gen/*.go
-	protoc --proto_path=pkg/proto --go_out=internal/grpc/gen --go_opt=paths=source_relative \
-    --go-grpc_out=internal/grpc/gen --go-grpc_opt=paths=source_relative \
-     pkg/proto/*.proto
+	rm -rf proto/gen/*.go
+	protoc --proto_path=proto --go_out=proto/gen --go_opt=paths=source_relative \
+    --go-grpc_out=proto/gen --go-grpc_opt=paths=source_relative \
+     proto/*.proto
 
 lint:
 	docker run -t --rm -v $(shell pwd):/app -v ~/.cache/golangci-lint/v1.57.2:/root/.cache -w /app golangci/golangci-lint:v1.57.2 golangci-lint run -v
