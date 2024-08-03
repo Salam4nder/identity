@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/Salam4nder/user/proto/gen"
 	"go.opentelemetry.io/otel"
@@ -17,34 +18,13 @@ func GenSpanAttributes(param any) ([]attribute.KeyValue, error) {
 		return nil, errors.New("param is nil")
 	}
 
-	switch p := param.(type) {
-	case *gen.UpdateUserRequest:
+	switch t := param.(type) {
+	case *gen.Input_Credentials:
 		return []attribute.KeyValue{
-			attribute.String("id", p.GetId()),
-			attribute.String("full_name", p.GetFullName()),
-			attribute.String("email", p.GetEmail()),
+			attribute.String("email", t.Credentials.GetEmail()),
+			attribute.Int("password length", len(t.Credentials.GetEmail())),
 		}, nil
-	case *gen.CreateUserRequest:
-		return []attribute.KeyValue{
-			attribute.String("full_name", p.FullName),
-			attribute.String("email", p.Email),
-			attribute.Int("password_length", len(p.Password)),
-		}, nil
-	case *gen.UserID:
-		return []attribute.KeyValue{
-			attribute.String("id", p.GetId()),
-		}, nil
-	case *gen.LoginUserRequest:
-		return []attribute.KeyValue{
-			attribute.String("email", p.GetEmail()),
-			attribute.Int("password_length", len(p.GetPassword())),
-		}, nil
-	case *gen.ReadByEmailRequest:
-		return []attribute.KeyValue{
-			attribute.String("email", p.GetEmail()),
-		}, nil
-
 	default:
-		return nil, errors.New("unsupported type")
+		return nil, fmt.Errorf("server: span attributes, unsupported type %T", t)
 	}
 }
