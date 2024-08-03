@@ -2,20 +2,40 @@ package strategy
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/Salam4nder/user/internal/auth"
+	"go.opentelemetry.io/otel"
 )
 
-var _ auth.Strategy = (*Authenticator)(nil)
+var tracer = otel.Tracer("strategy")
 
-func New() *Authenticator { return &Authenticator{} }
+var _ auth.Strategy = (*NoOp)(nil)
 
-type (
-	Authenticator struct{}
-	Input         struct{}
-	Output        struct{}
-)
+type NoOp struct{}
 
-func (x Authenticator) Authenticate(ctx context.Context) error {
+func NewNoOp() *NoOp { return &NoOp{} }
+
+func (x *NoOp) Authenticate(ctx context.Context) error {
+	ctx, span := tracer.Start(ctx, "Authenticate")
+	defer span.End()
+
+	slog.InfoContext(ctx, "strategy: noop authentication")
+	return nil
+}
+
+func (x *NoOp) Register(ctx context.Context) error {
+	ctx, span := tracer.Start(ctx, "Register")
+	defer span.End()
+
+	slog.InfoContext(ctx, "strategy: noop register")
+	return nil
+}
+
+func (x *NoOp) Revoke(ctx context.Context) error {
+	ctx, span := tracer.Start(ctx, "Revoke")
+	defer span.End()
+
+	slog.InfoContext(ctx, "strategy: noop revoke")
 	return nil
 }
