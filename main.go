@@ -12,18 +12,18 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Salam4nder/user/internal/auth/noop"
+	"github.com/Salam4nder/user/internal/auth/strategy"
 	"github.com/Salam4nder/user/internal/config"
 	"github.com/Salam4nder/user/internal/db"
 	"github.com/Salam4nder/user/internal/email"
 	"github.com/Salam4nder/user/internal/event"
-	internalGRPC "github.com/Salam4nder/user/internal/grpc"
-	"github.com/Salam4nder/user/internal/grpc/gen"
 	"github.com/Salam4nder/user/internal/grpc/interceptors"
+	"github.com/Salam4nder/user/internal/grpc/server"
 	"github.com/Salam4nder/user/internal/observability/metrics"
 	"github.com/Salam4nder/user/internal/observability/otel"
+	"github.com/Salam4nder/user/internal/token"
 	"github.com/Salam4nder/user/pkg/logger"
-	"github.com/Salam4nder/user/pkg/token"
+	"github.com/Salam4nder/user/proto/gen"
 	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/nats-io/nats.go"
@@ -121,11 +121,10 @@ func main() {
 	)
 	healthServer := health.NewServer()
 	healthgen.RegisterHealthServer(grpcServer, healthServer)
-	userServer, err := internalGRPC.NewUserServer(
+	userServer, err := server.NewUserServer(
 		healthServer,
 		natsClient,
-		// TODO(kg): naming on this.
-		noop.New(),
+		strategy.NewNoOp(),
 		tokenMaker,
 		psqlDB,
 	)
