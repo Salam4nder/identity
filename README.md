@@ -23,6 +23,64 @@ type Strategy interface {
 }
 ```
 
+
+## Usage
+
+```go
+// gRPC client stubs.
+func ExampleClient() {
+	cfg := config.Server{
+		GRPCHost: "0.0.0.0",
+		GRPCPort: "50051",
+	}
+	conn, err := grpc.NewClient(cfg.Addr())
+	if err != nil {
+		// handle err
+	}
+	defer conn.Close()
+
+	client := gen.NewIdentityClient(conn)
+
+	// Register with the credentials strategy.
+	_, err = client.Register(context.TODO(), &gen.Input{
+		Strategy: gen.Strategy_Credentials,
+		Data: &gen.Input_Credentials{
+			Credentials: &gen.CredentialsInput{
+				Email:    "email@email.com",
+				Password: "securePassword400",
+			},
+		},
+	})
+	if err != nil {
+		// handle err
+	}
+
+	// Register with the PersonalNumber strategy.
+	_, err = client.Register(context.TODO(), &gen.Input{
+		Strategy: gen.Strategy_PersonalNumber,
+		Data: &gen.Input_Numbers{
+			Numbers: &gen.PersonalNumberInput{
+				Numbers: 867497568396,
+			},
+		},
+	})
+	if err != nil {
+		// handle err
+	}
+}
+```
+
+```json
+// JSON body.
+{
+  "strategy": 1, // 1 is the Credentials strategy in the enum.
+  "credentials": {
+    "email": "email@email.com",
+    "password": "password23423"
+  }
+}
+```
+
 ## Config
 
 The application expects a `config.yaml` file in the root of the project.
