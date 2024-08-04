@@ -88,3 +88,14 @@ func (x NATS) Addr() string {
 func (x *Server) GRPCAddr() string {
 	return fmt.Sprintf("%s:%s", x.GRPCHost, x.GRPCPort)
 }
+
+// PSQLTestConfig is used to connect to the unit test db.
+func PSQLTestConfig() Postgres {
+	return Postgres{
+		Host:     "localhost",
+		Port:     "54321",
+		Name:     "unit-test-user-db",
+		User:     "test",
+		Password: "unit-test-pw",
+	}
+}

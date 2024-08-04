@@ -28,13 +28,7 @@ func Conn() (*sql.DB, func()) {
 }
 
 func TestMain(m *testing.M) {
-	cfg := config.Postgres{
-		Host:     "localhost",
-		Port:     "54321",
-		Name:     "unit-test-user-db",
-		User:     "test",
-		Password: "unit-test-pw",
-	}
+	cfg := config.PSQLTestConfig()
 
 	db, err := sql.Open(cfg.Driver(), cfg.Addr())
 	if err != nil {

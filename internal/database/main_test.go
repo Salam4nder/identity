@@ -25,13 +25,7 @@ const (
 // NewTestSQLConnPool returns a new SQL connection pool for testing.
 // [tablename] is the name of the table to truncate for cleanup.
 func TestMain(m *testing.M) {
-	cfg := config.Postgres{
-		Host:     "localhost",
-		Port:     "54321",
-		Name:     "unit-test-user-db",
-		User:     "test",
-		Password: "unit-test-pw",
-	}
+	cfg := config.PSQLTestConfig()
 
 	db, err := sql.Open(cfg.Driver(), cfg.Addr())
 	if err != nil {
