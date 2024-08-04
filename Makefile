@@ -17,7 +17,7 @@ test-db/run:
 	go test -count=1 -tags testdb --coverprofile=coverage.out -coverpkg ./... ./internal/database/...
 
 api:
-	docker build -t user .
+	docker build -t identity .
 
 redis:
 	docker run --name redis -p 6379:6379 -d redis-7alpine

@@ -46,7 +46,7 @@ const (
 	// TODO(kg):  Move these to config.
 	accessTokenDuration  = 15 * time.Minute
 	refreshTokenDuration = 7 * 24 * time.Hour
-	migrationFolder      = "/app/db/migrations"
+	migrationFolder      = "db/migrations"
 	natsTimeout          = 5 * time.Second
 )
 
@@ -84,6 +84,7 @@ func main() {
 	if err = migration.New(
 		psqlDB,
 		migration.Config{MigrationFolder: migrationFolder},
+		migration.SlogOption{Logger: slog.Default()},
 	).Migrate(); err != nil {
 		exitOnError(ctx, err)
 	}
