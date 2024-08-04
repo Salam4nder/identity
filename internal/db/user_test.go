@@ -19,9 +19,8 @@ func TestCreateUser(t *testing.T) {
 	db, cleanup := NewTestSQLConnPool("users")
 	t.Cleanup(cleanup)
 
-	randomParams := CreateUserParams{
+	randomParams := InsertParams{
 		ID:        uuid.New(),
-		FullName:  random.FullName(),
 		Email:     random.Email(),
 		Password:  password.SafeString(random.String(10)),
 		CreatedAt: time.Now().UTC(),
@@ -30,14 +29,13 @@ func TestCreateUser(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		t.Cleanup(cleanup)
 
-		err := CreateUser(ctx, db, randomParams)
+		err := Insert(ctx, db, randomParams)
 		require.NoError(t, err)
 
-		got, err := ReadUser(ctx, db, randomParams.ID)
+		got, err := Read(ctx, db, randomParams.ID)
 		require.NoError(t, err)
 		require.NotNil(t, got)
 		require.Equal(t, randomParams.ID, got.ID)
-		require.Equal(t, randomParams.FullName, got.FullName)
 		require.Equal(t, randomParams.Email, got.Email)
 		require.NotEqual(t, randomParams.Password, got.PasswordHash)
 		require.True(t, time.Now().After(got.CreatedAt))
@@ -48,23 +46,12 @@ func TestCreateUser(t *testing.T) {
 		)
 	})
 
-	t.Run("name exceeds 255 chars returns err", func(t *testing.T) {
-		t.Cleanup(cleanup)
-
-		randomParams.FullName = strings.Repeat("a", 256)
-		err := CreateUser(ctx, db, randomParams)
-		require.Error(t, err)
-		require.ErrorIs(t, err, ErrStringTooLong)
-
-		randomParams.FullName = random.FullName()
-	})
-
 	t.Run("email exceeds 255 chars returns err", func(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		randomParams.Email = strings.Repeat("a", 256)
 
-		err := CreateUser(ctx, db, randomParams)
+		err := Insert(ctx, db, randomParams)
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrStringTooLong)
 		randomParams.Email = random.Email()
@@ -73,18 +60,16 @@ func TestCreateUser(t *testing.T) {
 	t.Run("duplicate email returns error", func(t *testing.T) {
 		t.Cleanup(cleanup)
 
-		err := CreateUser(ctx, db, CreateUserParams{
+		err := Insert(ctx, db, InsertParams{
 			ID:        uuid.New(),
-			FullName:  "Same User",
 			Email:     "email@email.com",
 			Password:  "password",
 			CreatedAt: time.Now().UTC(),
 		})
 		require.NoError(t, err)
 
-		err = CreateUser(ctx, db, CreateUserParams{
+		err = Insert(ctx, db, InsertParams{
 			ID:        uuid.New(),
-			FullName:  "Same Email User",
 			Email:     "email@email.com",
 			Password:  "password",
 			CreatedAt: time.Now().UTC(),
@@ -98,29 +83,28 @@ func TestReadUser(t *testing.T) {
 	db, cleanup := NewTestSQLConnPool("users")
 	t.Cleanup(cleanup)
 
-	randomParams := CreateUserParams{
+	randomParams := InsertParams{
 		ID:        uuid.New(),
-		FullName:  random.FullName(),
 		Email:     random.Email(),
 		Password:  password.SafeString(random.String(10)),
 		CreatedAt: time.Now().UTC(),
 	}
 
-	err := CreateUser(ctx, db, randomParams)
+	err := Insert(ctx, db, randomParams)
 	require.NoError(t, err)
 
-	got, err := ReadUser(ctx, db, randomParams.ID)
+	got, err := Read(ctx, db, randomParams.ID)
 	require.NoError(t, err)
 	require.NotNil(t, got)
 
 	t.Run("Not found", func(t *testing.T) {
-		_, err := ReadUser(ctx, db, uuid.New())
+		_, err := Read(ctx, db, uuid.New())
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrUserNotFound)
 	})
 
 	t.Run("InputError on nil UUID", func(t *testing.T) {
-		_, err := ReadUser(ctx, db, uuid.Nil)
+		_, err := Read(ctx, db, uuid.Nil)
 		require.Error(t, err)
 		require.ErrorAs(t, err, &InputError{})
 	})
@@ -130,39 +114,37 @@ func TestReadUserByEmail(t *testing.T) {
 	db, cleanup := NewTestSQLConnPool("users")
 	t.Cleanup(cleanup)
 
-	randomParams := CreateUserParams{
+	randomParams := InsertParams{
 		ID:        uuid.New(),
-		FullName:  random.FullName(),
 		Email:     random.Email(),
 		Password:  password.SafeString(random.String(10)),
 		CreatedAt: time.Now().UTC(),
 	}
 
-	err := CreateUser(ctx, db, randomParams)
+	err := Insert(ctx, db, randomParams)
 	require.NoError(t, err)
 
-	got, err := ReadUserByEmail(ctx, db, randomParams.Email)
+	got, err := ReadByEmail(ctx, db, randomParams.Email)
 	require.NoError(t, err)
 	require.NotNil(t, got)
 	require.Equal(t, randomParams.ID, got.ID)
-	require.Equal(t, randomParams.FullName, got.FullName)
 	require.Equal(t, randomParams.Email, got.Email)
 	require.True(t, time.Now().After(got.CreatedAt))
 
 	t.Run("Not found", func(t *testing.T) {
-		_, err := ReadUserByEmail(ctx, db, random.Email())
+		_, err := ReadByEmail(ctx, db, random.Email())
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrUserNotFound)
 	})
 
 	t.Run("Email is empty", func(t *testing.T) {
-		_, err := ReadUserByEmail(ctx, db, "")
+		_, err := ReadByEmail(ctx, db, "")
 		require.Error(t, err)
 		require.ErrorAs(t, err, &InputError{})
 	})
 
 	t.Run("Email is not found", func(t *testing.T) {
-		_, err := ReadUserByEmail(ctx, db, "ass@ass.com")
+		_, err := ReadByEmail(ctx, db, "ass@ass.com")
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrUserNotFound)
 	})
@@ -172,9 +154,8 @@ func TestSQL_UpdateUser(t *testing.T) {
 	db, cleanup := NewTestSQLConnPool("users")
 	t.Cleanup(cleanup)
 
-	randomParams := CreateUserParams{
+	randomParams := InsertParams{
 		ID:        uuid.New(),
-		FullName:  random.FullName(),
 		Email:     random.Email(),
 		Password:  password.SafeString(random.String(10)),
 		CreatedAt: time.Now().UTC(),
@@ -186,17 +167,17 @@ func TestSQL_UpdateUser(t *testing.T) {
 		newFullName := "New Name"
 		newEmail := "new@email.com"
 
-		err := CreateUser(ctx, db, randomParams)
+		err := Insert(ctx, db, randomParams)
 		require.NoError(t, err)
 
-		err = UpdateUser(ctx, db, UpdateUserParams{
+		err = Update(ctx, db, UpdateParams{
 			ID:       randomParams.ID,
 			FullName: newFullName,
 			Email:    newEmail,
 		})
 		require.NoError(t, err)
 
-		got, err := ReadUser(ctx, db, randomParams.ID)
+		got, err := Read(ctx, db, randomParams.ID)
 		require.NoError(t, err)
 		require.NotNil(t, got)
 		require.Equal(t, randomParams.ID, got.ID)
@@ -209,16 +190,15 @@ func TestSQL_UpdateUser(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		ID := uuid.New()
-		err := CreateUser(ctx, db, CreateUserParams{
+		err := Insert(ctx, db, InsertParams{
 			ID:        ID,
-			FullName:  random.FullName(),
 			Email:     random.Email(),
 			Password:  password.SafeString(random.String(10)),
 			CreatedAt: time.Now().UTC(),
 		})
 		require.NoError(t, err)
 
-		err = UpdateUser(ctx, db, UpdateUserParams{
+		err = Update(ctx, db, UpdateParams{
 			ID:       ID,
 			FullName: strings.Repeat("a", 256),
 			Email:    random.Email(),
@@ -232,16 +212,15 @@ func TestSQL_UpdateUser(t *testing.T) {
 
 		ID := uuid.New()
 
-		err := CreateUser(ctx, db, CreateUserParams{
+		err := Insert(ctx, db, InsertParams{
 			ID:        ID,
-			FullName:  random.FullName(),
 			Email:     random.Email(),
 			Password:  password.SafeString(random.String(10)),
 			CreatedAt: time.Now().UTC(),
 		})
 		require.NoError(t, err)
 
-		err = UpdateUser(ctx, db, UpdateUserParams{
+		err = Update(ctx, db, UpdateParams{
 			ID:       ID,
 			FullName: random.FullName(),
 			Email:    strings.Repeat("a", 256),
@@ -257,20 +236,19 @@ func TestSQL_DeleteUser(t *testing.T) {
 
 	ID := uuid.New()
 
-	err := CreateUser(ctx, db, CreateUserParams{
+	err := Insert(ctx, db, InsertParams{
 		ID:        ID,
-		FullName:  random.FullName(),
 		Email:     random.Email(),
 		Password:  password.SafeString(random.String(15)),
 		CreatedAt: time.Now(),
 	})
 	require.NoError(t, err)
 
-	err = DeleteUser(ctx, db, ID)
+	err = Delete(ctx, db, ID)
 	require.NoError(t, err)
 
 	t.Run("Not found", func(t *testing.T) {
-		err := DeleteUser(ctx, db, ID)
+		err := Delete(ctx, db, ID)
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrNoRowsAffected)
 	})

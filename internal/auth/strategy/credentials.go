@@ -77,9 +77,8 @@ func (x *Credentials) Register(ctx context.Context) error {
 	ctx, span := tracer.Start(ctx, "Register")
 	defer span.End()
 
-	if err := db.CreateUser(ctx, x.db, db.CreateUserParams{
+	if err := db.Insert(ctx, x.db, db.InsertParams{
 		ID:        uuid.New(),
-		FullName:  "Full Name",
 		Email:     x.email,
 		Password:  x.password,
 		CreatedAt: time.Now(),

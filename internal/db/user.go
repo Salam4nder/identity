@@ -16,8 +16,8 @@ import (
 
 var tracer = otel.Tracer("db")
 
-// User defines a user in the users table.
-type User struct {
+// Entry defines an entry in the credentials table.
+type Entry struct {
 	ID           uuid.UUID  `db:"id"`
 	FullName     string     `db:"full_name"`
 	Email        string     `db:"email"`
@@ -26,32 +26,30 @@ type User struct {
 	UpdatedAt    *time.Time `db:"updated_at"`
 }
 
-// CreateUserParams defines the parameters to [CreateUser].
-type CreateUserParams struct {
+// InsertParams defines the parameters for inserts.
+type InsertParams struct {
 	ID        uuid.UUID
-	FullName  string
 	Email     string
 	Password  password.SafeString
 	CreatedAt time.Time
 }
 
-func (x CreateUserParams) SpanAttributes() []attribute.KeyValue {
+func (x InsertParams) SpanAttributes() []attribute.KeyValue {
 	return []attribute.KeyValue{
 		attribute.String("user_id", x.ID.String()),
-		attribute.String("full_name", x.FullName),
 		attribute.String("email", x.Email),
 		attribute.Int("password_length", len(x.Password)),
 	}
 }
 
-// CreateUser creates a new user in the database.
-func CreateUser(ctx context.Context, db *sql.DB, params CreateUserParams) error {
-	ctx, span := tracer.Start(ctx, "db.CreateUser", trace.WithAttributes(params.SpanAttributes()...))
+// Insert a new credentials entry.
+func Insert(ctx context.Context, db *sql.DB, params InsertParams) error {
+	ctx, span := tracer.Start(ctx, "Insert", trace.WithAttributes(params.SpanAttributes()...))
 	defer span.End()
 
 	query := `
-    INSERT INTO users (id, full_name, email, password_hash, created_at)
-    VALUES ($1, $2, $3, $4, $5)
+    INSERT INTO credentials (id, email, password_hash, created_at)
+    VALUES ($1, $2, $3, $4)
     `
 	span.SetAttributes(attribute.String("query", query))
 
@@ -59,7 +57,6 @@ func CreateUser(ctx context.Context, db *sql.DB, params CreateUserParams) error 
 		ctx,
 		query,
 		params.ID,
-		params.FullName,
 		params.Email,
 		params.Password,
 		params.CreatedAt,
@@ -90,9 +87,9 @@ func CreateUser(ctx context.Context, db *sql.DB, params CreateUserParams) error 
 	return nil
 }
 
-// ReadUser reads a user from the database.
-func ReadUser(ctx context.Context, db *sql.DB, id uuid.UUID) (*User, error) {
-	ctx, span := tracer.Start(ctx, "db.ReadUser")
+// Read a credentials [Entry] by ID.
+func Read(ctx context.Context, db *sql.DB, id uuid.UUID) (*Entry, error) {
+	ctx, span := tracer.Start(ctx, "Read")
 	defer span.End()
 	span.SetAttributes(attribute.String("id", id.String()))
 
@@ -101,16 +98,15 @@ func ReadUser(ctx context.Context, db *sql.DB, id uuid.UUID) (*User, error) {
 	}
 
 	query := `
-        SELECT id, full_name, email, password_hash, created_at, updated_at
-        FROM users
+        SELECT id, email, password_hash, created_at, updated_at
+        FROM credentials
         WHERE id = $1
         `
 	span.SetAttributes(attribute.String("query", query))
 
-	var user User
+	var user Entry
 	if err := db.QueryRowContext(ctx, query, id).Scan(
 		&user.ID,
-		&user.FullName,
 		&user.Email,
 		&user.PasswordHash,
 		&user.CreatedAt,
@@ -127,9 +123,9 @@ func ReadUser(ctx context.Context, db *sql.DB, id uuid.UUID) (*User, error) {
 	return &user, nil
 }
 
-// ReadUserByEmail reads a user from the database by email.
-func ReadUserByEmail(ctx context.Context, db *sql.DB, email string) (*User, error) {
-	ctx, span := tracer.Start(ctx, "db.ReadUserByEmail")
+// ReadByEmail a credentials [Entry] by an email.
+func ReadByEmail(ctx context.Context, db *sql.DB, email string) (*Entry, error) {
+	ctx, span := tracer.Start(ctx, "ReadByEmail")
 	defer span.End()
 
 	if email == "" {
@@ -137,8 +133,8 @@ func ReadUserByEmail(ctx context.Context, db *sql.DB, email string) (*User, erro
 	}
 
 	query := `
-        SELECT id, full_name, email, password_hash, created_at, updated_at
-        FROM users
+        SELECT id, email, password_hash, created_at, updated_at
+        FROM credentials
         WHERE email = $1
         `
 	span.SetAttributes(
@@ -146,10 +142,9 @@ func ReadUserByEmail(ctx context.Context, db *sql.DB, email string) (*User, erro
 		attribute.String("email", email),
 	)
 
-	var user User
+	var user Entry
 	if err := db.QueryRowContext(ctx, query, email).Scan(
 		&user.ID,
-		&user.FullName,
 		&user.Email,
 		&user.PasswordHash,
 		&user.CreatedAt,
@@ -166,14 +161,14 @@ func ReadUserByEmail(ctx context.Context, db *sql.DB, email string) (*User, erro
 	return &user, nil
 }
 
-// UpdateUserParams defines the parameters used to update a user.
-type UpdateUserParams struct {
+// UpdateParams defines the parameters used to update credentials.
+type UpdateParams struct {
 	ID       uuid.UUID
 	FullName string
 	Email    string
 }
 
-func (x UpdateUserParams) SpanAttributes() []attribute.KeyValue {
+func (x UpdateParams) SpanAttributes() []attribute.KeyValue {
 	return []attribute.KeyValue{
 		attribute.String("user_id", x.ID.String()),
 		attribute.String("full_name", x.FullName),
@@ -181,14 +176,14 @@ func (x UpdateUserParams) SpanAttributes() []attribute.KeyValue {
 	}
 }
 
-// UpdateUser updates a user in the database.
-func UpdateUser(ctx context.Context, db *sql.DB, params UpdateUserParams) error {
-	ctx, span := tracer.Start(ctx, "db.UpdateUser", trace.WithAttributes(params.SpanAttributes()...))
+// Update credentials.
+func Update(ctx context.Context, db *sql.DB, params UpdateParams) error {
+	ctx, span := tracer.Start(ctx, "Update", trace.WithAttributes(params.SpanAttributes()...))
 	defer span.End()
 
 	query := `
-        UPDATE users
-        SET full_name = $1, email = $2, updated_at = $3
+        UPDATE credentials
+        SET email = $1, updated_at = $2
         WHERE id = $4
         `
 	span.SetAttributes(attribute.String("query", query))
@@ -196,7 +191,6 @@ func UpdateUser(ctx context.Context, db *sql.DB, params UpdateUserParams) error 
 	res, err := db.ExecContext(
 		ctx,
 		query,
-		params.FullName,
 		params.Email,
 		time.Now(),
 		params.ID,
@@ -227,13 +221,13 @@ func UpdateUser(ctx context.Context, db *sql.DB, params UpdateUserParams) error 
 	return nil
 }
 
-// DeleteUser deletes a user from the database.
-func DeleteUser(ctx context.Context, db *sql.DB, id uuid.UUID) error {
-	ctx, span := tracer.Start(ctx, "db.DeleteUser")
+// Delete a credentils [Entry] from the database.
+func Delete(ctx context.Context, db *sql.DB, id uuid.UUID) error {
+	ctx, span := tracer.Start(ctx, "Delete")
 	defer span.End()
 
 	query := `
-        DELETE FROM users
+        DELETE FROM credentials
         WHERE id = $1
         `
 	span.SetAttributes(
