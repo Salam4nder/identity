@@ -46,11 +46,11 @@ func alreadyExistsError(ctx context.Context, err error, msg string) error {
 // 	return status.Error(codes.Unauthenticated, msg)
 // }
 
-func notFoundError(ctx context.Context, err error, msg string) error {
-	if err != nil {
-		span := trace.SpanFromContext(ctx)
-		span.SetStatus(otelCode.Error, err.Error())
-		span.RecordError(err)
-	}
-	return status.Error(codes.NotFound, msg)
-}
+// func notFoundError(ctx context.Context, err error, msg string) error {
+// 	if err != nil {
+// 		span := trace.SpanFromContext(ctx)
+// 		span.SetStatus(otelCode.Error, err.Error())
+// 		span.RecordError(err)
+// 	}
+// 	return status.Error(codes.NotFound, msg)
+// }
