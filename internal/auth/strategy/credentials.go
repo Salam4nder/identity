@@ -115,3 +115,7 @@ func (x *Credentials) Authenticate(_ context.Context) error {
 func (x *Credentials) Revoke(_ context.Context) error {
 	return nil
 }
+
+func (x *Credentials) Renew(_ context.Context) error {
+	return nil
+}
