@@ -24,15 +24,12 @@ func (x *Worker) Work(ctx context.Context, natsCh chan *nats.Msg) {
 	for {
 		select {
 		case <-ctx.Done():
-			slog.InfoContext(ctx, "event: context done, shutting down...")
+			slog.InfoContext(ctx, "event: context done, shutting down worker...")
 			return
 		case msg := <-natsCh:
 			var m email.Email
 			if err := gob.NewDecoder(bytes.NewReader(msg.Data)).Decode(&m); err != nil {
-				slog.WarnContext(ctx, "event: failed to decode message", "error", err)
-				if err = msg.Ack(); err != nil {
-					slog.WarnContext(ctx, "event: failed to ack message", "error", err)
-				}
+				slog.WarnContext(ctx, "event: decoding message", "err", err)
 				continue
 			}
 			if err := x.mailSender.SendEmail(ctx, email.Email{
@@ -41,10 +38,7 @@ func (x *Worker) Work(ctx context.Context, natsCh chan *nats.Msg) {
 				Body:    m.Body,
 				From:    m.From,
 			}); err != nil {
-				slog.WarnContext(ctx, "event: failed to send email", "error", err)
-			}
-			if err := msg.Ack(); err != nil {
-				slog.WarnContext(ctx, "event: failed to ack message", "error", err)
+				slog.WarnContext(ctx, "event: sending email", "err", err)
 			}
 		}
 	}
