@@ -41,7 +41,7 @@ type (
 func (x CredentialsInput) TraceAttributes() []attribute.KeyValue {
 	return []attribute.KeyValue{
 		attribute.String("email", x.Email),
-		attribute.Int("password length", utf8.RuneCountInString(string(x.Password))),
+		attribute.Int("password length", utf8.RuneCountInString((x.Password))),
 	}
 }
 
@@ -72,6 +72,9 @@ func (x *Credentials) IngestInput(ctx context.Context, input CredentialsInput) e
 	return nil
 }
 
+// Register will handles registration with the credentials strategy.
+// It will insert a new [credentials.Entry] into the credentials table
+// and send an email to the registered user.
 func (x *Credentials) Register(ctx context.Context) error {
 	ctx, span := tracer.Start(ctx, "Register")
 	defer span.End()
@@ -82,7 +85,6 @@ func (x *Credentials) Register(ctx context.Context) error {
 		Password:  x.password,
 		CreatedAt: time.Now(),
 	}); err != nil {
-		// TODO(kg:) Errs.
 		return err
 	}
 
@@ -92,7 +94,6 @@ func (x *Credentials) Register(ctx context.Context) error {
 		Subject: email.TestSubject,
 		Body:    email.TestBody,
 	}); err != nil {
-		// TODO(kg:) Errs.
 		return err
 	}
 
