@@ -1,12 +1,35 @@
 # Identity: A lightweight identity service.
 
+## Quickstart
+
+*Identity* operates on a given authentication `strategy`.
+
+A `strategy` must implement the following interface:
+
+```go
+// WIP.
+type Strategy interface {
+	// ConfiguredStrategy exposes the current configured strategy.
+	ConfiguredStrategy() gen.Strategy
+
+	// Renew will trade a valid refresh token for a new access token.
+	Renew(context.Context) error
+	// Revoke will purge all active tokens in the configured hot-storage.
+	Revoke(context.Context) error
+	// Register an entry with the configured strategy.
+	Register(context.Context) error
+	// Authenticate the user with the configured strategy.
+	Authenticate(context.Context) error
+}
+```
+
 ## Config
 
 The application expects a `config.yaml` file in the root of the project.
 
 ## Run
 
-Run `make up` to compose up the application and all its dependencies.
+Run `make api` to build the api image and `make up` to compose up the application and all its dependencies.
 
 
 ## Cleanup
@@ -17,7 +40,7 @@ Run `make down` to nuke everything down.
 
 ## Test
 
-Run all tests with `make test`. This will spin up a required Postgres container defined in `internal/db/compose.yaml`. 
+Run all tests with `make test`. This will spin up a required Postgres container defined in `internal/database/compose.yaml`. 
 
 Running `go test./...` will exclude tests that require a db connection.
 
@@ -34,7 +57,8 @@ This service serves gRPC requests. You can use GUI tools like **Insomnia** to te
 
 
 ## TODO
+* Examples.
 * TLS setup.
-* Email sending implementation.
+* Email sending implementation. For now a no-op stdout logger faker is used.
 * Complete remaining unit tests.
-* oauth2 support.
+* more auth strategies.
