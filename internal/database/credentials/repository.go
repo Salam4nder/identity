@@ -11,7 +11,6 @@ import (
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -45,7 +44,9 @@ func (x InsertParams) SpanAttributes() []attribute.KeyValue {
 	}
 }
 
-// Insert a new credentials entry. Returns [database.DuplicateEntryError] on duplicate entry.
+// Insert a new credentials entry.
+// Returns [database.DuplicateEntryError] on duplicate entry,
+// [database.RowsAffectedError] or [database.OperationFailedError].
 func Insert(ctx context.Context, db *sql.DB, params InsertParams) error {
 	ctx, span := tracer.Start(ctx, "Insert", trace.WithAttributes(params.SpanAttributes()...))
 	defer span.End()
@@ -65,34 +66,31 @@ func Insert(ctx context.Context, db *sql.DB, params InsertParams) error {
 		params.CreatedAt,
 	)
 	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		span.RecordError(err)
 		if database.IsPSQLDuplicateEntryError(err) {
-			return database.NewDuplicateEntryError("credentials")
+			return database.NewDuplicateEntryError(ctx, err, "credentials")
 		}
-		return err
+		return database.NewOperationFailedError(ctx, err)
 	}
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		span.RecordError(err)
-		return err
+		return database.NewOperationFailedError(ctx, err)
 	}
 	if rowsAffected != 1 {
-		return database.NewRowsAffectedError(1, rowsAffected)
+		return database.NewRowsAffectedError(ctx, database.ErrUnexpectedRowsAffectedError, 1, rowsAffected)
 	}
 
 	return nil
 }
 
 // Read a credentials [Entry] by ID.
+// Returns [database.NotFoundError] if entry is not found, otherwise [database.OperationFailedError].
 func Read(ctx context.Context, db *sql.DB, id uuid.UUID) (*Entry, error) {
 	ctx, span := tracer.Start(ctx, "Read")
 	defer span.End()
 	span.SetAttributes(attribute.String("id", id.String()))
 
 	if id == uuid.Nil {
-		return nil, database.NewInputError("id", id.String())
+		return nil, database.NewInputError(ctx, nil, "id", id.String())
 	}
 
 	query := `
@@ -110,24 +108,24 @@ func Read(ctx context.Context, db *sql.DB, id uuid.UUID) (*Entry, error) {
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	); err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		span.RecordError(err)
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, database.NewNotFoundError("credentials", id.String())
+			return nil, database.NewNotFoundError(ctx, err, "credentials", id.String())
 		}
-		return nil, err
+		return nil, database.NewOperationFailedError(ctx, err)
 	}
 
 	return &user, nil
 }
 
 // ReadByEmail a credentials [Entry] by an email.
+// On error, it returns [database.NotFoundError] if entry is not found,
+// otherwise [database.OperationFailedError].
 func ReadByEmail(ctx context.Context, db *sql.DB, email string) (*Entry, error) {
 	ctx, span := tracer.Start(ctx, "ReadByEmail")
 	defer span.End()
 
 	if email == "" {
-		return nil, database.NewInputError("email", email)
+		return nil, database.NewInputError(ctx, nil, "email", email)
 	}
 
 	query := `
@@ -148,12 +146,10 @@ func ReadByEmail(ctx context.Context, db *sql.DB, email string) (*Entry, error) 
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	); err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		span.RecordError(err)
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, database.NewNotFoundError("credentials", email)
+			return nil, database.NewNotFoundError(ctx, err, "credentials", email)
 		}
-		return nil, err
+		return nil, database.NewOperationFailedError(ctx, err)
 	}
 
 	return &user, nil
@@ -172,7 +168,8 @@ func (x UpdateParams) SpanAttributes() []attribute.KeyValue {
 	}
 }
 
-// Update credentials. Returns [database.DuplicateEntryError] on duplicate entry.
+// Update credentials. Returns [database.DuplicateEntryError] on duplicate entry,
+// [database.RowsAffectedError] or [database.OperationFailedError].
 func Update(ctx context.Context, db *sql.DB, params UpdateParams) error {
 	ctx, span := tracer.Start(ctx, "Update", trace.WithAttributes(params.SpanAttributes()...))
 	defer span.End()
@@ -192,27 +189,24 @@ func Update(ctx context.Context, db *sql.DB, params UpdateParams) error {
 		params.ID,
 	)
 	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		span.RecordError(err)
 		if database.IsPSQLDuplicateEntryError(err) {
-			return database.NewDuplicateEntryError("credentials")
+			return database.NewDuplicateEntryError(ctx, err, "credentials")
 		}
-		return err
+		return database.NewOperationFailedError(ctx, err)
 	}
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		span.RecordError(err)
-		return err
+		return database.NewOperationFailedError(ctx, err)
 	}
 	if rowsAffected != 1 {
-		return database.NewRowsAffectedError(1, rowsAffected)
+		return database.NewRowsAffectedError(ctx, database.ErrUnexpectedRowsAffectedError, 1, rowsAffected)
 	}
 
 	return nil
 }
 
 // Delete a credentils [Entry] from the database.
+// Returns [database.RowsAffectedError] or [database.OperationFailedError] on error.
 func Delete(ctx context.Context, db *sql.DB, id uuid.UUID) error {
 	ctx, span := tracer.Start(ctx, "Delete")
 	defer span.End()
@@ -228,15 +222,15 @@ func Delete(ctx context.Context, db *sql.DB, id uuid.UUID) error {
 
 	res, err := db.ExecContext(ctx, query, id)
 	if err != nil {
-		return err
+		return database.NewOperationFailedError(ctx, err)
 	}
 
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return database.NewOperationFailedError(ctx, err)
 	}
 	if rowsAffected != 1 {
-		return database.NewRowsAffectedError(1, rowsAffected)
+		return database.NewRowsAffectedError(ctx, database.ErrUnexpectedRowsAffectedError, 1, rowsAffected)
 	}
 
 	return nil
