@@ -163,15 +163,13 @@ func ReadByEmail(ctx context.Context, db *sql.DB, email string) (*Entry, error) 
 
 // UpdateParams defines the parameters used to update credentials.
 type UpdateParams struct {
-	ID       uuid.UUID
-	FullName string
-	Email    string
+	ID    uuid.UUID
+	Email string
 }
 
 func (x UpdateParams) SpanAttributes() []attribute.KeyValue {
 	return []attribute.KeyValue{
 		attribute.String("user_id", x.ID.String()),
-		attribute.String("full_name", x.FullName),
 		attribute.String("email", x.Email),
 	}
 }
@@ -184,7 +182,7 @@ func Update(ctx context.Context, db *sql.DB, params UpdateParams) error {
 	query := `
         UPDATE credentials
         SET email = $1, updated_at = $2
-        WHERE id = $4
+        WHERE id = $3
         `
 	span.SetAttributes(attribute.String("query", query))
 
