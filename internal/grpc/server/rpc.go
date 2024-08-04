@@ -25,7 +25,11 @@ func (x *Identity) Register(ctx context.Context, req *gen.Input) (*emptypb.Empty
 	}
 
 	if req.GetStrategy() != x.strategy.ConfiguredStrategy() {
-		return nil, invalidArgumentError(ctx, nil, fmt.Sprintf("invalid strategy, expecting %s", x.strategy.ConfiguredStrategy()))
+		return nil, invalidArgumentError(
+			ctx,
+			nil,
+			fmt.Sprintf("invalid strategy, expecting %s", x.strategy.ConfiguredStrategy()),
+		)
 	}
 
 	switch t := x.strategy.(type) {
