@@ -15,8 +15,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func TestCreateUser(t *testing.T) {
-	db, cleanup := NewTestSQLConnPool("users")
+func TestInsert(t *testing.T) {
+	db, cleanup := NewTestSQLConnPool("credentials")
 	t.Cleanup(cleanup)
 
 	randomParams := InsertParams{
@@ -79,8 +79,8 @@ func TestCreateUser(t *testing.T) {
 	})
 }
 
-func TestReadUser(t *testing.T) {
-	db, cleanup := NewTestSQLConnPool("users")
+func TestRead(t *testing.T) {
+	db, cleanup := NewTestSQLConnPool("credentials")
 	t.Cleanup(cleanup)
 
 	randomParams := InsertParams{
@@ -110,8 +110,8 @@ func TestReadUser(t *testing.T) {
 	})
 }
 
-func TestReadUserByEmail(t *testing.T) {
-	db, cleanup := NewTestSQLConnPool("users")
+func TestReadByEmail(t *testing.T) {
+	db, cleanup := NewTestSQLConnPool("credentials")
 	t.Cleanup(cleanup)
 
 	randomParams := InsertParams{
@@ -150,8 +150,8 @@ func TestReadUserByEmail(t *testing.T) {
 	})
 }
 
-func TestSQL_UpdateUser(t *testing.T) {
-	db, cleanup := NewTestSQLConnPool("users")
+func TestUpdate(t *testing.T) {
+	db, cleanup := NewTestSQLConnPool("credentials")
 	t.Cleanup(cleanup)
 
 	randomParams := InsertParams{
@@ -164,16 +164,14 @@ func TestSQL_UpdateUser(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		t.Cleanup(cleanup)
 
-		newFullName := "New Name"
 		newEmail := "new@email.com"
 
 		err := Insert(ctx, db, randomParams)
 		require.NoError(t, err)
 
 		err = Update(ctx, db, UpdateParams{
-			ID:       randomParams.ID,
-			FullName: newFullName,
-			Email:    newEmail,
+			ID:    randomParams.ID,
+			Email: newEmail,
 		})
 		require.NoError(t, err)
 
@@ -181,30 +179,8 @@ func TestSQL_UpdateUser(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, got)
 		require.Equal(t, randomParams.ID, got.ID)
-		require.Equal(t, newFullName, got.FullName)
 		require.Equal(t, newEmail, got.Email)
 		require.True(t, time.Now().After(got.CreatedAt))
-	})
-
-	t.Run("name exceeds 255 chars returns err", func(t *testing.T) {
-		t.Cleanup(cleanup)
-
-		ID := uuid.New()
-		err := Insert(ctx, db, InsertParams{
-			ID:        ID,
-			Email:     random.Email(),
-			Password:  password.SafeString(random.String(10)),
-			CreatedAt: time.Now().UTC(),
-		})
-		require.NoError(t, err)
-
-		err = Update(ctx, db, UpdateParams{
-			ID:       ID,
-			FullName: strings.Repeat("a", 256),
-			Email:    random.Email(),
-		})
-		require.Error(t, err)
-		require.ErrorIs(t, err, ErrStringTooLong)
 	})
 
 	t.Run("email exceeds 255 chars returns err", func(t *testing.T) {
@@ -221,17 +197,16 @@ func TestSQL_UpdateUser(t *testing.T) {
 		require.NoError(t, err)
 
 		err = Update(ctx, db, UpdateParams{
-			ID:       ID,
-			FullName: random.FullName(),
-			Email:    strings.Repeat("a", 256),
+			ID:    ID,
+			Email: strings.Repeat("a", 256),
 		})
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrStringTooLong)
 	})
 }
 
-func TestSQL_DeleteUser(t *testing.T) {
-	db, cleanup := NewTestSQLConnPool("users")
+func TestDelete(t *testing.T) {
+	db, cleanup := NewTestSQLConnPool("credentials")
 	t.Cleanup(cleanup)
 
 	ID := uuid.New()
