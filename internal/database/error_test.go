@@ -19,7 +19,6 @@ func Test_IsPSQLDuplicateEntryError(t *testing.T) {
 		if !database.IsPSQLDuplicateEntryError(err) {
 			t.Error("expected true")
 		}
-
 	})
 
 	t.Run("should be false", func(t *testing.T) {
