@@ -1,4 +1,4 @@
-module github.com/Salam4nder/user
+module github.com/Salam4nder/identity
 
 go 1.22
 

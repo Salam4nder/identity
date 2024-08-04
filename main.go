@@ -12,18 +12,18 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Salam4nder/user/internal/auth/strategy"
-	"github.com/Salam4nder/user/internal/config"
-	"github.com/Salam4nder/user/internal/database"
-	"github.com/Salam4nder/user/internal/email"
-	"github.com/Salam4nder/user/internal/event"
-	"github.com/Salam4nder/user/internal/grpc/interceptors"
-	"github.com/Salam4nder/user/internal/grpc/server"
-	"github.com/Salam4nder/user/internal/observability/metrics"
-	"github.com/Salam4nder/user/internal/observability/otel"
-	"github.com/Salam4nder/user/internal/token"
-	"github.com/Salam4nder/user/pkg/logger"
-	"github.com/Salam4nder/user/proto/gen"
+	"github.com/Salam4nder/identity/internal/auth/strategy"
+	"github.com/Salam4nder/identity/internal/config"
+	"github.com/Salam4nder/identity/internal/database"
+	"github.com/Salam4nder/identity/internal/email"
+	"github.com/Salam4nder/identity/internal/event"
+	"github.com/Salam4nder/identity/internal/grpc/interceptors"
+	"github.com/Salam4nder/identity/internal/grpc/server"
+	"github.com/Salam4nder/identity/internal/observability/metrics"
+	"github.com/Salam4nder/identity/internal/observability/otel"
+	"github.com/Salam4nder/identity/internal/token"
+	"github.com/Salam4nder/identity/pkg/logger"
+	"github.com/Salam4nder/identity/proto/gen"
 	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/nats-io/nats.go"
@@ -98,7 +98,7 @@ func main() {
 	)
 	exitOnError(ctx, err)
 	natsChan := make(chan *nats.Msg, 64)
-	userSub, err := natsClient.ChanSubscribe(event.UserRegistered, natsChan)
+	userSub, err := natsClient.ChanSubscribe(email.IngestedEvent, natsChan)
 	exitOnError(ctx, err)
 
 	// Worker.

@@ -1,4 +1,4 @@
-# User: A lightweight identity service.
+# Identity: A lightweight identity service.
 
 ## Config
 
