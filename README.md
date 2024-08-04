@@ -14,8 +14,7 @@ type Strategy interface {
 
 	// Renew will trade a valid refresh token for a new access token.
 	Renew(context.Context) error
-	// Revoke all active tokens in the configured hot-storage
-    // for the user.
+	// Revoke all active tokens in the configured hot-storage for the user.
 	Revoke(context.Context) error
 	// Register an entry with the configured strategy.
 	Register(context.Context) error
