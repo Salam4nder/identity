@@ -19,7 +19,7 @@ func (x *Identity) Register(ctx context.Context, req *gen.Input) (*emptypb.Empty
 	defer span.End()
 
 	if req == nil {
-		return nil, requestIsNilError(span)
+		return nil, requestIsNilError()
 	}
 
 	switch t := x.strategy.(type) {
@@ -30,21 +30,22 @@ func (x *Identity) Register(ctx context.Context, req *gen.Input) (*emptypb.Empty
 		} else {
 			slog.WarnContext(ctx, "server: getting span attributes", "err", err)
 		}
+
 		if err = t.IngestInput(ctx, strategy.CredentialsInput{
 			Email:    req.GetCredentials().GetEmail(),
 			Password: req.GetCredentials().GetPassword(),
 		}); err != nil {
-			return nil, invalidArgumentError(err, span, err.Error())
+			return nil, invalidArgumentError(ctx, err, err.Error())
 		}
 		if err := t.Register(ctx); err != nil {
 			// TODO(kg): Errs.
-			return nil, invalidArgumentError(err, span, err.Error())
+			return nil, invalidArgumentError(ctx, err, err.Error())
 		}
 	case *strategy.NoOp:
 		slog.InfoContext(ctx, "server: no op register")
 	default:
 		slog.ErrorContext(ctx, fmt.Sprintf("server: unsupported strategy %T,", t))
-		return nil, internalServerError(nil, span)
+		return nil, internalServerError(ctx, fmt.Errorf("unsupported strategy %T", t))
 	}
 
 	metrics.UsersActive.Inc()
