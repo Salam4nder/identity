@@ -14,7 +14,7 @@ import (
 
 	"github.com/Salam4nder/user/internal/auth/strategy"
 	"github.com/Salam4nder/user/internal/config"
-	"github.com/Salam4nder/user/internal/db"
+	"github.com/Salam4nder/user/internal/database"
 	"github.com/Salam4nder/user/internal/email"
 	"github.com/Salam4nder/user/internal/event"
 	"github.com/Salam4nder/user/internal/grpc/interceptors"
@@ -28,8 +28,6 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/stimtech/go-migration"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthgen "google.golang.org/grpc/health/grpc_health_v1"
@@ -78,11 +76,7 @@ func main() {
 
 	psqlDB, err := sql.Open(cfg.PSQL.Driver(), cfg.PSQL.Addr())
 	exitOnError(ctx, err)
-	if err = db.HealthCheck(ctx, psqlDB, 5 /*max tries*/); err != nil {
-		exitOnError(ctx, err)
-	}
-	migration := migration.New(psqlDB, zap.NewNop()).WithFolder(migrationFolder)
-	if err = migration.Migrate(); err != nil {
+	if err = database.HealthCheck(ctx, psqlDB, 5 /*max tries*/); err != nil {
 		exitOnError(ctx, err)
 	}
 
