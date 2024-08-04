@@ -8,8 +8,11 @@ import (
 	"github.com/Salam4nder/user/internal/auth/strategy"
 	"github.com/Salam4nder/user/internal/observability/metrics"
 	"github.com/Salam4nder/user/proto/gen"
+	"go.opentelemetry.io/otel"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
+
+var tracer = otel.Tracer("server")
 
 func (x *Identity) Register(ctx context.Context, req *gen.Input) (*emptypb.Empty, error) {
 	ctx, span := tracer.Start(ctx, "Register")
@@ -41,7 +44,7 @@ func (x *Identity) Register(ctx context.Context, req *gen.Input) (*emptypb.Empty
 		slog.InfoContext(ctx, "server: no op register")
 	default:
 		slog.ErrorContext(ctx, fmt.Sprintf("server: unsupported strategy %T,", t))
-		internalServerError(nil, span)
+		return nil, internalServerError(nil, span)
 	}
 
 	metrics.UsersActive.Inc()

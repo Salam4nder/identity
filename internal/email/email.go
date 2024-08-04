@@ -40,7 +40,7 @@ func (x Email) TraceAttributes() []attribute.KeyValue {
 }
 
 func Ingest(ctx context.Context, natsConn *nats.Conn, email Email) error {
-	ctx, span := tracer.Start(ctx, "Ingest", trace.WithAttributes(email.TraceAttributes()...))
+	_, span := tracer.Start(ctx, "Ingest", trace.WithAttributes(email.TraceAttributes()...))
 	defer span.End()
 
 	var buf bytes.Buffer

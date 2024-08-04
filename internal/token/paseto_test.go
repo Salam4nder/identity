@@ -9,7 +9,7 @@ func bootstrap(t *testing.T) *PasetoMaker {
 	t.Helper()
 
 	t.Run("invalid symmetric key", func(t *testing.T) {
-		var bb []byte
+		bb := make([]byte, 0, 31)
 		for range 31 {
 			bb = append(bb, byte('s'))
 		}
@@ -23,7 +23,7 @@ func bootstrap(t *testing.T) *PasetoMaker {
 		}
 	})
 
-	var b []byte
+	b := make([]byte, 0, 32)
 	for range 32 {
 		b = append(b, byte('s'))
 	}

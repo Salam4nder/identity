@@ -5,19 +5,16 @@ import (
 	"fmt"
 
 	"github.com/Salam4nder/user/proto/gen"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 )
 
-type Input interface {
+type GenReq interface {
 	*gen.Credentials | *gen.Number
 }
 
-var tracer = otel.Tracer("server")
-
 // GenerateSpanAttributes returns span attributes for generated request structs.
 // Experimental solution, not the prettiest.
-func GenSpanAttributes[T Input](param T) ([]attribute.KeyValue, error) {
+func GenSpanAttributes[T GenReq](param T) ([]attribute.KeyValue, error) {
 	if param == nil {
 		return nil, errors.New("param is nil")
 	}

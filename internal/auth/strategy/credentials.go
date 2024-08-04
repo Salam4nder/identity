@@ -56,7 +56,7 @@ func NewCredentials(db *sql.DB, natsConn *nats.Conn) *Credentials {
 // IngestInput sets the input field of the underlying [Credentials].
 // [Credentials] is ready to call the rest of it's methods if this method returns no error.
 func (x *Credentials) IngestInput(ctx context.Context, input CredentialsInput) error {
-	ctx, span := tracer.Start(ctx, "IngestInput", trace.WithAttributes(input.TraceAttributes()...))
+	_, span := tracer.Start(ctx, "IngestInput", trace.WithAttributes(input.TraceAttributes()...))
 	defer span.End()
 
 	p, err := password.FromString(input.Password)
@@ -102,9 +102,11 @@ func (x *Credentials) Register(ctx context.Context) error {
 
 	return nil
 }
-func (x *Credentials) Authenticate(ctx context.Context) error {
+
+func (x *Credentials) Authenticate(_ context.Context) error {
 	return nil
 }
-func (x *Credentials) Revoke(ctx context.Context) error {
+
+func (x *Credentials) Revoke(_ context.Context) error {
 	return nil
 }
