@@ -3,7 +3,7 @@ FROM golang:latest as builder
 WORKDIR /app
 
 COPY . .
-COPY internal/db/migrations /app/db/migrations
+COPY internal/database/migrations /app/db/migrations
 COPY ./config.yaml .
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
