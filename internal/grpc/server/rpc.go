@@ -2,10 +2,12 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
 	"github.com/Salam4nder/user/internal/auth/strategy"
+	"github.com/Salam4nder/user/internal/database"
 	"github.com/Salam4nder/user/internal/observability/metrics"
 	"github.com/Salam4nder/user/proto/gen"
 	"go.opentelemetry.io/otel"
@@ -37,9 +39,11 @@ func (x *Identity) Register(ctx context.Context, req *gen.Input) (*emptypb.Empty
 		}); err != nil {
 			return nil, invalidArgumentError(ctx, err, err.Error())
 		}
-		if err := t.Register(ctx); err != nil {
-			// TODO(kg): Errs.
-			return nil, invalidArgumentError(ctx, err, err.Error())
+		if err = t.Register(ctx); err != nil {
+			if errors.As(err, &database.DuplicateEntryError{}) {
+				return nil, alreadyExistsError(ctx, err, "provided credentials already exist")
+			}
+			return nil, internalServerError(ctx, err)
 		}
 	case *strategy.NoOp:
 		slog.InfoContext(ctx, "server: no op register")
