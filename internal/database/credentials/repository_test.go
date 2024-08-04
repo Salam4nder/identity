@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Salam4nder/user/internal/database"
 	"github.com/Salam4nder/user/internal/database/credentials"
 	"github.com/Salam4nder/user/pkg/password"
 	"github.com/Salam4nder/user/pkg/random"
@@ -56,7 +57,6 @@ func TestInsert(t *testing.T) {
 
 		err := credentials.Insert(ctx, db, randomParams)
 		require.Error(t, err)
-		require.ErrorIs(t, err, credentials.ErrStringTooLong)
 		randomParams.Email = random.Email()
 	})
 
@@ -78,7 +78,7 @@ func TestInsert(t *testing.T) {
 			CreatedAt: time.Now().UTC(),
 		})
 		require.Error(t, err)
-		require.ErrorIs(t, err, credentials.ErrDuplicateEmail)
+		require.ErrorAs(t, err, &database.DuplicateEntryError{})
 	})
 }
 
@@ -104,13 +104,13 @@ func TestRead(t *testing.T) {
 	t.Run("Not found", func(t *testing.T) {
 		_, err := credentials.Read(ctx, db, uuid.New())
 		require.Error(t, err)
-		require.ErrorIs(t, err, credentials.ErrUserNotFound)
+		require.ErrorAs(t, err, &database.NotFoundError{})
 	})
 
 	t.Run("InputError on nil UUID", func(t *testing.T) {
 		_, err := credentials.Read(ctx, db, uuid.Nil)
 		require.Error(t, err)
-		require.ErrorAs(t, err, &credentials.InputError{})
+		require.ErrorAs(t, err, &database.InputError{})
 	})
 }
 
@@ -139,19 +139,13 @@ func TestReadByEmail(t *testing.T) {
 	t.Run("Not found", func(t *testing.T) {
 		_, err := credentials.ReadByEmail(ctx, db, random.Email())
 		require.Error(t, err)
-		require.ErrorIs(t, err, credentials.ErrUserNotFound)
+		require.ErrorAs(t, err, &database.NotFoundError{})
 	})
 
 	t.Run("Email is empty", func(t *testing.T) {
 		_, err := credentials.ReadByEmail(ctx, db, "")
 		require.Error(t, err)
-		require.ErrorAs(t, err, &credentials.InputError{})
-	})
-
-	t.Run("Email is not found", func(t *testing.T) {
-		_, err := credentials.ReadByEmail(ctx, db, "ass@ass.com")
-		require.Error(t, err)
-		require.ErrorIs(t, err, credentials.ErrUserNotFound)
+		require.ErrorAs(t, err, &database.InputError{})
 	})
 }
 
@@ -167,7 +161,7 @@ func TestUpdate(t *testing.T) {
 		CreatedAt: time.Now().UTC(),
 	}
 
-	t.Run("ok", func(t *testing.T) {
+	t.Run("OK", func(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		newEmail := "new@email.com"
@@ -207,7 +201,15 @@ func TestUpdate(t *testing.T) {
 			Email: strings.Repeat("a", 256),
 		})
 		require.Error(t, err)
-		require.ErrorIs(t, err, credentials.ErrStringTooLong)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		err := credentials.Update(ctx, db, credentials.UpdateParams{
+			ID:    uuid.New(),
+			Email: strings.Repeat("a", 23),
+		})
+		require.Error(t, err)
+		require.ErrorAs(t, err, &database.RowsAffectedError{})
 	})
 }
 
@@ -232,6 +234,6 @@ func TestDelete(t *testing.T) {
 	t.Run("Not found", func(t *testing.T) {
 		err := credentials.Delete(ctx, db, ID)
 		require.Error(t, err)
-		require.ErrorIs(t, err, credentials.ErrNoRowsAffected)
+		require.ErrorAs(t, err, &database.RowsAffectedError{})
 	})
 }

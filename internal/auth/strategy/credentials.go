@@ -3,7 +3,6 @@ package strategy
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 	"unicode/utf8"
@@ -84,9 +83,6 @@ func (x *Credentials) Register(ctx context.Context) error {
 		CreatedAt: time.Now(),
 	}); err != nil {
 		// TODO(kg:) Errs.
-		if errors.Is(err, credentials.ErrDuplicateEmail) {
-			return err
-		}
 		return err
 	}
 

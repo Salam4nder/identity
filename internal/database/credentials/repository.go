@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/Salam4nder/user/internal/database"
 	"github.com/Salam4nder/user/pkg/password"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
@@ -14,7 +15,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-var tracer = otel.Tracer("db")
+var tracer = otel.Tracer("credentials")
 
 const Tablename = "credentials"
 
@@ -44,7 +45,7 @@ func (x InsertParams) SpanAttributes() []attribute.KeyValue {
 	}
 }
 
-// Insert a new credentials entry.
+// Insert a new credentials entry. Returns [database.DuplicateEntryError] on duplicate entry.
 func Insert(ctx context.Context, db *sql.DB, params InsertParams) error {
 	ctx, span := tracer.Start(ctx, "Insert", trace.WithAttributes(params.SpanAttributes()...))
 	defer span.End()
@@ -66,8 +67,8 @@ func Insert(ctx context.Context, db *sql.DB, params InsertParams) error {
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		span.RecordError(err)
-		if IsSentinelErr(err) {
-			return SentinelErr(err)
+		if database.IsPSQLDuplicateEntryError(err) {
+			return database.NewDuplicateEntryError("credentials")
 		}
 		return err
 	}
@@ -78,12 +79,7 @@ func Insert(ctx context.Context, db *sql.DB, params InsertParams) error {
 		return err
 	}
 	if rowsAffected != 1 {
-		switch rowsAffected {
-		case 0:
-			return ErrNoRowsAffected
-		default:
-			return ErrMultipleRowsAffected
-		}
+		return database.NewRowsAffectedError(1, rowsAffected)
 	}
 
 	return nil
@@ -96,7 +92,7 @@ func Read(ctx context.Context, db *sql.DB, id uuid.UUID) (*Entry, error) {
 	span.SetAttributes(attribute.String("id", id.String()))
 
 	if id == uuid.Nil {
-		return nil, InputError{Field: "id", Value: id.String()}
+		return nil, database.NewInputError("id", id.String())
 	}
 
 	query := `
@@ -117,7 +113,7 @@ func Read(ctx context.Context, db *sql.DB, id uuid.UUID) (*Entry, error) {
 		span.SetStatus(codes.Error, err.Error())
 		span.RecordError(err)
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrUserNotFound
+			return nil, database.NewNotFoundError("credentials", id.String())
 		}
 		return nil, err
 	}
@@ -131,7 +127,7 @@ func ReadByEmail(ctx context.Context, db *sql.DB, email string) (*Entry, error) 
 	defer span.End()
 
 	if email == "" {
-		return nil, InputError{Field: "email", Value: email}
+		return nil, database.NewInputError("email", email)
 	}
 
 	query := `
@@ -155,7 +151,7 @@ func ReadByEmail(ctx context.Context, db *sql.DB, email string) (*Entry, error) 
 		span.SetStatus(codes.Error, err.Error())
 		span.RecordError(err)
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrUserNotFound
+			return nil, database.NewNotFoundError("credentials", email)
 		}
 		return nil, err
 	}
@@ -176,7 +172,7 @@ func (x UpdateParams) SpanAttributes() []attribute.KeyValue {
 	}
 }
 
-// Update credentials.
+// Update credentials. Returns [database.DuplicateEntryError] on duplicate entry.
 func Update(ctx context.Context, db *sql.DB, params UpdateParams) error {
 	ctx, span := tracer.Start(ctx, "Update", trace.WithAttributes(params.SpanAttributes()...))
 	defer span.End()
@@ -198,8 +194,8 @@ func Update(ctx context.Context, db *sql.DB, params UpdateParams) error {
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		span.RecordError(err)
-		if IsSentinelErr(err) {
-			return SentinelErr(err)
+		if database.IsPSQLDuplicateEntryError(err) {
+			return database.NewDuplicateEntryError("credentials")
 		}
 		return err
 	}
@@ -210,12 +206,7 @@ func Update(ctx context.Context, db *sql.DB, params UpdateParams) error {
 		return err
 	}
 	if rowsAffected != 1 {
-		switch rowsAffected {
-		case 0:
-			return ErrNoRowsAffected
-		default:
-			return ErrMultipleRowsAffected
-		}
+		return database.NewRowsAffectedError(1, rowsAffected)
 	}
 
 	return nil
@@ -237,9 +228,6 @@ func Delete(ctx context.Context, db *sql.DB, id uuid.UUID) error {
 
 	res, err := db.ExecContext(ctx, query, id)
 	if err != nil {
-		if IsSentinelErr(err) {
-			return SentinelErr(err)
-		}
 		return err
 	}
 
@@ -248,12 +236,7 @@ func Delete(ctx context.Context, db *sql.DB, id uuid.UUID) error {
 		return err
 	}
 	if rowsAffected != 1 {
-		switch rowsAffected {
-		case 0:
-			return ErrNoRowsAffected
-		default:
-			return ErrMultipleRowsAffected
-		}
+		return database.NewRowsAffectedError(1, rowsAffected)
 	}
 
 	return nil
