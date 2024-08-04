@@ -9,7 +9,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/Salam4nder/user/internal/auth"
-	"github.com/Salam4nder/user/internal/db"
+	"github.com/Salam4nder/user/internal/database/credentials"
 	"github.com/Salam4nder/user/internal/email"
 	"github.com/Salam4nder/user/pkg/password"
 	"github.com/Salam4nder/user/pkg/validation"
@@ -77,14 +77,14 @@ func (x *Credentials) Register(ctx context.Context) error {
 	ctx, span := tracer.Start(ctx, "Register")
 	defer span.End()
 
-	if err := db.Insert(ctx, x.db, db.InsertParams{
+	if err := credentials.Insert(ctx, x.db, credentials.InsertParams{
 		ID:        uuid.New(),
 		Email:     x.email,
 		Password:  x.password,
 		CreatedAt: time.Now(),
 	}); err != nil {
 		// TODO(kg:) Errs.
-		if errors.Is(err, db.ErrDuplicateEmail) {
+		if errors.Is(err, credentials.ErrDuplicateEmail) {
 			return err
 		}
 		return err

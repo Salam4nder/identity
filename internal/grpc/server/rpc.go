@@ -21,7 +21,7 @@ func (x *Identity) Register(ctx context.Context, req *gen.Input) (*emptypb.Empty
 
 	switch t := x.strategy.(type) {
 	case *strategy.Credentials:
-		attrs, err := GenSpanAttributes[*gen.Credentials](req.GetCredentials())
+		attrs, err := GenSpanAttributes(req.GetCredentials())
 		if err == nil {
 			span.SetAttributes(attrs...)
 		} else {
