@@ -10,10 +10,13 @@ import (
 
 // Application is the application configuration.
 type Application struct {
-	Environment string   `yaml:"environment"`
-	PSQL        Postgres `yaml:"postgres"`
-	NATS        NATS     `yaml:"nats"`
-	Server      Server   `yaml:"server"`
+	Environment  string `yaml:"environment"`
+	SymmetricKey string `yaml:"symmetricKey"`
+	// AccessDuration  time.Duration `yaml:"accessDuration"`
+	// RefreshDuration time.Duration `yaml:"refreshDuration"`
+	PSQL   Postgres `yaml:"postgres"`
+	NATS   NATS     `yaml:"nats"`
+	Server Server   `yaml:"server"`
 }
 
 // New returns a new application configuration
@@ -54,9 +57,8 @@ type NATS struct {
 
 // Server holds the gRPC server configuration.
 type Server struct {
-	GRPCHost     string `yaml:"host"`
-	GRPCPort     string `yaml:"port"`
-	SymmetricKey string `yaml:"symmetricKey"`
+	GRPCHost string `yaml:"host"`
+	GRPCPort string `yaml:"port"`
 }
 
 // Addr returns the PSQL connection string.

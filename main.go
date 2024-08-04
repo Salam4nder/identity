@@ -105,7 +105,7 @@ func main() {
 	tokenMaker, err := token.BootstrapPasetoMaker(
 		accessTokenDuration,
 		refreshTokenDuration,
-		[]byte(cfg.Server.SymmetricKey))
+		[]byte(cfg.SymmetricKey))
 	if err != nil {
 		exitOnError(ctx, err)
 	}
@@ -125,7 +125,7 @@ func main() {
 		psqlDB,
 		healthServer,
 		natsClient,
-		strategy.NewNoOp(),
+		strategy.NewCredentials(psqlDB, natsClient),
 		tokenMaker,
 	)
 	exitOnError(ctx, err)
