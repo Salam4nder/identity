@@ -8,10 +8,10 @@ refreshTokenDuration: 24
 postgres:
   host: postgres
   port: 5432
-  db: users-db
+  db: identity-db
   user: user
   password : password
-  applicationName: user-service
+  applicationName: identity-service
 server:
   host: 0.0.0.0
   port: 50051

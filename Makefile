@@ -23,10 +23,10 @@ redis:
 	docker run --name redis -p 6379:6379 -d redis-7alpine
 
 up:
-	docker-compose up -d
+	docker compose up -d
 
 down:
-	docker-compose down -v
+	docker compose down -v
 
 logs:
 	docker-compose logs -f
