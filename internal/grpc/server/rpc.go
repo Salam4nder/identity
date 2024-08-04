@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/Salam4nder/user/internal/auth/strategy"
-	"github.com/Salam4nder/user/internal/database"
-	"github.com/Salam4nder/user/internal/observability/metrics"
-	"github.com/Salam4nder/user/proto/gen"
+	"github.com/Salam4nder/identity/internal/auth/strategy"
+	"github.com/Salam4nder/identity/internal/database"
+	"github.com/Salam4nder/identity/internal/observability/metrics"
+	"github.com/Salam4nder/identity/proto/gen"
 	"go.opentelemetry.io/otel"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -22,6 +22,10 @@ func (x *Identity) Register(ctx context.Context, req *gen.Input) (*emptypb.Empty
 
 	if req == nil {
 		return nil, requestIsNilError()
+	}
+
+	if req.GetStrategy() != x.strategy.ConfiguredStrategy() {
+		return nil, invalidArgumentError(ctx, nil, fmt.Sprintf("invalid strategy, expecting %s", x.strategy.ConfiguredStrategy()))
 	}
 
 	switch t := x.strategy.(type) {
@@ -45,8 +49,6 @@ func (x *Identity) Register(ctx context.Context, req *gen.Input) (*emptypb.Empty
 			}
 			return nil, internalServerError(ctx, err)
 		}
-	case *strategy.NoOp:
-		slog.InfoContext(ctx, "server: no op register")
 	default:
 		slog.ErrorContext(ctx, fmt.Sprintf("server: unsupported strategy %T,", t))
 		return nil, internalServerError(ctx, fmt.Errorf("unsupported strategy %T", t))

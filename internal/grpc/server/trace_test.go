@@ -3,12 +3,12 @@ package server
 import (
 	"testing"
 
-	"github.com/Salam4nder/user/proto/gen"
+	"github.com/Salam4nder/identity/proto/gen"
 )
 
 func TestGenSpanAttributes(t *testing.T) {
 	t.Run("gen.Credentials", func(t *testing.T) {
-		c := &gen.Credentials{
+		c := &gen.CredentialsInput{
 			Email:    "email",
 			Password: "password",
 		}
@@ -22,7 +22,7 @@ func TestGenSpanAttributes(t *testing.T) {
 	})
 
 	t.Run("gen.Number", func(t *testing.T) {
-		c := &gen.Number{
+		c := &gen.PersonalNumberInput{
 			Numbers: 23409820394802,
 		}
 		attr, err := GenSpanAttributes(c)

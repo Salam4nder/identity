@@ -13,7 +13,7 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"github.com/Salam4nder/user/internal/config"
+	"github.com/Salam4nder/identity/internal/config"
 	"github.com/stimtech/go-migration/v2"
 )
 

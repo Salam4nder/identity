@@ -6,8 +6,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/Salam4nder/user/internal/database"
-	"github.com/Salam4nder/user/pkg/password"
+	"github.com/Salam4nder/identity/internal/database"
+	"github.com/Salam4nder/identity/pkg/password"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"

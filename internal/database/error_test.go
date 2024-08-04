@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Salam4nder/user/internal/database"
+	"github.com/Salam4nder/identity/internal/database"
 	"github.com/lib/pq"
 )
 

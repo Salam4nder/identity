@@ -6,7 +6,7 @@ import (
 	"encoding/gob"
 	"log/slog"
 
-	"github.com/Salam4nder/user/internal/email"
+	"github.com/Salam4nder/identity/internal/email"
 	"github.com/nats-io/nats.go"
 )
 

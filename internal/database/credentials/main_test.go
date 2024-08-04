@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Salam4nder/user/internal/config"
-	"github.com/Salam4nder/user/internal/database/credentials"
+	"github.com/Salam4nder/identity/internal/config"
+	"github.com/Salam4nder/identity/internal/database/credentials"
 )
 
 var testConn *sql.DB

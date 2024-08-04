@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/Salam4nder/user/internal/database"
+	"github.com/Salam4nder/identity/internal/database"
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 

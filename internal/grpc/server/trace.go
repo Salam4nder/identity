@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Salam4nder/user/proto/gen"
+	"github.com/Salam4nder/identity/proto/gen"
 	"go.opentelemetry.io/otel/attribute"
 )
 
 type GenReq interface {
-	*gen.Credentials | *gen.Number
+	*gen.CredentialsInput | *gen.PersonalNumberInput
 }
 
 // GenerateSpanAttributes returns span attributes for generated request structs.
@@ -20,12 +20,12 @@ func GenSpanAttributes[T GenReq](param T) ([]attribute.KeyValue, error) {
 	}
 
 	switch t := any(param).(type) {
-	case *gen.Credentials:
+	case *gen.CredentialsInput:
 		return []attribute.KeyValue{
 			attribute.String("email", t.GetEmail()),
 			attribute.Int("password length", len(t.GetPassword())),
 		}, nil
-	case *gen.Number:
+	case *gen.PersonalNumberInput:
 		return []attribute.KeyValue{
 			attribute.Int64("number", int64(t.GetNumbers())),
 		}, nil

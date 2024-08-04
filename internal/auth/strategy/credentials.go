@@ -7,16 +7,20 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/Salam4nder/user/internal/auth"
-	"github.com/Salam4nder/user/internal/database/credentials"
-	"github.com/Salam4nder/user/internal/email"
-	"github.com/Salam4nder/user/pkg/password"
-	"github.com/Salam4nder/user/pkg/validation"
+	"github.com/Salam4nder/identity/internal/auth"
+	"github.com/Salam4nder/identity/internal/database/credentials"
+	"github.com/Salam4nder/identity/internal/email"
+	"github.com/Salam4nder/identity/pkg/password"
+	"github.com/Salam4nder/identity/pkg/validation"
+	"github.com/Salam4nder/identity/proto/gen"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
+
+var tracer = otel.Tracer("strategy")
 
 var _ auth.Strategy = (*Credentials)(nil)
 
@@ -50,6 +54,10 @@ func (x CredentialsInput) TraceAttributes() []attribute.KeyValue {
 // An [CredentialsInput] is created with [IngestInput()].
 func NewCredentials(db *sql.DB, natsConn *nats.Conn) *Credentials {
 	return &Credentials{db: db, natsConn: natsConn}
+}
+
+func (x *Credentials) ConfiguredStrategy() gen.Strategy {
+	return gen.Strategy_Credentials
 }
 
 // IngestInput sets the input field of the underlying [Credentials].
