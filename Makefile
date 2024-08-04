@@ -1,20 +1,20 @@
-.PHONY: test test-cover test-db test-db/down test-db/run run api up down logs logs-user logs-db proto lint nancy redis
+.PHONY: test test-cover test-db test-db/down test-db/run run api up down logs logs-api logs-db proto lint nancy redis
 
 test: 
-	go test -v ./... && $(MAKE) test-db
+	go test -count=1 ./... && $(MAKE) test-db
 
 test-cover:
 	go tool cover -html=coverage.out
 
 test-db:
-	docker compose -f internal/db/docker-compose.yaml up -d --wait
+	docker compose -f internal/database/docker-compose.yaml up -d --wait
 	bash -c "trap '$(MAKE) test-db/down' EXIT; $(MAKE) test-db/run"
 
 test-db/down:
-	docker compose -f internal/db/docker-compose.yaml down -v
+	docker compose -f internal/database/docker-compose.yaml down -v
 
 test-db/run:
-	go test -tags testdb -v --coverprofile=coverage.out -coverpkg ./... ./internal/db
+	go test -count=1 -tags testdb --coverprofile=coverage.out -coverpkg ./... ./internal/database/...
 
 api:
 	docker build -t user .
@@ -31,7 +31,7 @@ down:
 logs:
 	docker-compose logs -f
 
-logs-user:
+logs-api:
 	docker-compose logs -f api
 
 logs-db:
