@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	"github.com/Salam4nder/user/internal/auth/strategy"
@@ -18,26 +19,29 @@ func (x *Identity) Register(ctx context.Context, req *gen.Input) (*emptypb.Empty
 		return nil, requestIsNilError(span)
 	}
 
-	attrs, err := GenSpanAttributes(req)
-	if err == nil {
-		span.SetAttributes(attrs...)
-	} else {
-		slog.WarnContext(ctx, "server: getting span attributes", "err", err)
-	}
-
 	switch t := x.strategy.(type) {
 	case *strategy.Credentials:
-		creds := req.GetCredentials()
-		if err := t.IngestInput(ctx, creds.GetEmail(), creds.GetPassword()); err != nil {
-			// TODO(kg): Errs.
-			invalidArgumentError(err, span, "msg")
+		attrs, err := GenSpanAttributes[*gen.Credentials](req.GetCredentials())
+		if err == nil {
+			span.SetAttributes(attrs...)
+		} else {
+			slog.WarnContext(ctx, "server: getting span attributes", "err", err)
+		}
+		if err = t.IngestInput(ctx, strategy.CredentialsInput{
+			Email:    req.GetCredentials().GetEmail(),
+			Password: req.GetCredentials().GetPassword(),
+		}); err != nil {
+			return nil, invalidArgumentError(err, span, err.Error())
 		}
 		if err := t.Register(ctx); err != nil {
 			// TODO(kg): Errs.
-			invalidArgumentError(err, span, "msg")
+			return nil, invalidArgumentError(err, span, err.Error())
 		}
 	case *strategy.NoOp:
 		slog.InfoContext(ctx, "server: no op register")
+	default:
+		slog.ErrorContext(ctx, fmt.Sprintf("server: unsupported strategy %T,", t))
+		internalServerError(nil, span)
 	}
 
 	metrics.UsersActive.Inc()
