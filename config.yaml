@@ -1,5 +1,10 @@
 # environment options: dev, prod
 environment: dev
+# strategy options: credentials, noop
+strategy: credentials
+symmetricKey: 12345678912345678912345678912345
+accessTokenDuration: 10
+refreshTokenDuration: 24
 postgres:
   host: postgres
   port: 5432
@@ -10,9 +15,6 @@ postgres:
 server:
   host: 0.0.0.0
   port: 50051
-  symmetricKey: 12345678912345678912345678912345
-  accessTokenDuration: 10
-  refreshTokenDuration: 24
 nats:
   host: nats
   port: 4222
