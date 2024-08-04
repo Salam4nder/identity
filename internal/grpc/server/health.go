@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/Salam4nder/user/internal/db"
+	"github.com/Salam4nder/user/internal/database"
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
@@ -18,7 +18,7 @@ func (x *Identity) MonitorHealth(ctx context.Context) {
 			return
 		case <-time.After(5 * time.Second):
 			var unhealthy bool
-			if err := db.HealthCheck(ctx, x.db, 1); err != nil {
+			if err := database.HealthCheck(ctx, x.db, 1); err != nil {
 				unhealthy = true
 				// Only log if the context is not done.
 				if ctx.Err() == nil {
