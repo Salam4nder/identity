@@ -8,14 +8,14 @@ import (
 
 var (
 	UsersRegistered = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: "user",
+		Namespace: "identity",
 		Subsystem: "api",
 		Name:      "users_registered_total",
 		Help:      "Number of registered users - increases on user creation",
 	})
 
 	UsersActive = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: "user",
+		Namespace: "identiy",
 		Subsystem: "api",
 		Name:      "users_active",
 		Help:      "Number of active users - for now increases on user creation and decreases on deletion",
