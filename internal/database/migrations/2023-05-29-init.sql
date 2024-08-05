@@ -5,3 +5,9 @@ CREATE TABLE IF NOT EXISTS credentials (
     created_at timestamptz NOT NULL,
     updated_at timestamptz DEFAULT NULL
 );
+
+CREATE TABLE IF NOT EXISTS personal_numbers (
+    id bigserial PRIMARY KEY,
+    created_at timestamptz NOT NULL,
+    updated_at timestamptz DEFAULT NULL
+);
