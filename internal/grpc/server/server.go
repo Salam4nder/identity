@@ -26,22 +26,22 @@ type Identity struct {
 	strategies map[gen.Strategy]auth.Strategy
 }
 
-// NewUserServer returns a new UserService.
-func NewUserServer(
+// NewIdentity returns a new [Identity] gRPC server.
+func NewIdentity(
 	db *sql.DB,
 	health *health.Server,
 	natsConn *nats.Conn,
 	tokenMaker token.Maker,
-) (*Identity, error) {
+) *Identity {
 	return &Identity{
 		tokenMaker: tokenMaker,
 		health:     health,
 		natsConn:   natsConn,
 		db:         db,
-	}, nil
+	}
 }
 
-// MountStrategies will parse the configured strategy string representations and mount them to the server.
+// MountStrategies will parse the configured strategy string representations and mount them on the server.
 // Aborts and returns an error if any of them fails to parse.
 func (x *Identity) MountStrategies(s ...string) error {
 	m := make(map[gen.Strategy]auth.Strategy)
