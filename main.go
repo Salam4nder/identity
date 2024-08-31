@@ -12,7 +12,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Salam4nder/identity/internal/auth/strategy"
 	"github.com/Salam4nder/identity/internal/config"
 	"github.com/Salam4nder/identity/internal/database"
 	"github.com/Salam4nder/identity/internal/email"
@@ -124,18 +123,19 @@ func main() {
 	)
 	healthServer := health.NewServer()
 	healthgen.RegisterHealthServer(grpcServer, healthServer)
-	userServer, err := server.NewUserServer(
+	srv := server.NewIdentity(
 		psqlDB,
 		healthServer,
 		natsClient,
-		strategy.NewCredentials(psqlDB, natsClient),
 		tokenMaker,
 	)
-	exitOnError(ctx, err)
-	gen.RegisterIdentityServer(grpcServer, userServer)
+	if err = srv.MountStrategies(cfg.Strategies...); err != nil {
+		exitOnError(ctx, err)
+	}
+	gen.RegisterIdentityServer(grpcServer, srv)
 	reflection.Register(grpcServer)
 
-	go userServer.MonitorHealth(ctx)
+	go srv.MonitorHealth(ctx)
 
 	srvErrChan := make(chan error, 1)
 	go func() {
