@@ -22,11 +22,19 @@ message PersonalNumberInput {
     uint64 Numbers = 1;
 }
 
-message Input {
+message RegisterRequest {
     Strategy strategy = 1;
     oneof data {
         CredentialsInput credentials = 2;
-        PersonalNumberInput numbers = 3;
+        google.protobuf.Empty empty = 3;
+    }
+}
+
+message AuthenticateRequest {
+    Strategy strategy = 1;
+    oneof data {
+        CredentialsInput credentials = 2;
+        PersonalNumberInput number = 3;
     }
 }
 
@@ -38,6 +46,6 @@ message AuthenticateResponse {
 }
 
 service Identity {
-    rpc Register (Input) returns (google.protobuf.Empty){}
-    rpc Authenticate (Input) returns (AuthenticateResponse){}
+    rpc Register (RegisterRequest) returns (google.protobuf.Empty){}
+    rpc Authenticate (AuthenticateRequest) returns (AuthenticateResponse){}
 }

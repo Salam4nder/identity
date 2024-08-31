@@ -28,8 +28,8 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type IdentityClient interface {
-	Register(ctx context.Context, in *Input, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	Authenticate(ctx context.Context, in *Input, opts ...grpc.CallOption) (*AuthenticateResponse, error)
+	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	Authenticate(ctx context.Context, in *AuthenticateRequest, opts ...grpc.CallOption) (*AuthenticateResponse, error)
 }
 
 type identityClient struct {
@@ -40,7 +40,7 @@ func NewIdentityClient(cc grpc.ClientConnInterface) IdentityClient {
 	return &identityClient{cc}
 }
 
-func (c *identityClient) Register(ctx context.Context, in *Input, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *identityClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, Identity_Register_FullMethodName, in, out, opts...)
 	if err != nil {
@@ -49,7 +49,7 @@ func (c *identityClient) Register(ctx context.Context, in *Input, opts ...grpc.C
 	return out, nil
 }
 
-func (c *identityClient) Authenticate(ctx context.Context, in *Input, opts ...grpc.CallOption) (*AuthenticateResponse, error) {
+func (c *identityClient) Authenticate(ctx context.Context, in *AuthenticateRequest, opts ...grpc.CallOption) (*AuthenticateResponse, error) {
 	out := new(AuthenticateResponse)
 	err := c.cc.Invoke(ctx, Identity_Authenticate_FullMethodName, in, out, opts...)
 	if err != nil {
@@ -62,8 +62,8 @@ func (c *identityClient) Authenticate(ctx context.Context, in *Input, opts ...gr
 // All implementations must embed UnimplementedIdentityServer
 // for forward compatibility
 type IdentityServer interface {
-	Register(context.Context, *Input) (*emptypb.Empty, error)
-	Authenticate(context.Context, *Input) (*AuthenticateResponse, error)
+	Register(context.Context, *RegisterRequest) (*emptypb.Empty, error)
+	Authenticate(context.Context, *AuthenticateRequest) (*AuthenticateResponse, error)
 	mustEmbedUnimplementedIdentityServer()
 }
 
@@ -71,10 +71,10 @@ type IdentityServer interface {
 type UnimplementedIdentityServer struct {
 }
 
-func (UnimplementedIdentityServer) Register(context.Context, *Input) (*emptypb.Empty, error) {
+func (UnimplementedIdentityServer) Register(context.Context, *RegisterRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
-func (UnimplementedIdentityServer) Authenticate(context.Context, *Input) (*AuthenticateResponse, error) {
+func (UnimplementedIdentityServer) Authenticate(context.Context, *AuthenticateRequest) (*AuthenticateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Authenticate not implemented")
 }
 func (UnimplementedIdentityServer) mustEmbedUnimplementedIdentityServer() {}
@@ -91,7 +91,7 @@ func RegisterIdentityServer(s grpc.ServiceRegistrar, srv IdentityServer) {
 }
 
 func _Identity_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Input)
+	in := new(RegisterRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -103,13 +103,13 @@ func _Identity_Register_Handler(srv interface{}, ctx context.Context, dec func(i
 		FullMethod: Identity_Register_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IdentityServer).Register(ctx, req.(*Input))
+		return srv.(IdentityServer).Register(ctx, req.(*RegisterRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Identity_Authenticate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Input)
+	in := new(AuthenticateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func _Identity_Authenticate_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: Identity_Authenticate_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IdentityServer).Authenticate(ctx, req.(*Input))
+		return srv.(IdentityServer).Authenticate(ctx, req.(*AuthenticateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
