@@ -8,9 +8,9 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/Salam4nder/identity/proto/gen";
 
 enum Strategy {
-    NoStrategy = 0;
-    Credentials = 1;
-    PersonalNumber = 2;
+    TypeNoStrategy = 0;
+    TypeCredentials = 1;
+    TypePersonalNumber = 2;
 }
 
 message CredentialsInput {
@@ -18,7 +18,11 @@ message CredentialsInput {
     string password = 2;
 }
 
-message PersonalNumberInput {
+message CredentialsOutput {
+    string email = 1;
+}
+
+message PersonalNumber {
     uint64 Numbers = 1;
 }
 
@@ -30,11 +34,18 @@ message RegisterRequest {
     }
 }
 
+message RegisterResponse {
+    oneof data {
+        CredentialsOutput credentials = 1;
+        PersonalNumber number = 2;
+    }
+}
+
 message AuthenticateRequest {
     Strategy strategy = 1;
     oneof data {
         CredentialsInput credentials = 2;
-        PersonalNumberInput number = 3;
+        PersonalNumber number = 3;
     }
 }
 
@@ -46,6 +57,6 @@ message AuthenticateResponse {
 }
 
 service Identity {
-    rpc Register (RegisterRequest) returns (google.protobuf.Empty){}
+    rpc Register (RegisterRequest) returns (RegisterResponse){}
     rpc Authenticate (AuthenticateRequest) returns (AuthenticateResponse){}
 }
