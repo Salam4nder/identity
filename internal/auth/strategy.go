@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Salam4nder/identity/internal/auth/strategy"
 	"github.com/Salam4nder/identity/proto/gen"
@@ -21,28 +22,22 @@ type Strategy interface {
 	Authenticate(context.Context) error
 }
 
+const (
+	StrategyCredentials    = "credentials"
+	StrategyPersonalNumber = "personal_number"
+)
+
 var (
 	_ Strategy = (*strategy.Credentials)(nil)
 	_ Strategy = (*strategy.PersonalNumber)(nil)
 )
 
-var supportedStrategies = map[gen.Strategy]struct{}{}
-
-func Supported(s gen.Strategy) bool {
-	if _, ok := supportedStrategies[s]; !ok {
-		return false
+func StrategyFromString(s string) (gen.Strategy, error) {
+	switch s {
+	case StrategyCredentials:
+		return gen.Strategy_Credentials, nil
+	case StrategyPersonalNumber:
+		return gen.Strategy_PersonalNumber, nil
 	}
-	return true
+	return gen.Strategy_NoStrategy, errors.New("auth: unsupported strategy")
 }
-
-func strategyFromString(s string) gen.Strategy {
-}
-
-// func MountStrategies(s ...string) {
-// 	for _, v := range s {
-//         switch {
-//             case v
-//         }
-// 		supportedStrategies[v] = struct{}{}
-// 	}
-// }
