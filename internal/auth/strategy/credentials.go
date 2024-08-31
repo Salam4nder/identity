@@ -7,7 +7,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/Salam4nder/identity/internal/auth"
 	"github.com/Salam4nder/identity/internal/database/credentials"
 	"github.com/Salam4nder/identity/internal/email"
 	"github.com/Salam4nder/identity/pkg/password"
@@ -22,11 +21,11 @@ import (
 
 var tracer = otel.Tracer("strategy")
 
-var _ auth.Strategy = (*Credentials)(nil)
+const TypeCredentials = "Credentials"
 
 type (
 	// Credentials implements the [Strategy] interface and has everything
-	// to be able to [Register()], [Authenticate()] and [Revoke()] with credentials.
+	// to be able to [Register], [Authenticate] and [Revoke] with credentials.
 	Credentials struct {
 		db       *sql.DB
 		natsConn *nats.Conn
@@ -51,7 +50,7 @@ func (x CredentialsInput) TraceAttributes() []attribute.KeyValue {
 
 // NewCredentials creates a new [Credentials] strategy for authentication.
 // It still needs [CredentialsInput] to be able to call it's methods.
-// An [CredentialsInput] is created with [IngestInput()].
+// A [CredentialsInput] is created with [IngestInput()].
 func NewCredentials(db *sql.DB, natsConn *nats.Conn) *Credentials {
 	return &Credentials{db: db, natsConn: natsConn}
 }
