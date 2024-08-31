@@ -16,7 +16,7 @@ import (
 
 var tracer = otel.Tracer("server")
 
-func (x *Identity) Register(ctx context.Context, req *gen.Input) (*emptypb.Empty, error) {
+func (x *Identity) Register(ctx context.Context, req *gen.RegisterRequest) (*emptypb.Empty, error) {
 	ctx, span := tracer.Start(ctx, "Register")
 	defer span.End()
 
@@ -51,6 +51,10 @@ func (x *Identity) Register(ctx context.Context, req *gen.Input) (*emptypb.Empty
 			if errors.As(err, &database.DuplicateEntryError{}) {
 				return nil, alreadyExistsError(ctx, err, "provided credentials already exist")
 			}
+			return nil, internalServerError(ctx, err)
+		}
+	case *strategy.PersonalNumber:
+		if err := t.Register(ctx); err != nil {
 			return nil, internalServerError(ctx, err)
 		}
 	default:
