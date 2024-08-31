@@ -10,8 +10,9 @@ import (
 
 // Application is the application configuration.
 type Application struct {
-	Environment  string `yaml:"environment"`
-	SymmetricKey string `yaml:"symmetricKey"`
+	Environment  string   `yaml:"environment"`
+	SymmetricKey string   `yaml:"symmetricKey"`
+	Strategies   []string `yaml:"strategies"`
 	// AccessDuration  time.Duration `yaml:"accessDuration"`
 	// RefreshDuration time.Duration `yaml:"refreshDuration"`
 	PSQL   Postgres `yaml:"postgres"`

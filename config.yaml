@@ -1,7 +1,9 @@
 # environment options: dev, prod
 environment: dev
-# strategy options: credentials, noop
-strategy: credentials
+# strategy options: credentials, personal_number
+strategies:
+  - credentials
+  - personal_number
 symmetricKey: 12345678912345678912345678912345
 accessTokenDuration: 10
 refreshTokenDuration: 24
