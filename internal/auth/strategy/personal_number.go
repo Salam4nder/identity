@@ -7,7 +7,6 @@ import (
 	"math/big"
 
 	"github.com/Salam4nder/identity/internal/database/personalnumber"
-	"github.com/Salam4nder/identity/proto/gen"
 )
 
 // PersonalNumber implements the [Strategy] interface and has everything
@@ -21,10 +20,6 @@ type PersonalNumber struct {
 
 func NewPersonalNumber(db *sql.DB) *PersonalNumber {
 	return &PersonalNumber{db: db}
-}
-
-func (x *PersonalNumber) ConfiguredStrategy() gen.Strategy {
-	return gen.Strategy_PersonalNumber
 }
 
 func (x *PersonalNumber) Register(ctx context.Context) error {
