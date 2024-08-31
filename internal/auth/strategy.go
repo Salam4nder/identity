@@ -32,9 +32,9 @@ var (
 func StrategyFromString(s string) (gen.Strategy, error) {
 	switch s {
 	case StrategyCredentials:
-		return gen.Strategy_Credentials, nil
+		return gen.Strategy_TypeCredentials, nil
 	case StrategyPersonalNumber:
-		return gen.Strategy_PersonalNumber, nil
+		return gen.Strategy_TypePersonalNumber, nil
 	}
-	return gen.Strategy_NoStrategy, errors.New("auth: unsupported strategy")
+	return gen.Strategy_TypeNoStrategy, errors.New("auth: unsupported strategy")
 }

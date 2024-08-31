@@ -53,9 +53,9 @@ func (x *Identity) MountStrategies(s ...string) error {
 		}
 		slog.Info(fmt.Sprintf("mounted strategy %s", v))
 		switch strat {
-		case gen.Strategy_Credentials:
+		case gen.Strategy_TypeCredentials:
 			m[strat] = strategy.NewCredentials(x.db, x.natsConn)
-		case gen.Strategy_PersonalNumber:
+		case gen.Strategy_TypePersonalNumber:
 			m[strat] = strategy.NewPersonalNumber(x.db)
 		default:
 			return errors.New("unsupported strategy")
