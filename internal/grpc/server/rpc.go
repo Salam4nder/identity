@@ -2,15 +2,14 @@ package server
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 
 	"github.com/Salam4nder/identity/internal/auth/strategy"
-	"github.com/Salam4nder/identity/internal/database"
 	"github.com/Salam4nder/identity/internal/observability/metrics"
 	"github.com/Salam4nder/identity/proto/gen"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -24,42 +23,22 @@ func (x *Identity) Register(ctx context.Context, req *gen.RegisterRequest) (*emp
 		return nil, requestIsNilError()
 	}
 
-	if req.GetStrategy() != x.strategy.ConfiguredStrategy() {
-		return nil, invalidArgumentError(
-			ctx,
-			nil,
-			fmt.Sprintf("invalid strategy, expecting %s", x.strategy.ConfiguredStrategy()),
-		)
-	}
+	strat := req.GetStrategy()
+	span.SetAttributes(attribute.String("strategy", strat.String()))
 
-	switch t := x.strategy.(type) {
-	case *strategy.Credentials:
-		attrs, err := GenSpanAttributes(req.GetCredentials())
-		if err == nil {
-			span.SetAttributes(attrs...)
-		} else {
-			slog.WarnContext(ctx, "server: getting span attributes", "err", err)
-		}
-
-		if err = t.IngestInput(ctx, strategy.CredentialsInput{
+	switch strat {
+	case gen.Strategy_Credentials:
+		ctx = strategy.NewContext(ctx, strategy.Input{
 			Email:    req.GetCredentials().GetEmail(),
 			Password: req.GetCredentials().GetPassword(),
-		}); err != nil {
-			return nil, invalidArgumentError(ctx, err, err.Error())
-		}
-		if err = t.Register(ctx); err != nil {
-			if errors.As(err, &database.DuplicateEntryError{}) {
-				return nil, alreadyExistsError(ctx, err, "provided credentials already exist")
-			}
-			return nil, internalServerError(ctx, err)
-		}
-	case *strategy.PersonalNumber:
-		if err := t.Register(ctx); err != nil {
-			return nil, internalServerError(ctx, err)
-		}
+		})
 	default:
-		slog.ErrorContext(ctx, fmt.Sprintf("server: unsupported strategy %T,", t))
-		return nil, internalServerError(ctx, fmt.Errorf("unsupported strategy %T", t))
+		slog.ErrorContext(ctx, fmt.Sprintf("server: unsupported strategy %T,", req.GetStrategy()))
+		return nil, internalServerError(ctx, fmt.Errorf("unsupported strategy %T", req.GetStrategy()))
+	}
+
+	if err := x.strategies[strat].Register(ctx); err != nil {
+		return nil, internalServerError(ctx, err)
 	}
 
 	metrics.UsersActive.Inc()
