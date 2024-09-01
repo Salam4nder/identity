@@ -110,14 +110,6 @@ func (x *Strategy) Authenticate(_ context.Context) error {
 	return nil
 }
 
-func (x *Strategy) Revoke(_ context.Context) error {
-	return nil
-}
-
-func (x *Strategy) Renew(_ context.Context) error {
-	return nil
-}
-
 func fromContext(ctx context.Context) (*Input, error) {
 	c, ok := ctx.Value(inputKey).(*Input)
 	if !ok {

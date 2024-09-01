@@ -62,14 +62,6 @@ func (x *Strategy) Authenticate(_ context.Context) error {
 	return nil
 }
 
-func (x *Strategy) Revoke(_ context.Context) error {
-	return nil
-}
-
-func (x *Strategy) Renew(_ context.Context) error {
-	return nil
-}
-
 func generateRandomUint64() (uint64, error) {
 	var result uint64
 	for i := 0; i < 16; i++ {
