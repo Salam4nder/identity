@@ -2,22 +2,17 @@
 
 ## Quickstart
 
-*Identity* operates on a given authentication `strategy`.
+*Identity* operates on given authentication strategies.
 
 A `strategy` must implement the following interface:
 
 ```go
 // WIP.
 type Strategy interface {
-	// ConfiguredStrategy exposes the current configured strategy.
-	ConfiguredStrategy() gen.Strategy
-
-	// Renew will trade a valid refresh token for a new access token.
-	Renew(context.Context) error
-	// Revoke all active tokens in the configured hot-storage for the user.
-	Revoke(context.Context) error
 	// Register an entry with the configured strategy.
-	Register(context.Context) error
+	// Outputs from this method are stored in the
+	// returned context.
+	Register(context.Context) (context.Context, error)
 	// Authenticate the user with the configured strategy.
 	Authenticate(context.Context) error
 }
@@ -28,46 +23,36 @@ type Strategy interface {
 
 ```go
 // gRPC client stubs.
-func ExampleClient() {
-	cfg := config.Server{
-		GRPCHost: "0.0.0.0",
-		GRPCPort: "50051",
-	}
-	conn, err := grpc.NewClient(cfg.Addr())
+	conn, err := grpc.NewClient(
+		"localhost:50051",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 	if err != nil {
 		// handle err
 	}
-	defer conn.Close()
-
 	client := gen.NewIdentityClient(conn)
 
-	// Register with the credentials strategy.
-	_, err = client.Register(context.TODO(), &gen.Input{
-		Strategy: gen.Strategy_Credentials,
-		Data: &gen.Input_Credentials{
-			Credentials: &gen.CredentialsInput{
-				Email:    "email@email.com",
-				Password: "securePassword400",
-			},
-		},
+	resp, err := client.Register(context.TODO(), &gen.RegisterRequest{
+		Strategy: gen.Strategy_TypePersonalNumber,
+		Data:     &gen.RegisterRequest_Empty{},
 	})
 	if err != nil {
 		// handle err
 	}
+	slog.Info("client got resp number", "number", resp.GetNumber().Numbers)
 
-	// Register with the PersonalNumber strategy.
-	_, err = client.Register(context.TODO(), &gen.Input{
-		Strategy: gen.Strategy_PersonalNumber,
-		Data: &gen.Input_Numbers{
-			Numbers: &gen.PersonalNumberInput{
-				Numbers: 867497568396,
+	resp, err = client.Register(context.TODO(), &gen.RegisterRequest{
+		Strategy: gen.Strategy_TypeCredentials,
+		Data: &gen.RegisterRequest_Credentials{
+			Credentials: &gen.CredentialsInput{
+				Email:    random.Email(),
+				Password: "pasSwe22i3rj",
 			},
 		},
 	})
 	if err != nil {
 		// handle err
 	}
-}
 ```
 
 ```json
