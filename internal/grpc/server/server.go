@@ -48,18 +48,18 @@ func (x *Identity) MountStrategies(s ...string) error {
 	m := make(map[gen.Strategy]auth.Strategy)
 
 	for _, v := range s {
-		strat, err := auth.StrategyFromString(v)
+		strategy, err := auth.StrategyFromString(v)
 		if err != nil {
 			return err
 		}
 		slog.Info(fmt.Sprintf("mounted strategy %s", v))
-		switch strat {
+		switch strategy {
 		case gen.Strategy_TypeCredentials:
-			m[strat] = credentials.New(x.db, x.natsConn)
+			m[strategy] = credentials.New(x.db, x.natsConn)
 		case gen.Strategy_TypePersonalNumber:
-			m[strat] = personalnumber.New(x.db)
+			m[strategy] = personalnumber.New(x.db)
 		default:
-			return errors.New("unsupported strategy")
+			return errors.New("server: unsupported strategy")
 		}
 	}
 
