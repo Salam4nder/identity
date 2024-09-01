@@ -4,7 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/Salam4nder/identity/internal/auth/strategy"
+	"github.com/Salam4nder/identity/internal/auth/strategy/credentials"
+	"github.com/Salam4nder/identity/internal/auth/strategy/personalnumber"
 	"github.com/Salam4nder/identity/proto/gen"
 )
 
@@ -14,7 +15,8 @@ type Strategy interface {
 	// Revoke will purge all active tokens in the configured hot-storage.
 	Revoke(context.Context) error
 	// Register an entry with the configured strategy.
-	Register(context.Context) error
+	// Any output returned within context.
+	Register(context.Context) (context.Context, error)
 	// Authenticate the user with the configured strategy.
 	Authenticate(context.Context) error
 }
@@ -25,8 +27,8 @@ const (
 )
 
 var (
-	_ Strategy = (*strategy.Credentials)(nil)
-	_ Strategy = (*strategy.PersonalNumber)(nil)
+	_ Strategy = (*credentials.Strategy)(nil)
+	_ Strategy = (*personalnumber.Strategy)(nil)
 )
 
 func StrategyFromString(s string) (gen.Strategy, error) {

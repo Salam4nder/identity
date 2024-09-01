@@ -7,7 +7,8 @@ import (
 	"log/slog"
 
 	"github.com/Salam4nder/identity/internal/auth"
-	"github.com/Salam4nder/identity/internal/auth/strategy"
+	"github.com/Salam4nder/identity/internal/auth/strategy/credentials"
+	"github.com/Salam4nder/identity/internal/auth/strategy/personalnumber"
 	"github.com/Salam4nder/identity/internal/token"
 	"github.com/Salam4nder/identity/proto/gen"
 	"github.com/nats-io/nats.go"
@@ -54,9 +55,9 @@ func (x *Identity) MountStrategies(s ...string) error {
 		slog.Info(fmt.Sprintf("mounted strategy %s", v))
 		switch strat {
 		case gen.Strategy_TypeCredentials:
-			m[strat] = strategy.NewCredentials(x.db, x.natsConn)
+			m[strat] = credentials.New(x.db, x.natsConn)
 		case gen.Strategy_TypePersonalNumber:
-			m[strat] = strategy.NewPersonalNumber(x.db)
+			m[strat] = personalnumber.New(x.db)
 		default:
 			return errors.New("unsupported strategy")
 		}

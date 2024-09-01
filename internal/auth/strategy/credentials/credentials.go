@@ -1,4 +1,4 @@
-package strategy
+package credentials
 
 import (
 	"context"
@@ -21,53 +21,56 @@ import (
 var (
 	tracer = otel.Tracer("strategy")
 
-	credentialsKey ctxKey
+	inputKey  ctxKey
+	outputKey ctxKey
 )
 
 type (
 	ctxKey int
 
-	// Credentials implements the [Strategy] interface and has everything
+	// Strategy implements the [Strategy] interface and has everything
 	// to be able to [Register], [Authenticate] and [Revoke] with credentials.
-	Credentials struct {
+	Strategy struct {
 		db       *sql.DB
 		natsConn *nats.Conn
 	}
+
+	Input struct {
+		Email, Password string
+	}
+
+	Output struct {
+		Email string
+	}
 )
 
-type Input struct {
-	Email, Password string
+// New creates a new [Strategy] for authentication.
+func New(db *sql.DB, natsConn *nats.Conn) *Strategy {
+	return &Strategy{db: db, natsConn: natsConn}
 }
 
-// NewCredentials creates a new [Credentials] strategy for authentication.
-// It still needs [CredentialsInput] to be able to call it's methods.
-// A [CredentialsInput] is created with [IngestInput()].
-func NewCredentials(db *sql.DB, natsConn *nats.Conn) *Credentials {
-	return &Credentials{db: db, natsConn: natsConn}
+func NewContext(ctx context.Context, c *Input) context.Context {
+	return context.WithValue(ctx, inputKey, c)
 }
 
-func credentialsFromContext(ctx context.Context) (Input, error) {
-	c, ok := ctx.Value(credentialsKey).(Input)
+func FromContext(ctx context.Context) (*Output, error) {
+	c, ok := ctx.Value(outputKey).(*Output)
 	if !ok {
-		return Input{}, errors.New("strategy: getting credentials key from context")
+		return nil, errors.New("strategy: getting credentials output from context")
 	}
 	return c, nil
-}
-
-func NewContext(ctx context.Context, c Input) context.Context {
-	return context.WithValue(ctx, credentialsKey, c)
 }
 
 // Register will handles registration with the credentials strategy.
 // It will insert a new [credentials.Entry] into the credentials table
 // and send an email to the registered user.
-func (x *Credentials) Register(ctx context.Context) error {
+func (x *Strategy) Register(ctx context.Context) (context.Context, error) {
 	ctx, span := tracer.Start(ctx, "Register")
 	defer span.End()
 
-	cred, err := credentialsFromContext(ctx)
+	cred, err := fromContext(ctx)
 	if err != nil {
-		return err
+		return ctx, err
 	}
 	span.SetAttributes(
 		attribute.String("email", cred.Email),
@@ -76,10 +79,10 @@ func (x *Credentials) Register(ctx context.Context) error {
 
 	p, err := password.FromString(cred.Password)
 	if err != nil {
-		return fmt.Errorf("strategy: credentials, %w", err)
+		return ctx, fmt.Errorf("strategy: credentials, %w", err)
 	}
 	if err = validation.Email(cred.Email); err != nil {
-		return fmt.Errorf("strategy: credentials, %w", err)
+		return ctx, fmt.Errorf("strategy: credentials, %w", err)
 	}
 
 	if err := credentials.Insert(ctx, x.db, credentials.InsertParams{
@@ -88,7 +91,7 @@ func (x *Credentials) Register(ctx context.Context) error {
 		Password:  p,
 		CreatedAt: time.Now(),
 	}); err != nil {
-		return err
+		return ctx, err
 	}
 
 	if err := email.Ingest(ctx, x.natsConn, email.Email{
@@ -97,20 +100,32 @@ func (x *Credentials) Register(ctx context.Context) error {
 		Subject: email.TestSubject,
 		Body:    email.TestBody,
 	}); err != nil {
-		return err
+		return ctx, err
 	}
 
+	return newContext(ctx, &Output{Email: cred.Email}), nil
+}
+
+func (x *Strategy) Authenticate(_ context.Context) error {
 	return nil
 }
 
-func (x *Credentials) Authenticate(_ context.Context) error {
+func (x *Strategy) Revoke(_ context.Context) error {
 	return nil
 }
 
-func (x *Credentials) Revoke(_ context.Context) error {
+func (x *Strategy) Renew(_ context.Context) error {
 	return nil
 }
 
-func (x *Credentials) Renew(_ context.Context) error {
-	return nil
+func fromContext(ctx context.Context) (*Input, error) {
+	c, ok := ctx.Value(inputKey).(*Input)
+	if !ok {
+		return nil, errors.New("strategy: getting credentials input from context")
+	}
+	return c, nil
+}
+
+func newContext(ctx context.Context, c *Output) context.Context {
+	return context.WithValue(ctx, outputKey, c)
 }
