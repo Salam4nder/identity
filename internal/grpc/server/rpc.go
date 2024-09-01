@@ -22,22 +22,22 @@ func (x *Identity) Register(ctx context.Context, req *gen.RegisterRequest) (*gen
 		return nil, requestIsNilError()
 	}
 
-	strat := req.GetStrategy()
-	span.SetAttributes(attribute.String("strategy", strat.String()))
+	strategy := req.GetStrategy()
+	span.SetAttributes(attribute.String("strategy", strategy.String()))
 
 	registerResponse := new(gen.RegisterResponse)
 	var (
 		err        error
 		requestCtx context.Context
 	)
-	switch strat {
+	switch strategy {
 	case gen.Strategy_TypeCredentials:
 		ctx = credentials.NewContext(ctx, &credentials.Input{
 			Email:    req.GetCredentials().GetEmail(),
 			Password: req.GetCredentials().GetPassword(),
 		})
 
-		requestCtx, err = x.strategies[strat].Register(ctx)
+		requestCtx, err = x.strategies[strategy].Register(ctx)
 		if err != nil {
 			return nil, internalServerError(ctx, err)
 		}
@@ -49,7 +49,7 @@ func (x *Identity) Register(ctx context.Context, req *gen.RegisterRequest) (*gen
 
 		registerResponse.Data = &gen.RegisterResponse_Credentials{Credentials: &gen.CredentialsOutput{Email: creds.Email}}
 	case gen.Strategy_TypePersonalNumber:
-		requestCtx, err = x.strategies[strat].Register(ctx)
+		requestCtx, err = x.strategies[strategy].Register(ctx)
 		if err != nil {
 			return nil, internalServerError(ctx, err)
 		}
