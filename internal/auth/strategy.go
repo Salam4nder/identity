@@ -10,12 +10,9 @@ import (
 )
 
 type Strategy interface {
-	// Renew will trade a valid refresh token for a new access token.
-	Renew(context.Context) error
-	// Revoke will purge all active tokens in the configured hot-storage.
-	Revoke(context.Context) error
 	// Register an entry with the configured strategy.
-	// Any output returned within context.
+	// Outputs from this method are stored in the
+	// returned context.
 	Register(context.Context) (context.Context, error)
 	// Authenticate the user with the configured strategy.
 	Authenticate(context.Context) error
