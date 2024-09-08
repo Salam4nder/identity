@@ -1,4 +1,4 @@
-.PHONY: test test-cover test-db test-db/down test-db/run run api up down logs logs-api logs-db proto lint nancy redis
+.PHONY: test test-cover test-db test-db/down test-db/run run api up down proto lint nancy
 
 test: 
 	go test -count=1 ./... && $(MAKE) test-db
@@ -19,23 +19,11 @@ test-db/run:
 api:
 	docker build -t identity .
 
-redis:
-	docker run --name redis -p 6379:6379 -d redis-7alpine
-
 up:
-	docker compose up -d
+	make api && docker compose up -d
 
 down:
 	docker compose down -v
-
-logs:
-	docker-compose logs -f
-
-logs-api:
-	docker-compose logs -f api
-
-logs-db:
-	docker-compose logs -f postgres
 
 proto:
 	rm -rf proto/gen/*.go
