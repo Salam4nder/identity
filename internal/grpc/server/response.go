@@ -40,11 +40,14 @@ func internalServerError(ctx context.Context, err error) error {
 // 	return status.Error(codes.AlreadyExists, msg)
 // }
 
-// func unauthenticatedError(err error, span trace.Span, msg string) error {
-// 	span.SetStatus(otelCode.Error, err.Error())
-// 	span.RecordError(err)
-// 	return status.Error(codes.Unauthenticated, msg)
-// }
+func unauthenticatedError(ctx context.Context, err error, msg string) error {
+	if err != nil {
+		span := trace.SpanFromContext(ctx)
+		span.SetStatus(otelCode.Error, err.Error())
+		span.RecordError(err)
+	}
+	return status.Error(codes.Unauthenticated, msg)
+}
 
 // func notFoundError(ctx context.Context, err error, msg string) error {
 // 	if err != nil {
