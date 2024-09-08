@@ -3,6 +3,7 @@ package token_test
 import (
 	"context"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -14,9 +15,17 @@ import (
 	"github.com/google/uuid"
 )
 
+var (
+	db      *sql.DB
+	cleanup func()
+)
+
+func init() {
+	db, cleanup = database.SetupTestConn(token.Tablename)
+}
+
 func TestInsert(t *testing.T) {
 	ctx := context.Background()
-	db, cleanup := Conn()
 	t.Cleanup(cleanup)
 
 	commonID := uuid.NewString()
@@ -59,7 +68,6 @@ func TestInsert(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	ctx := context.Background()
-	db, cleanup := Conn()
 	t.Cleanup(cleanup)
 
 	t.Run("OK", func(t *testing.T) {
@@ -109,7 +117,6 @@ func TestGet(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	ctx := context.Background()
-	db, cleanup := Conn()
 	t.Cleanup(cleanup)
 
 	t.Run("OK", func(t *testing.T) {
