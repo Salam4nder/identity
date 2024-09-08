@@ -1,4 +1,3 @@
--- +migrate Up
 CREATE TABLE IF NOT EXISTS credentials (
     id uuid PRIMARY KEY,
     email varchar(255) NOT NULL UNIQUE,
