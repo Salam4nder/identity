@@ -58,7 +58,6 @@ message AuthenticateResponse {
 
 message VerifyRequest {
     string token = 1;
-    string email = 2;
 }
 
 service Identity {
