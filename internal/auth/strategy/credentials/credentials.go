@@ -5,11 +5,15 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 	"unicode/utf8"
 
+	"github.com/Salam4nder/identity/internal/database"
 	"github.com/Salam4nder/identity/internal/database/credentials"
+	tokendb "github.com/Salam4nder/identity/internal/database/token"
 	"github.com/Salam4nder/identity/internal/email"
+	"github.com/Salam4nder/identity/internal/token"
 	"github.com/Salam4nder/identity/pkg/password"
 	"github.com/Salam4nder/identity/pkg/validation"
 	"github.com/google/uuid"
@@ -23,6 +27,8 @@ var (
 
 	inputKey  ctxKey
 	outputKey ctxKey
+
+	ErrTokenDoesNotExist = errors.New("credentials: token does not exist")
 )
 
 type (
@@ -85,8 +91,19 @@ func (x *Strategy) Register(ctx context.Context) (context.Context, error) {
 		return ctx, fmt.Errorf("strategy: credentials, %w", err)
 	}
 
-	if err := credentials.Insert(ctx, x.db, credentials.InsertParams{
-		ID:        uuid.New(),
+	tx, err := x.db.BeginTx(ctx, nil)
+	defer func() {
+		if err != nil {
+			slog.ErrorContext(ctx, "credentials: error occurred, rolling back", "err", err)
+			if err := tx.Rollback(); err != nil {
+				slog.ErrorContext(ctx, "credentials: failed rollback", "err", err)
+			}
+		}
+	}()
+
+	id := uuid.New()
+	if err = credentials.Insert(ctx, tx, credentials.InsertParams{
+		ID:        id,
 		Email:     cred.Email,
 		Password:  p,
 		CreatedAt: time.Now(),
@@ -94,12 +111,22 @@ func (x *Strategy) Register(ctx context.Context) (context.Context, error) {
 		return ctx, err
 	}
 
-	if err := email.Ingest(ctx, x.natsConn, email.Email{
+	t := token.NewEmailVerificationToken(id.String())
+	if err = tokendb.Insert(ctx, tx, t); err != nil {
+		return ctx, err
+	}
+
+	if err = email.Ingest(ctx, x.natsConn, email.Email{
 		To:      cred.Email,
 		From:    email.TestFrom,
 		Subject: email.TestSubject,
-		Body:    email.TestBody,
+		Body:    email.Verification("https://example.com", t),
 	}); err != nil {
+		return ctx, err
+	}
+
+	if err = tx.Commit(); err != nil {
+		slog.ErrorContext(ctx, "credentials: commit failed", "err", err)
 		return ctx, err
 	}
 
@@ -107,6 +134,53 @@ func (x *Strategy) Register(ctx context.Context) (context.Context, error) {
 }
 
 func (x *Strategy) Authenticate(_ context.Context) error {
+	return nil
+}
+
+func (x *Strategy) Verify(ctx context.Context, tokenInput string) error {
+	t, err := tokendb.Get(ctx, x.db, tokenInput)
+	if err != nil {
+		if errors.As(err, &database.NotFoundError{}) {
+			return ErrTokenDoesNotExist
+		}
+		return fmt.Errorf("credentials: getting token, %w", err)
+	}
+
+	id, _, err := token.ParseVerificationToken(t)
+	if err != nil {
+		return fmt.Errorf("credentials: reading user by email, %w", err)
+	}
+
+	c, err := credentials.Read(ctx, x.db, id)
+	if err != nil {
+		return fmt.Errorf("credentials: reading user by email, %w", err)
+	}
+	if c.VerifiedAt != nil && !c.VerifiedAt.IsZero() {
+		return errors.New("credentials: user already verified")
+	}
+
+	tx, err := x.db.BeginTx(ctx, nil)
+	defer func() {
+		if err != nil {
+			slog.ErrorContext(ctx, "credentials: error occurred, rolling back", "err", err)
+			if err := tx.Rollback(); err != nil {
+				slog.ErrorContext(ctx, "credentials: failed rollback", "err", err)
+			}
+		}
+	}()
+
+	if err = credentials.Verify(ctx, tx, c.ID); err != nil {
+		return fmt.Errorf("credentials: verifying user, %w", err)
+	}
+
+	if err = tokendb.Delete(ctx, tx, t); err != nil {
+		return fmt.Errorf("credentials: deleting token, %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("credentials: committing transaction, %w", err)
+	}
+
 	return nil
 }
 
