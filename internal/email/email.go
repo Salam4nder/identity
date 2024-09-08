@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
+	"fmt"
 	"log/slog"
 
 	"github.com/nats-io/nats.go"
@@ -22,6 +23,11 @@ const (
 	TestBody    = "Do the following step to verify your identity."
 	TestFrom    = "fugaziindustries@proton.me"
 )
+
+// Verification builds the email body for email verifications.
+func Verification(origin, token string) string {
+	return fmt.Sprintf("Please click the following link to verify your email: %s/%s", origin, token)
+}
 
 type Email struct {
 	To      string
