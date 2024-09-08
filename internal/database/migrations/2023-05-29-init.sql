@@ -3,7 +3,8 @@ CREATE TABLE IF NOT EXISTS credentials (
     email varchar(255) NOT NULL UNIQUE,
     password_hash varchar(255) NOT NULL,
     created_at timestamptz NOT NULL,
-    updated_at timestamptz DEFAULT NULL
+    updated_at timestamptz DEFAULT NULL,
+    verified_at timestamptz NULL
 );
 
 CREATE TABLE IF NOT EXISTS personal_numbers (
