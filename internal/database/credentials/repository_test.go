@@ -5,7 +5,6 @@ package credentials_test
 
 import (
 	"context"
-	"database/sql"
 	"strings"
 	"testing"
 	"time"
@@ -19,17 +18,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var (
-	db      *sql.DB
-	cleanup func()
-)
-
-func init() {
-	db, cleanup = database.SetupTestConn(credentials.Tablename)
-}
-
 func TestInsert(t *testing.T) {
 	ctx := context.Background()
+	db, cleanup := database.SetupTestConn(credentials.Tablename)
 	t.Cleanup(cleanup)
 
 	randomParams := credentials.InsertParams{
@@ -93,6 +84,7 @@ func TestInsert(t *testing.T) {
 
 func TestRead(t *testing.T) {
 	ctx := context.Background()
+	db, cleanup := database.SetupTestConn(credentials.Tablename)
 	t.Cleanup(cleanup)
 
 	randomParams := credentials.InsertParams{
@@ -124,6 +116,7 @@ func TestRead(t *testing.T) {
 
 func TestReadByEmail(t *testing.T) {
 	ctx := context.Background()
+	db, cleanup := database.SetupTestConn(credentials.Tablename)
 	t.Cleanup(cleanup)
 
 	randomParams := credentials.InsertParams{
@@ -158,6 +151,7 @@ func TestReadByEmail(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	ctx := context.Background()
+	db, cleanup := database.SetupTestConn(credentials.Tablename)
 	t.Cleanup(cleanup)
 
 	randomParams := credentials.InsertParams{
@@ -221,6 +215,7 @@ func TestUpdate(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	ctx := context.Background()
+	db, cleanup := database.SetupTestConn(credentials.Tablename)
 	t.Cleanup(cleanup)
 
 	ID := uuid.New()
@@ -247,6 +242,7 @@ func TestDelete(t *testing.T) {
 
 func TestVerify(t *testing.T) {
 	ctx := context.Background()
+	db, cleanup := database.SetupTestConn(credentials.Tablename)
 	t.Cleanup(cleanup)
 
 	ID := uuid.New()

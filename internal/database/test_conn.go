@@ -49,7 +49,6 @@ func SetupTestConn(tableName string) (*sql.DB, func()) {
 	}
 	slog.Info("database: applied migrations", "amount", n)
 
-	slog.Info("database: successfully connected to test db")
 	return db, func() {
 		_, err := db.Exec(fmt.Sprintf("TRUNCATE %s CASCADE", tableName))
 		if err != nil {

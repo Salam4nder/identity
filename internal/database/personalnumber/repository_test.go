@@ -5,7 +5,6 @@ package personalnumber_test
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"testing"
 
@@ -13,16 +12,8 @@ import (
 	"github.com/Salam4nder/identity/internal/database/personalnumber"
 )
 
-var (
-	db      *sql.DB
-	cleanup func()
-)
-
-func init() {
-	db, cleanup = database.SetupTestConn(personalnumber.Tablename)
-}
-
 func TestInsert(t *testing.T) {
+	db, cleanup := database.SetupTestConn(personalnumber.Tablename)
 	t.Cleanup(cleanup)
 
 	n := uint64(4865998752658465)
@@ -44,6 +35,7 @@ func TestInsert(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
+	db, cleanup := database.SetupTestConn(personalnumber.Tablename)
 	t.Cleanup(cleanup)
 
 	n := uint64(4865998752658464)
