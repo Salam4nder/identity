@@ -3,7 +3,6 @@ package personalnumber
 import (
 	"context"
 	"database/sql"
-	"time"
 
 	"github.com/Salam4nder/identity/internal/database"
 	"go.opentelemetry.io/otel"
@@ -19,17 +18,10 @@ func Insert(ctx context.Context, db *sql.DB, id uint64) error {
 	defer span.End()
 	span.SetAttributes(attribute.Int64("id", int64(id)))
 
-	query := `INSERT INTO personal_numbers (id, created_at)
-    VALUES ($1, $2)
-    `
+	query := `INSERT INTO personal_numbers (id) VALUES ($1)`
 	span.SetAttributes(attribute.String("query", query))
 
-	res, err := db.ExecContext(
-		ctx,
-		query,
-		id,
-		time.Now(),
-	)
+	res, err := db.ExecContext(ctx, query, id)
 	if err != nil {
 		if database.IsPSQLDuplicateEntryError(err) {
 			return database.NewDuplicateEntryError(ctx, err, "personal_number")
