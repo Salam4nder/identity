@@ -12,8 +12,11 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+
 	"github.com/Salam4nder/identity/internal/config"
 	"github.com/Salam4nder/identity/internal/database"
+	"github.com/Salam4nder/identity/internal/database/migrations"
 	"github.com/Salam4nder/identity/internal/email"
 	"github.com/Salam4nder/identity/internal/event"
 	"github.com/Salam4nder/identity/internal/grpc/interceptors"
@@ -23,11 +26,12 @@ import (
 	"github.com/Salam4nder/identity/internal/token"
 	"github.com/Salam4nder/identity/pkg/logger"
 	"github.com/Salam4nder/identity/proto/gen"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	migrate "github.com/rubenv/sql-migrate"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthgen "google.golang.org/grpc/health/grpc_health_v1"
@@ -80,16 +84,19 @@ func main() {
 		exitOnError(ctx, err)
 	}
 
-	n, err := migrate.Exec(
-		psqlDB,
-		cfg.PSQL.Driver(),
-		&migrate.FileMigrationSource{Dir: migrationFolder},
-		migrate.Up,
-	)
+	src, err := iofs.New(migrations.Files, ".")
 	if err != nil {
 		exitOnError(ctx, err)
 	}
-	slog.InfoContext(ctx, "main: applied migrations", "amount", n)
+	m, err := migrate.NewWithSourceInstance("iofs", src, cfg.PSQL.Addr())
+	if err != nil {
+		exitOnError(ctx, err)
+	}
+	if err = m.Up(); err != nil {
+		if !errors.Is(err, migrate.ErrNoChange) {
+			exitOnError(ctx, err)
+		}
+	}
 
 	// NATS.
 	natsClient, err := nats.Connect(
