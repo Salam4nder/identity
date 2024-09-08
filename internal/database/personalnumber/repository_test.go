@@ -46,7 +46,7 @@ func TestInsert(t *testing.T) {
 func TestDelete(t *testing.T) {
 	t.Cleanup(cleanup)
 
-	n := uint64(4865998752658465)
+	n := uint64(4865998752658464)
 	t.Run("OK", func(t *testing.T) {
 		if err := personalnumber.Insert(context.Background(), db, n); err != nil {
 			t.Errorf("expected no err, got %s", err.Error())
