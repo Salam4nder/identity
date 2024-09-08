@@ -48,7 +48,7 @@ func (x InsertParams) SpanAttributes() []attribute.KeyValue {
 // Insert a new credentials entry.
 // Returns [database.DuplicateEntryError] on duplicate entry,
 // [database.RowsAffectedError] or [database.OperationFailedError].
-func Insert(ctx context.Context, db *sql.DB, params InsertParams) error {
+func Insert(ctx context.Context, db database.Querier, params InsertParams) error {
 	ctx, span := tracer.Start(ctx, "Insert", trace.WithAttributes(params.SpanAttributes()...))
 	defer span.End()
 
@@ -239,7 +239,7 @@ func Delete(ctx context.Context, db *sql.DB, id uuid.UUID) error {
 }
 
 // Verify updates the `verified_at` column for a given credential ID.
-func Verify(ctx context.Context, db *sql.DB, id uuid.UUID) error {
+func Verify(ctx context.Context, db database.Querier, id uuid.UUID) error {
 	ctx, span := tracer.Start(ctx, "Verify")
 	defer span.End()
 
