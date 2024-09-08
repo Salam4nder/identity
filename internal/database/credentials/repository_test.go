@@ -220,20 +220,47 @@ func TestDelete(t *testing.T) {
 
 	ID := uuid.New()
 
-	err := credentials.Insert(ctx, db, credentials.InsertParams{
-		ID:        ID,
-		Email:     random.Email(),
-		Password:  password.SafeString(random.String(15)),
-		CreatedAt: time.Now(),
-	})
-	require.NoError(t, err)
+	t.Run("OK", func(t *testing.T) {
+		err := credentials.Insert(ctx, db, credentials.InsertParams{
+			ID:        ID,
+			Email:     random.Email(),
+			Password:  password.SafeString(random.String(15)),
+			CreatedAt: time.Now(),
+		})
+		require.NoError(t, err)
 
-	err = credentials.Delete(ctx, db, ID)
-	require.NoError(t, err)
+		err = credentials.Delete(ctx, db, ID)
+		require.NoError(t, err)
+	})
 
 	t.Run("Not found", func(t *testing.T) {
 		err := credentials.Delete(ctx, db, ID)
 		require.Error(t, err)
 		require.ErrorAs(t, err, &database.RowsAffectedError{})
+	})
+}
+
+func TestVerify(t *testing.T) {
+	ctx := context.Background()
+	db, cleanup := Conn()
+	t.Cleanup(cleanup)
+
+	ID := uuid.New()
+
+	t.Run("OK", func(t *testing.T) {
+		err := credentials.Insert(ctx, db, credentials.InsertParams{
+			ID:        ID,
+			Email:     random.Email(),
+			Password:  password.SafeString(random.String(15)),
+			CreatedAt: time.Now(),
+		})
+		require.NoError(t, err)
+
+		err = credentials.Verify(ctx, db, ID)
+		require.NoError(t, err)
+
+		cred, err := credentials.Read(ctx, db, ID)
+		require.NoError(t, err)
+		require.NotNil(t, cred.VerifiedAt)
 	})
 }
