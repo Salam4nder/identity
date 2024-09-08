@@ -14,7 +14,7 @@ var tracer = otel.Tracer("token")
 
 const Tablename = "tokens"
 
-func Insert(ctx context.Context, db *sql.DB, token string) error {
+func Insert(ctx context.Context, db database.Querier, token string) error {
 	ctx, span := tracer.Start(ctx, "Insert")
 	defer span.End()
 	span.SetAttributes(attribute.String("token", token))
@@ -75,7 +75,7 @@ func Get(ctx context.Context, db *sql.DB, token string) (string, error) {
 	return s, nil
 }
 
-func Delete(ctx context.Context, db *sql.DB, token string) error {
+func Delete(ctx context.Context, db database.Querier, token string) error {
 	ctx, span := tracer.Start(ctx, "Delete")
 	defer span.End()
 	span.SetAttributes(attribute.String("token", token))
