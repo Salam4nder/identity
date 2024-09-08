@@ -29,7 +29,7 @@ type (
 	ctxKey int
 
 	// Strategy implements the [Strategy] interface and has everything
-	// to be able to [Register], [Authenticate] and [Revoke] with credentials.
+	// to be able to [Register] and [Authenticate] with credentials.
 	Strategy struct {
 		db       *sql.DB
 		natsConn *nats.Conn
