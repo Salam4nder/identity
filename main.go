@@ -27,7 +27,7 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/stimtech/go-migration/v2"
+	migrate "github.com/rubenv/sql-migrate"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthgen "google.golang.org/grpc/health/grpc_health_v1"
@@ -80,13 +80,16 @@ func main() {
 		exitOnError(ctx, err)
 	}
 
-	if err = migration.New(
+	n, err := migrate.Exec(
 		psqlDB,
-		migration.Config{MigrationFolder: migrationFolder},
-		migration.SlogOption{Logger: slog.Default()},
-	).Migrate(); err != nil {
+		cfg.PSQL.Driver(),
+		&migrate.FileMigrationSource{Dir: migrationFolder},
+		migrate.Up,
+	)
+	if err != nil {
 		exitOnError(ctx, err)
 	}
+	slog.InfoContext(ctx, "main: applied migrations", "amount", n)
 
 	// NATS.
 	natsClient, err := nats.Connect(
