@@ -26,6 +26,7 @@ type Entry struct {
 	PasswordHash string     `db:"password_hash"`
 	CreatedAt    time.Time  `db:"created_at"`
 	UpdatedAt    *time.Time `db:"updated_at"`
+	VerifiedAt   *time.Time `db:"verified_at"`
 }
 
 // InsertParams defines the parameters for inserts.
@@ -38,7 +39,7 @@ type InsertParams struct {
 
 func (x InsertParams) SpanAttributes() []attribute.KeyValue {
 	return []attribute.KeyValue{
-		attribute.String("user_id", x.ID.String()),
+		attribute.String("id", x.ID.String()),
 		attribute.String("email", x.Email),
 		attribute.Int("password_length", len(x.Password)),
 	}
@@ -94,19 +95,20 @@ func Read(ctx context.Context, db *sql.DB, id uuid.UUID) (*Entry, error) {
 	}
 
 	query := `
-        SELECT id, email, password_hash, created_at, updated_at
+        SELECT id, email, password_hash, created_at, updated_at, verified_at
         FROM credentials
         WHERE id = $1
         `
 	span.SetAttributes(attribute.String("query", query))
 
-	var user Entry
+	var entry Entry
 	if err := db.QueryRowContext(ctx, query, id).Scan(
-		&user.ID,
-		&user.Email,
-		&user.PasswordHash,
-		&user.CreatedAt,
-		&user.UpdatedAt,
+		&entry.ID,
+		&entry.Email,
+		&entry.PasswordHash,
+		&entry.CreatedAt,
+		&entry.UpdatedAt,
+		&entry.VerifiedAt,
 	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, database.NewNotFoundError(ctx, err, "credentials", id.String())
@@ -114,7 +116,7 @@ func Read(ctx context.Context, db *sql.DB, id uuid.UUID) (*Entry, error) {
 		return nil, database.NewOperationFailedError(ctx, err)
 	}
 
-	return &user, nil
+	return &entry, nil
 }
 
 // ReadByEmail a credentials [Entry] by an email.
@@ -138,13 +140,13 @@ func ReadByEmail(ctx context.Context, db *sql.DB, email string) (*Entry, error) 
 		attribute.String("email", email),
 	)
 
-	var user Entry
+	var entry Entry
 	if err := db.QueryRowContext(ctx, query, email).Scan(
-		&user.ID,
-		&user.Email,
-		&user.PasswordHash,
-		&user.CreatedAt,
-		&user.UpdatedAt,
+		&entry.ID,
+		&entry.Email,
+		&entry.PasswordHash,
+		&entry.CreatedAt,
+		&entry.UpdatedAt,
 	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, database.NewNotFoundError(ctx, err, "credentials", email)
@@ -152,7 +154,7 @@ func ReadByEmail(ctx context.Context, db *sql.DB, email string) (*Entry, error) 
 		return nil, database.NewOperationFailedError(ctx, err)
 	}
 
-	return &user, nil
+	return &entry, nil
 }
 
 // UpdateParams defines the parameters used to update credentials.
@@ -163,7 +165,7 @@ type UpdateParams struct {
 
 func (x UpdateParams) SpanAttributes() []attribute.KeyValue {
 	return []attribute.KeyValue{
-		attribute.String("user_id", x.ID.String()),
+		attribute.String("id", x.ID.String()),
 		attribute.String("email", x.Email),
 	}
 }
@@ -216,7 +218,7 @@ func Delete(ctx context.Context, db *sql.DB, id uuid.UUID) error {
         WHERE id = $1
         `
 	span.SetAttributes(
-		attribute.String("user_id", id.String()),
+		attribute.String("id", id.String()),
 		attribute.String("query", query),
 	)
 
@@ -225,6 +227,34 @@ func Delete(ctx context.Context, db *sql.DB, id uuid.UUID) error {
 		return database.NewOperationFailedError(ctx, err)
 	}
 
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return database.NewOperationFailedError(ctx, err)
+	}
+	if rowsAffected != 1 {
+		return database.NewRowsAffectedError(ctx, database.ErrUnexpectedRowsAffectedError, 1, rowsAffected)
+	}
+
+	return nil
+}
+
+// Verify updates the `verified_at` column for a given credential ID.
+func Verify(ctx context.Context, db *sql.DB, id uuid.UUID) error {
+	ctx, span := tracer.Start(ctx, "Verify")
+	defer span.End()
+
+	query := `
+    UPDATE credentials SET verified_at = $1 WHERE id = $2
+    `
+	span.SetAttributes(
+		attribute.String("id", id.String()),
+		attribute.String("query", query),
+	)
+
+	res, err := db.ExecContext(ctx, query, time.Now(), id)
+	if err != nil {
+		return database.NewOperationFailedError(ctx, err)
+	}
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
 		return database.NewOperationFailedError(ctx, err)
