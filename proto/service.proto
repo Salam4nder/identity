@@ -56,7 +56,13 @@ message AuthenticateResponse {
     google.protobuf.Timestamp created_at = 4;
 }
 
+message VerifyRequest {
+    string token = 1;
+    string email = 2;
+}
+
 service Identity {
     rpc Register (RegisterRequest) returns (RegisterResponse){}
+    rpc Verify (VerifyRequest) returns (google.protobuf.Empty){}
     rpc Authenticate (AuthenticateRequest) returns (AuthenticateResponse){}
 }
