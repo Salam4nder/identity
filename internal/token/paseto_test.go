@@ -109,18 +109,61 @@ func TestMakeRefreshToken(t *testing.T) {
 func TestVerify(t *testing.T) {
 	t.Run("OK", func(t *testing.T) {
 		b := bootstrap(t)
-		s, err := b.MakeAccessToken(random.Email(), gen.Strategy_TypeCredentials)
-		if err != nil {
-			t.Error("expected no error")
-		}
-		if err := b.Verify((s)); err != nil {
-			t.Errorf("expected no error, got %s", err.Error())
-		}
+		t.Run("credentials", func(t *testing.T) {
+			e := random.Email()
+			s, err := b.MakeAccessToken(e, gen.Strategy_TypeCredentials)
+			if err != nil {
+				t.Error("expected no error")
+			}
+			tt, err := b.Parse(s)
+			if err != nil {
+				t.Errorf("expected no error, got %s", err.Error())
+			}
+
+			var strat gen.Strategy
+			tt.Get(PasetoStrategyKey, &strat)
+			if strat != gen.Strategy_TypeCredentials {
+				t.Error("wrong strategy")
+			}
+
+			var i string
+			tt.Get(PasetoIdentifierKey, &i)
+			if i != e {
+				t.Error("wrong identifier")
+			}
+		})
+		t.Run("personal_number", func(t *testing.T) {
+			number, err := random.UINT64()
+			if err != nil {
+				t.Error("expected no error")
+			}
+
+			s, err := b.MakeAccessToken(number, gen.Strategy_TypePersonalNumber)
+			if err != nil {
+				t.Error("expected no error")
+			}
+			tt, err := b.Parse(s)
+			if err != nil {
+				t.Errorf("expected no error, got %s", err.Error())
+			}
+
+			var strat gen.Strategy
+			tt.Get(PasetoStrategyKey, &strat)
+			if strat != gen.Strategy_TypePersonalNumber {
+				t.Error("wrong strategy")
+			}
+
+			var i uint64
+			tt.Get(PasetoIdentifierKey, &i)
+			if i != number {
+				t.Error("wrong identifier")
+			}
+		})
 	})
 
 	t.Run("invalid returns error", func(t *testing.T) {
 		b := bootstrap(t)
-		if err := b.Verify(fromString("ass")); err == nil {
+		if _, err := b.Parse(fromString("ass")); err == nil {
 			t.Error("expected error")
 		}
 	})
