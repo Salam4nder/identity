@@ -3,6 +3,7 @@ package token
 import (
 	"log/slog"
 
+	"aidanwoods.dev/go-paseto"
 	"github.com/Salam4nder/identity/proto/gen"
 )
 
@@ -28,5 +29,5 @@ func fromString(s string) SafeString {
 type Maker interface {
 	MakeAccessToken(identifer any, strat gen.Strategy) (SafeString, error)
 	MakeRefreshToken(identifer any, strat gen.Strategy) (SafeString, error)
-	Verify(t SafeString) error
+	Parse(t SafeString) (*paseto.Token, error)
 }
