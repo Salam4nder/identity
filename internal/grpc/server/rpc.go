@@ -61,7 +61,7 @@ func (x *Identity) Register(ctx context.Context, req *gen.RegisterRequest) (*gen
 			return nil, internalServerError(ctx, err)
 		}
 
-		registerResponse.Data = &gen.RegisterResponse_Number{Number: &gen.PersonalNumber{Numbers: n}}
+		registerResponse.Data = &gen.RegisterResponse_Number{Number: &gen.PersonalNumber{Number: n}}
 
 	default:
 		return nil, internalServerError(ctx, fmt.Errorf("unsupported strategy %s", req.GetStrategy().String()))
@@ -73,8 +73,8 @@ func (x *Identity) Register(ctx context.Context, req *gen.RegisterRequest) (*gen
 	return registerResponse, nil
 }
 
-// Verify a user that registered using the credentials strategy.
-func (x *Identity) Verify(ctx context.Context, req *gen.VerifyRequest) (*emptypb.Empty, error) {
+// VerifyEmail verifies a user that registered using the credentials strategy.
+func (x *Identity) VerifyEmail(ctx context.Context, req *gen.VerifyEmailRequest) (*emptypb.Empty, error) {
 	ctx, span := tracer.Start(ctx, "Verify")
 	defer span.End()
 
