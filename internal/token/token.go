@@ -1,6 +1,10 @@
 package token
 
-import "log/slog"
+import (
+	"log/slog"
+
+	"github.com/Salam4nder/identity/proto/gen"
+)
 
 // SafeString has it's common stringers masked.
 // Should be created internally.
@@ -22,7 +26,7 @@ func fromString(s string) SafeString {
 
 // Maker is an abstract interface for making and verifying access and refresh tokens.
 type Maker interface {
-	MakeAccessToken() SafeString
-	MakeRefreshToken() SafeString
+	MakeAccessToken(identifer any, strat gen.Strategy) (SafeString, error)
+	MakeRefreshToken(identifer any, strat gen.Strategy) (SafeString, error)
 	Verify(t SafeString) error
 }
