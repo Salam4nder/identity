@@ -148,7 +148,7 @@ func (x *Strategy) Verify(ctx context.Context, tokenInput string) error {
 
 	id, _, err := token.ParseVerificationToken(t)
 	if err != nil {
-		return fmt.Errorf("credentials: reading user by email, %w", err)
+		return fmt.Errorf("credentials: pasring verification token, %w", err)
 	}
 
 	c, err := credentials.Read(ctx, x.db, id)
