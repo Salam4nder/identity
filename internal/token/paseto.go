@@ -12,8 +12,8 @@ import (
 var _ Maker = (*PasetoMaker)(nil)
 
 const (
-	identifierKey = "token_identifier"
-	strategyKey   = "token_strategy"
+	PasetoIdentifierKey = "token_identifier"
+	PasetoStrategyKey   = "token_strategy"
 )
 
 // PasetoMaker makes PASETO tokens.
@@ -55,15 +55,15 @@ func (x *PasetoMaker) MakeAccessToken(identifer any, strat gen.Strategy) (SafeSt
 		if !ok {
 			return "", fmt.Errorf("token: expected identifier to be string, got %T", identifer)
 		}
-		token.Set(strategyKey, gen.Strategy_TypeCredentials)
-		token.Set(identifierKey, s)
+		token.Set(PasetoStrategyKey, gen.Strategy_TypeCredentials)
+		token.Set(PasetoIdentifierKey, s)
 	case gen.Strategy_TypePersonalNumber:
 		d, ok := identifer.(uint64)
 		if !ok {
 			return "", fmt.Errorf("token: expected identifier to be uint64, got %T", identifer)
 		}
-		token.Set(strategyKey, gen.Strategy_TypePersonalNumber)
-		token.Set(identifierKey, d)
+		token.Set(PasetoStrategyKey, gen.Strategy_TypePersonalNumber)
+		token.Set(PasetoIdentifierKey, d)
 	default:
 		return "", errors.New("unsupported strategy")
 	}
@@ -81,15 +81,15 @@ func (x *PasetoMaker) MakeRefreshToken(identifer any, strat gen.Strategy) (SafeS
 		if !ok {
 			return "", fmt.Errorf("token: expected identifier to be string, got %T", identifer)
 		}
-		token.Set(strategyKey, gen.Strategy_TypeCredentials)
-		token.Set(identifierKey, s)
+		token.Set(PasetoStrategyKey, gen.Strategy_TypeCredentials)
+		token.Set(PasetoIdentifierKey, s)
 	case gen.Strategy_TypePersonalNumber:
 		d, ok := identifer.(uint64)
 		if !ok {
 			return "", fmt.Errorf("token: expected identifier to be uint64, got %T", identifer)
 		}
-		token.Set(strategyKey, gen.Strategy_TypePersonalNumber)
-		token.Set(identifierKey, d)
+		token.Set(PasetoStrategyKey, gen.Strategy_TypePersonalNumber)
+		token.Set(PasetoIdentifierKey, d)
 	default:
 		return "", errors.New("unsupported strategy")
 	}
@@ -99,10 +99,11 @@ func (x *PasetoMaker) MakeRefreshToken(identifer any, strat gen.Strategy) (SafeS
 	return fromString(token.V4Encrypt(x.symmetricKey, nil)), nil
 }
 
-func (x *PasetoMaker) Verify(t SafeString) error {
-	_, err := x.parser.ParseV4Local(x.symmetricKey, string(t), nil)
+// Parse will parse a Paseto token and return it if it is valid.
+func (x *PasetoMaker) Parse(s SafeString) (*paseto.Token, error) {
+	t, err := x.parser.ParseV4Local(x.symmetricKey, string(s), nil)
 	if err != nil {
-		return fmt.Errorf("token: verifying token, %w", err)
+		return nil, fmt.Errorf("token: verifying token, %w", err)
 	}
-	return nil
+	return t, nil
 }
