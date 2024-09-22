@@ -3,7 +3,6 @@ syntax = "proto3";
 package gen;
 
 import "google/protobuf/empty.proto";
-import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/Salam4nder/identity/proto/gen";
 
@@ -23,7 +22,7 @@ message CredentialsOutput {
 }
 
 message PersonalNumber {
-    uint64 Numbers = 1;
+    uint64 number = 1;
 }
 
 message RegisterRequest {
@@ -50,18 +49,16 @@ message AuthenticateRequest {
 }
 
 message AuthenticateResponse {
-    string id = 1;
-    string access_token = 2;
-    string refresh_token = 3;
-    google.protobuf.Timestamp created_at = 4;
+    string access_token = 1;
+    string refresh_token = 2;
 }
 
-message VerifyRequest {
+message VerifyEmailRequest {
     string token = 1;
 }
 
 service Identity {
     rpc Register (RegisterRequest) returns (RegisterResponse){}
-    rpc Verify (VerifyRequest) returns (google.protobuf.Empty){}
+    rpc VerifyEmail (VerifyEmailRequest) returns (google.protobuf.Empty){}
     rpc Authenticate (AuthenticateRequest) returns (AuthenticateResponse){}
 }

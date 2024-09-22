@@ -21,7 +21,7 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	Identity_Register_FullMethodName     = "/gen.Identity/Register"
-	Identity_Verify_FullMethodName       = "/gen.Identity/Verify"
+	Identity_VerifyEmail_FullMethodName  = "/gen.Identity/VerifyEmail"
 	Identity_Authenticate_FullMethodName = "/gen.Identity/Authenticate"
 )
 
@@ -30,7 +30,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type IdentityClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
-	Verify(ctx context.Context, in *VerifyRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	VerifyEmail(ctx context.Context, in *VerifyEmailRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Authenticate(ctx context.Context, in *AuthenticateRequest, opts ...grpc.CallOption) (*AuthenticateResponse, error)
 }
 
@@ -51,9 +51,9 @@ func (c *identityClient) Register(ctx context.Context, in *RegisterRequest, opts
 	return out, nil
 }
 
-func (c *identityClient) Verify(ctx context.Context, in *VerifyRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *identityClient) VerifyEmail(ctx context.Context, in *VerifyEmailRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, Identity_Verify_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Identity_VerifyEmail_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (c *identityClient) Authenticate(ctx context.Context, in *AuthenticateReque
 // for forward compatibility
 type IdentityServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
-	Verify(context.Context, *VerifyRequest) (*emptypb.Empty, error)
+	VerifyEmail(context.Context, *VerifyEmailRequest) (*emptypb.Empty, error)
 	Authenticate(context.Context, *AuthenticateRequest) (*AuthenticateResponse, error)
 	mustEmbedUnimplementedIdentityServer()
 }
@@ -86,8 +86,8 @@ type UnimplementedIdentityServer struct {
 func (UnimplementedIdentityServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
-func (UnimplementedIdentityServer) Verify(context.Context, *VerifyRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Verify not implemented")
+func (UnimplementedIdentityServer) VerifyEmail(context.Context, *VerifyEmailRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method VerifyEmail not implemented")
 }
 func (UnimplementedIdentityServer) Authenticate(context.Context, *AuthenticateRequest) (*AuthenticateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Authenticate not implemented")
@@ -123,20 +123,20 @@ func _Identity_Register_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Identity_Verify_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(VerifyRequest)
+func _Identity_VerifyEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyEmailRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(IdentityServer).Verify(ctx, in)
+		return srv.(IdentityServer).VerifyEmail(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Identity_Verify_FullMethodName,
+		FullMethod: Identity_VerifyEmail_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IdentityServer).Verify(ctx, req.(*VerifyRequest))
+		return srv.(IdentityServer).VerifyEmail(ctx, req.(*VerifyEmailRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -171,8 +171,8 @@ var Identity_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Identity_Register_Handler,
 		},
 		{
-			MethodName: "Verify",
-			Handler:    _Identity_Verify_Handler,
+			MethodName: "VerifyEmail",
+			Handler:    _Identity_VerifyEmail_Handler,
 		},
 		{
 			MethodName: "Authenticate",
