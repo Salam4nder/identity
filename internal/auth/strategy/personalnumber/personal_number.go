@@ -2,12 +2,11 @@ package personalnumber
 
 import (
 	"context"
-	"crypto/rand"
 	"database/sql"
 	"errors"
-	"math/big"
 
 	"github.com/Salam4nder/identity/internal/database/personalnumber"
+	"github.com/Salam4nder/identity/pkg/random"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -45,7 +44,7 @@ func (x *Strategy) Register(ctx context.Context) (context.Context, error) {
 	ctx, span := tracer.Start(ctx, "Register")
 	defer span.End()
 
-	n, err := generateRandomUint64()
+	n, err := random.UINT64()
 	if err != nil {
 		return ctx, err
 	}
@@ -60,22 +59,6 @@ func (x *Strategy) Register(ctx context.Context) (context.Context, error) {
 
 func (x *Strategy) Authenticate(_ context.Context) error {
 	return nil
-}
-
-func generateRandomUint64() (uint64, error) {
-	var result uint64
-	for i := 0; i < 16; i++ {
-		// Generate a random digit between 0 and 9.
-		digit, err := rand.Int(rand.Reader, big.NewInt(10))
-		if err != nil {
-			return 0, err
-		}
-
-		// Shift the result left by one digit and add the new digit.
-		result = result*10 + digit.Uint64()
-	}
-
-	return result, nil
 }
 
 func newContext(ctx context.Context, n uint64) context.Context {
