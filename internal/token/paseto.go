@@ -6,14 +6,19 @@ import (
 	"time"
 
 	"aidanwoods.dev/go-paseto"
+	"github.com/Salam4nder/identity/internal/config"
 	"github.com/Salam4nder/identity/proto/gen"
 )
 
 var _ Maker = (*PasetoMaker)(nil)
 
 const (
+	PasetoTokenTypeKey  = "token_type"
 	PasetoIdentifierKey = "token_identifier"
 	PasetoStrategyKey   = "token_strategy"
+
+	PasetoTokenTypeAccess  = "token_type_access"
+	PasetoTokenTypeRefresh = "token_type_refresh"
 )
 
 // PasetoMaker makes PASETO tokens.
@@ -34,6 +39,7 @@ func BootstrapPasetoMaker(
 	}
 
 	p := paseto.MakeParser([]paseto.Rule{
+		paseto.IssuedBy(config.ApplicationName),
 		paseto.NotExpired(),
 		paseto.ValidAt(time.Now()),
 	},
@@ -67,6 +73,8 @@ func (x *PasetoMaker) MakeAccessToken(identifer any, strat gen.Strategy) (SafeSt
 	default:
 		return "", errors.New("unsupported strategy")
 	}
+	token.Set(PasetoTokenTypeKey, PasetoTokenTypeAccess)
+	token.SetIssuer(config.ApplicationName)
 	token.SetIssuedAt(time.Now())
 	token.SetNotBefore(time.Now())
 	token.SetExpiration(time.Now().Add(x.accessDur))
@@ -93,6 +101,8 @@ func (x *PasetoMaker) MakeRefreshToken(identifer any, strat gen.Strategy) (SafeS
 	default:
 		return "", errors.New("unsupported strategy")
 	}
+	token.Set(PasetoTokenTypeKey, PasetoTokenTypeRefresh)
+	token.SetIssuer(config.ApplicationName)
 	token.SetIssuedAt(time.Now())
 	token.SetNotBefore(time.Now())
 	token.SetExpiration(time.Now().Add(x.refreshDur))
