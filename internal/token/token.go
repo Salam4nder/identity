@@ -28,8 +28,8 @@ func fromString(s string) SafeString {
 
 // Maker is an abstract interface for making and verifying access and refresh tokens.
 type Maker interface {
-	MakeAccessToken(identifer any, strat gen.Strategy) (SafeString, error)
-	MakeRefreshToken(identifer any, strat gen.Strategy) (SafeString, error)
+	MakeAccessToken(identifier any, strategy gen.Strategy) (SafeString, error)
+	MakeRefreshToken(identifier any, strategy gen.Strategy) (SafeString, error)
 	Parse(token string) (*paseto.Token, error)
 	RefreshTokenExpiration() time.Time
 	AccessTokenExpiration() time.Time

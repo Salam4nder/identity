@@ -208,13 +208,13 @@ func (x *Identity) Refresh(ctx context.Context, req *gen.TokenRequest) (*gen.Ref
 		)
 	}
 
-	var strat gen.Strategy
-	if err = t.Get(token.PasetoStrategyKey, &strat); err != nil {
+	var strategy gen.Strategy
+	if err = t.Get(token.PasetoStrategyKey, &strategy); err != nil {
 		return nil, internalServerError(ctx, err)
 	}
 
 	var accessToken token.SafeString
-	switch strat {
+	switch strategy {
 	case gen.Strategy_TypeCredentials:
 		var email string
 		if err = t.Get(token.PasetoIdentifierKey, &email); err != nil {

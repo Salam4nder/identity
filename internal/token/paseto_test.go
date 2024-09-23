@@ -120,14 +120,20 @@ func TestVerify(t *testing.T) {
 				t.Errorf("expected no error, got %s", err.Error())
 			}
 
-			var strat gen.Strategy
-			tt.Get(PasetoStrategyKey, &strat)
-			if strat != gen.Strategy_TypeCredentials {
+			var strategy gen.Strategy
+			err = tt.Get(PasetoStrategyKey, &strategy)
+			if err != nil {
+				t.Error("expected no error")
+			}
+			if strategy != gen.Strategy_TypeCredentials {
 				t.Error("wrong strategy")
 			}
 
 			var i string
-			tt.Get(PasetoIdentifierKey, &i)
+			err = tt.Get(PasetoIdentifierKey, &i)
+			if err != nil {
+				t.Error("expected no error")
+			}
 			if i != e {
 				t.Error("wrong identifier")
 			}
@@ -147,14 +153,20 @@ func TestVerify(t *testing.T) {
 				t.Errorf("expected no error, got %s", err.Error())
 			}
 
-			var strat gen.Strategy
-			tt.Get(PasetoStrategyKey, &strat)
-			if strat != gen.Strategy_TypePersonalNumber {
+			var strategy gen.Strategy
+			err = tt.Get(PasetoStrategyKey, &strategy)
+			if err != nil {
+				t.Error("expected no error")
+			}
+			if strategy != gen.Strategy_TypePersonalNumber {
 				t.Error("wrong strategy")
 			}
 
 			var i uint64
-			tt.Get(PasetoIdentifierKey, &i)
+			err = tt.Get(PasetoIdentifierKey, &i)
+			if err != nil {
+				t.Error("expected no error")
+			}
 			if i != number {
 				t.Error("wrong identifier")
 			}

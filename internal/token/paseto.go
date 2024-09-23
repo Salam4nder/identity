@@ -13,11 +13,14 @@ import (
 var _ Maker = (*PasetoMaker)(nil)
 
 const (
+	// nolint:gosec
 	PasetoTokenTypeKey  = "token_type"
 	PasetoIdentifierKey = "token_identifier"
 	PasetoStrategyKey   = "token_strategy"
 
-	PasetoTokenTypeAccess  = "token_type_access"
+	// nolint:gosec
+	PasetoTokenTypeAccess = "token_type_access"
+	// nolint:gosec
 	PasetoTokenTypeRefresh = "token_type_refresh"
 )
 
@@ -53,27 +56,37 @@ func BootstrapPasetoMaker(
 	}, nil
 }
 
-func (x *PasetoMaker) MakeAccessToken(identifer any, strat gen.Strategy) (SafeString, error) {
+func (x *PasetoMaker) MakeAccessToken(identifier any, strategy gen.Strategy) (SafeString, error) {
 	token := paseto.NewToken()
-	switch strat {
+	switch strategy {
 	case gen.Strategy_TypeCredentials:
-		s, ok := identifer.(string)
+		s, ok := identifier.(string)
 		if !ok {
-			return "", fmt.Errorf("token: expected identifier to be string, got %T", identifer)
+			return "", fmt.Errorf("token: expected identifier to be string, got %T", identifier)
 		}
-		token.Set(PasetoStrategyKey, gen.Strategy_TypeCredentials)
-		token.Set(PasetoIdentifierKey, s)
+		if err := token.Set(PasetoStrategyKey, gen.Strategy_TypeCredentials); err != nil {
+			return "", err
+		}
+		if err := token.Set(PasetoIdentifierKey, s); err != nil {
+			return "", err
+		}
 	case gen.Strategy_TypePersonalNumber:
-		d, ok := identifer.(uint64)
+		d, ok := identifier.(uint64)
 		if !ok {
-			return "", fmt.Errorf("token: expected identifier to be uint64, got %T", identifer)
+			return "", fmt.Errorf("token: expected identifier to be uint64, got %T", identifier)
 		}
-		token.Set(PasetoStrategyKey, gen.Strategy_TypePersonalNumber)
-		token.Set(PasetoIdentifierKey, d)
+		if err := token.Set(PasetoStrategyKey, gen.Strategy_TypePersonalNumber); err != nil {
+			return "", err
+		}
+		if err := token.Set(PasetoIdentifierKey, d); err != nil {
+			return "", err
+		}
 	default:
 		return "", errors.New("unsupported strategy")
 	}
-	token.Set(PasetoTokenTypeKey, PasetoTokenTypeAccess)
+	if err := token.Set(PasetoTokenTypeKey, PasetoTokenTypeAccess); err != nil {
+		return "", err
+	}
 	token.SetIssuer(config.ApplicationName)
 	token.SetIssuedAt(time.Now())
 	token.SetNotBefore(time.Now())
@@ -81,27 +94,37 @@ func (x *PasetoMaker) MakeAccessToken(identifer any, strat gen.Strategy) (SafeSt
 	return fromString(token.V4Encrypt(x.symmetricKey, nil)), nil
 }
 
-func (x *PasetoMaker) MakeRefreshToken(identifer any, strat gen.Strategy) (SafeString, error) {
+func (x *PasetoMaker) MakeRefreshToken(identifier any, strategy gen.Strategy) (SafeString, error) {
 	token := paseto.NewToken()
-	switch strat {
+	switch strategy {
 	case gen.Strategy_TypeCredentials:
-		s, ok := identifer.(string)
+		s, ok := identifier.(string)
 		if !ok {
-			return "", fmt.Errorf("token: expected identifier to be string, got %T", identifer)
+			return "", fmt.Errorf("token: expected identifier to be string, got %T", identifier)
 		}
-		token.Set(PasetoStrategyKey, gen.Strategy_TypeCredentials)
-		token.Set(PasetoIdentifierKey, s)
+		if err := token.Set(PasetoStrategyKey, gen.Strategy_TypeCredentials); err != nil {
+			return "", err
+		}
+		if err := token.Set(PasetoIdentifierKey, s); err != nil {
+			return "", err
+		}
 	case gen.Strategy_TypePersonalNumber:
-		d, ok := identifer.(uint64)
+		d, ok := identifier.(uint64)
 		if !ok {
-			return "", fmt.Errorf("token: expected identifier to be uint64, got %T", identifer)
+			return "", fmt.Errorf("token: expected identifier to be uint64, got %T", identifier)
 		}
-		token.Set(PasetoStrategyKey, gen.Strategy_TypePersonalNumber)
-		token.Set(PasetoIdentifierKey, d)
+		if err := token.Set(PasetoStrategyKey, gen.Strategy_TypePersonalNumber); err != nil {
+			return "", err
+		}
+		if err := token.Set(PasetoIdentifierKey, d); err != nil {
+			return "", err
+		}
 	default:
 		return "", errors.New("unsupported strategy")
 	}
-	token.Set(PasetoTokenTypeKey, PasetoTokenTypeRefresh)
+	if err := token.Set(PasetoTokenTypeKey, PasetoTokenTypeRefresh); err != nil {
+		return "", err
+	}
 	token.SetIssuer(config.ApplicationName)
 	token.SetIssuedAt(time.Now())
 	token.SetNotBefore(time.Now())
