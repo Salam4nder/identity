@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/Salam4nder/identity/internal/auth/strategy/credentials"
 	"github.com/Salam4nder/identity/internal/auth/strategy/personalnumber"
@@ -13,10 +14,12 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var tracer = otel.Tracer("server")
 
+// Register a user with the given strategy.
 func (x *Identity) Register(ctx context.Context, req *gen.RegisterRequest) (*gen.RegisterResponse, error) {
 	ctx, span := tracer.Start(ctx, "Register")
 	defer span.End()
@@ -75,8 +78,8 @@ func (x *Identity) Register(ctx context.Context, req *gen.RegisterRequest) (*gen
 }
 
 // VerifyEmail verifies a user that registered using the credentials strategy.
-func (x *Identity) VerifyEmail(ctx context.Context, req *gen.VerifyEmailRequest) (*emptypb.Empty, error) {
-	ctx, span := tracer.Start(ctx, "Verify")
+func (x *Identity) VerifyEmail(ctx context.Context, req *gen.TokenRequest) (*emptypb.Empty, error) {
+	ctx, span := tracer.Start(ctx, "VerifyEmail")
 	defer span.End()
 
 	if req == nil {
@@ -102,6 +105,7 @@ func (x *Identity) VerifyEmail(ctx context.Context, req *gen.VerifyEmailRequest)
 	return &emptypb.Empty{}, nil
 }
 
+// Authenticate a user with the given strategy.
 func (x *Identity) Authenticate(ctx context.Context, req *gen.AuthenticateRequest) (*gen.AuthenticateResponse, error) {
 	ctx, span := tracer.Start(ctx, "Authenticate")
 	defer span.End()
@@ -176,5 +180,60 @@ func (x *Identity) Authenticate(ctx context.Context, req *gen.AuthenticateReques
 	return &gen.AuthenticateResponse{
 		AccessToken:  string(accessToken),
 		RefreshToken: string(refreshToken),
+	}, nil
+}
+
+// Refresh will exchange a valid refresh token for a new access token.
+func (x *Identity) Refresh(ctx context.Context, req *gen.TokenRequest) (*gen.RefreshResponse, error) {
+	ctx, span := tracer.Start(ctx, "Refresh")
+	defer span.End()
+
+	if req == nil {
+		return nil, requestIsNilError()
+	}
+
+	t, err := x.tokenMaker.Parse(req.GetToken())
+	if err != nil {
+		return nil, internalServerError(ctx, err)
+	}
+
+	exp, err := t.GetExpiration()
+	if err != nil {
+		return nil, internalServerError(ctx, err)
+	}
+	if time.Now().After(exp) {
+		return nil, invalidArgumentError(ctx, errors.New("rpc: token is expired"), "token is expired")
+	}
+
+	var strat gen.Strategy
+	if err = t.Get(token.PasetoStrategyKey, &strat); err != nil {
+		return nil, internalServerError(ctx, err)
+	}
+
+	var accessToken token.SafeString
+	switch strat {
+	case gen.Strategy_TypeCredentials:
+		var email string
+		if err = t.Get(token.PasetoIdentifierKey, &email); err != nil {
+			return nil, internalServerError(ctx, err)
+		}
+		accessToken, err = x.tokenMaker.MakeAccessToken(email, gen.Strategy_TypeCredentials)
+		if err != nil {
+			return nil, internalServerError(ctx, err)
+		}
+	case gen.Strategy_TypePersonalNumber:
+		var number uint64
+		if err = t.Get(token.PasetoIdentifierKey, &number); err != nil {
+			return nil, internalServerError(ctx, err)
+		}
+		accessToken, err = x.tokenMaker.MakeAccessToken(number, gen.Strategy_TypeCredentials)
+		if err != nil {
+			return nil, internalServerError(ctx, err)
+		}
+	}
+
+	return &gen.RefreshResponse{
+		Token:     string(accessToken),
+		ExpiresAt: timestamppb.New(x.tokenMaker.AccessTokenExpiration()),
 	}, nil
 }
