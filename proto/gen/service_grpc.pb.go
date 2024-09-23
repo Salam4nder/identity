@@ -20,6 +20,8 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
+	Identity_Refresh_FullMethodName      = "/gen.Identity/Refresh"
+	Identity_Validate_FullMethodName     = "/gen.Identity/Validate"
 	Identity_Register_FullMethodName     = "/gen.Identity/Register"
 	Identity_VerifyEmail_FullMethodName  = "/gen.Identity/VerifyEmail"
 	Identity_Authenticate_FullMethodName = "/gen.Identity/Authenticate"
@@ -29,8 +31,10 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type IdentityClient interface {
+	Refresh(ctx context.Context, in *TokenRequest, opts ...grpc.CallOption) (*RefreshResponse, error)
+	Validate(ctx context.Context, in *TokenRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
-	VerifyEmail(ctx context.Context, in *VerifyEmailRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	VerifyEmail(ctx context.Context, in *TokenRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Authenticate(ctx context.Context, in *AuthenticateRequest, opts ...grpc.CallOption) (*AuthenticateResponse, error)
 }
 
@@ -42,6 +46,24 @@ func NewIdentityClient(cc grpc.ClientConnInterface) IdentityClient {
 	return &identityClient{cc}
 }
 
+func (c *identityClient) Refresh(ctx context.Context, in *TokenRequest, opts ...grpc.CallOption) (*RefreshResponse, error) {
+	out := new(RefreshResponse)
+	err := c.cc.Invoke(ctx, Identity_Refresh_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityClient) Validate(ctx context.Context, in *TokenRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, Identity_Validate_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *identityClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
 	out := new(RegisterResponse)
 	err := c.cc.Invoke(ctx, Identity_Register_FullMethodName, in, out, opts...)
@@ -51,7 +73,7 @@ func (c *identityClient) Register(ctx context.Context, in *RegisterRequest, opts
 	return out, nil
 }
 
-func (c *identityClient) VerifyEmail(ctx context.Context, in *VerifyEmailRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *identityClient) VerifyEmail(ctx context.Context, in *TokenRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, Identity_VerifyEmail_FullMethodName, in, out, opts...)
 	if err != nil {
@@ -73,8 +95,10 @@ func (c *identityClient) Authenticate(ctx context.Context, in *AuthenticateReque
 // All implementations must embed UnimplementedIdentityServer
 // for forward compatibility
 type IdentityServer interface {
+	Refresh(context.Context, *TokenRequest) (*RefreshResponse, error)
+	Validate(context.Context, *TokenRequest) (*emptypb.Empty, error)
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
-	VerifyEmail(context.Context, *VerifyEmailRequest) (*emptypb.Empty, error)
+	VerifyEmail(context.Context, *TokenRequest) (*emptypb.Empty, error)
 	Authenticate(context.Context, *AuthenticateRequest) (*AuthenticateResponse, error)
 	mustEmbedUnimplementedIdentityServer()
 }
@@ -83,10 +107,16 @@ type IdentityServer interface {
 type UnimplementedIdentityServer struct {
 }
 
+func (UnimplementedIdentityServer) Refresh(context.Context, *TokenRequest) (*RefreshResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Refresh not implemented")
+}
+func (UnimplementedIdentityServer) Validate(context.Context, *TokenRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Validate not implemented")
+}
 func (UnimplementedIdentityServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
-func (UnimplementedIdentityServer) VerifyEmail(context.Context, *VerifyEmailRequest) (*emptypb.Empty, error) {
+func (UnimplementedIdentityServer) VerifyEmail(context.Context, *TokenRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method VerifyEmail not implemented")
 }
 func (UnimplementedIdentityServer) Authenticate(context.Context, *AuthenticateRequest) (*AuthenticateResponse, error) {
@@ -103,6 +133,42 @@ type UnsafeIdentityServer interface {
 
 func RegisterIdentityServer(s grpc.ServiceRegistrar, srv IdentityServer) {
 	s.RegisterService(&Identity_ServiceDesc, srv)
+}
+
+func _Identity_Refresh_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServer).Refresh(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Identity_Refresh_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServer).Refresh(ctx, req.(*TokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Identity_Validate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServer).Validate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Identity_Validate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServer).Validate(ctx, req.(*TokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Identity_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -124,7 +190,7 @@ func _Identity_Register_Handler(srv interface{}, ctx context.Context, dec func(i
 }
 
 func _Identity_VerifyEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(VerifyEmailRequest)
+	in := new(TokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -136,7 +202,7 @@ func _Identity_VerifyEmail_Handler(srv interface{}, ctx context.Context, dec fun
 		FullMethod: Identity_VerifyEmail_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IdentityServer).VerifyEmail(ctx, req.(*VerifyEmailRequest))
+		return srv.(IdentityServer).VerifyEmail(ctx, req.(*TokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -166,6 +232,14 @@ var Identity_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "gen.Identity",
 	HandlerType: (*IdentityServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Refresh",
+			Handler:    _Identity_Refresh_Handler,
+		},
+		{
+			MethodName: "Validate",
+			Handler:    _Identity_Validate_Handler,
+		},
 		{
 			MethodName: "Register",
 			Handler:    _Identity_Register_Handler,
