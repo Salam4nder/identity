@@ -3,18 +3,23 @@
 ## Description
 
 *Identity* is a simple yet easily extendable identity service that handles user registration, authentication and token management.
+
 It produces stateless tokens and operates on given authentication strategies.
+
 A `strategy` must implement the following interface:
 
 ```go
 type Strategy interface {
-	// Strategies require different inputs and outputs, so we store them in contexts.
+	// Strategies require different inputs and outputs, 
+    // so we store them in contexts.
 	Register(context.Context) (context.Context, error)
 	Authenticate(context.Context) error
 }
 ```
 One of the implemented strategies is authentication by a `personal number`, which is simply a 16-digit number.
+
 It is a simple yet super convenient way for users to start using your prouducts without giving you their personal information.
+
 This strategy is inspired by *Mullvad VPN*.
 
 ## Usage
