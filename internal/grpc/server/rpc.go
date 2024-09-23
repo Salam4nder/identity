@@ -8,6 +8,7 @@ import (
 	"github.com/Salam4nder/identity/internal/auth/strategy/credentials"
 	"github.com/Salam4nder/identity/internal/auth/strategy/personalnumber"
 	"github.com/Salam4nder/identity/internal/observability/metrics"
+	"github.com/Salam4nder/identity/internal/token"
 	"github.com/Salam4nder/identity/proto/gen"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -88,7 +89,7 @@ func (x *Identity) VerifyEmail(ctx context.Context, req *gen.VerifyEmailRequest)
 	}
 	switch credStrat := c.(type) {
 	case *credentials.Strategy:
-		if err := credStrat.Verify(ctx, req.GetToken()); err != nil {
+		if err := credStrat.VerifyEmail(ctx, req.GetToken()); err != nil {
 			if errors.Is(err, credentials.ErrTokenDoesNotExist) {
 				return nil, unauthenticatedError(ctx, err, "incorrect token")
 			}
@@ -99,4 +100,54 @@ func (x *Identity) VerifyEmail(ctx context.Context, req *gen.VerifyEmailRequest)
 	}
 
 	return &emptypb.Empty{}, nil
+}
+
+func (x *Identity) Authenticate(ctx context.Context, req *gen.AuthenticateRequest) (*gen.AuthenticateResponse, error) {
+	ctx, span := tracer.Start(ctx, "Authenticate")
+	defer span.End()
+
+	if req == nil {
+		return nil, requestIsNilError()
+	}
+
+	strategy := req.GetStrategy()
+	span.SetAttributes(attribute.String("strategy", strategy.String()))
+
+	var (
+		err                       error
+		accessToken, refreshToken token.SafeString
+	)
+	switch strategy {
+	case gen.Strategy_TypeCredentials:
+		ctx = credentials.NewContext(ctx, &credentials.Input{
+			Email:    req.GetCredentials().GetEmail(),
+			Password: req.GetCredentials().GetPassword(),
+		})
+
+		if err = x.strategies[strategy].Authenticate(ctx); err != nil {
+			switch {
+			case errors.Is(err, credentials.ErrUserNotFound), errors.Is(err, credentials.ErrIncorrectPassword):
+				return nil, invalidArgumentError(ctx, err, err.Error())
+			case errors.Is(err, credentials.ErrUserNotVerified):
+				return nil, notFoundError(ctx, err, err.Error())
+			default:
+				return nil, internalServerError(ctx, err)
+			}
+		}
+		accessToken, err = x.tokenMaker.MakeAccessToken(req.GetCredentials().Email, gen.Strategy_TypeCredentials)
+		if err != nil {
+			return nil, internalServerError(ctx, err)
+		}
+		refreshToken, err = x.tokenMaker.MakeRefreshToken(req.GetCredentials().Email, gen.Strategy_TypeCredentials)
+		if err != nil {
+			return nil, internalServerError(ctx, err)
+		}
+
+	default:
+		return nil, internalServerError(ctx, fmt.Errorf("unsupported strategy %s", req.GetStrategy().String()))
+	}
+	return &gen.AuthenticateResponse{
+		AccessToken:  string(accessToken),
+		RefreshToken: string(refreshToken),
+	}, nil
 }
