@@ -229,7 +229,7 @@ func (x *Identity) Refresh(ctx context.Context, req *gen.TokenRequest) (*gen.Ref
 		if err = t.Get(token.PasetoIdentifierKey, &number); err != nil {
 			return nil, internalServerError(ctx, err)
 		}
-		accessToken, err = x.tokenMaker.MakeAccessToken(number, gen.Strategy_TypeCredentials)
+		accessToken, err = x.tokenMaker.MakeAccessToken(number, gen.Strategy_TypePersonalNumber)
 		if err != nil {
 			return nil, internalServerError(ctx, err)
 		}
