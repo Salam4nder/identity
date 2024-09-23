@@ -8,6 +8,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const ApplicationName = "identity"
+
 // Application is the application configuration.
 type Application struct {
 	Environment  string   `yaml:"environment"`
