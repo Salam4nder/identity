@@ -3,6 +3,7 @@ syntax = "proto3";
 package gen;
 
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/Salam4nder/identity/proto/gen";
 
@@ -53,12 +54,19 @@ message AuthenticateResponse {
     string refresh_token = 2;
 }
 
-message VerifyEmailRequest {
+message TokenRequest {
     string token = 1;
 }
 
+message RefreshResponse {
+    string token = 1;
+    google.protobuf.Timestamp expires_at = 2;
+}
+
 service Identity {
+    rpc Refresh (TokenRequest) returns (RefreshResponse){}
+    rpc Validate(TokenRequest) returns (google.protobuf.Empty){}
     rpc Register (RegisterRequest) returns (RegisterResponse){}
-    rpc VerifyEmail (VerifyEmailRequest) returns (google.protobuf.Empty){}
+    rpc VerifyEmail (TokenRequest) returns (google.protobuf.Empty){}
     rpc Authenticate (AuthenticateRequest) returns (AuthenticateResponse){}
 }
