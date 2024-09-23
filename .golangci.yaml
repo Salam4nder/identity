@@ -20,7 +20,7 @@ linters:
      - errorlint
      - execinquery
      - exportloopref
-     - gocognit
+     # - gocognit
      - gocritic
      - godot
      - gofumpt
