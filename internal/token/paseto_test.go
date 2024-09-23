@@ -115,7 +115,7 @@ func TestVerify(t *testing.T) {
 			if err != nil {
 				t.Error("expected no error")
 			}
-			tt, err := b.Parse(s)
+			tt, err := b.Parse(string(s))
 			if err != nil {
 				t.Errorf("expected no error, got %s", err.Error())
 			}
@@ -142,7 +142,7 @@ func TestVerify(t *testing.T) {
 			if err != nil {
 				t.Error("expected no error")
 			}
-			tt, err := b.Parse(s)
+			tt, err := b.Parse(string(s))
 			if err != nil {
 				t.Errorf("expected no error, got %s", err.Error())
 			}
@@ -163,7 +163,7 @@ func TestVerify(t *testing.T) {
 
 	t.Run("invalid returns error", func(t *testing.T) {
 		b := bootstrap(t)
-		if _, err := b.Parse(fromString("ass")); err == nil {
+		if _, err := b.Parse("ass"); err == nil {
 			t.Error("expected error")
 		}
 	})
