@@ -1,70 +1,25 @@
 # Identity: A lightweight identity service.
 
-## Quickstart
+## Description
 
-*Identity* operates on given authentication strategies.
-
+*Identity* is a simple yet easily extendable identity service that handles user registration, authentication and token management.
+It produces stateless tokens and operates on given authentication strategies.
 A `strategy` must implement the following interface:
 
 ```go
-// WIP.
 type Strategy interface {
-	// Register an entry with the configured strategy.
-	// Outputs from this method are stored in the
-	// returned context.
+	// Strategies require different inputs and outputs, so we store them in contexts.
 	Register(context.Context) (context.Context, error)
-	// Authenticate the user with the configured strategy.
 	Authenticate(context.Context) error
 }
 ```
-
+One of the implemented strategies is authentication by a `personal number`, which is simply a 16-digit number.
+It is a simple yet super convenient way for users to start using your prouducts without giving you their personal information.
+This strategy is inspired by *Mullvad VPN*.
 
 ## Usage
 
-```go
-// gRPC client stubs.
-	conn, err := grpc.NewClient(
-		"localhost:50051",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-	if err != nil {
-		// handle err
-	}
-	client := gen.NewIdentityClient(conn)
-
-	resp, err := client.Register(context.TODO(), &gen.RegisterRequest{
-		Strategy: gen.Strategy_TypePersonalNumber,
-		Data:     &gen.RegisterRequest_Empty{},
-	})
-	if err != nil {
-		// handle err
-	}
-	slog.Info("client got resp number", "number", resp.GetNumber().Numbers)
-
-	resp, err = client.Register(context.TODO(), &gen.RegisterRequest{
-		Strategy: gen.Strategy_TypeCredentials,
-		Data: &gen.RegisterRequest_Credentials{
-			Credentials: &gen.CredentialsInput{
-				Email:    random.Email(),
-				Password: "pasSwe22i3rj",
-			},
-		},
-	})
-	if err != nil {
-		// handle err
-	}
-```
-
-```json
-// JSON body.
-{
-  "strategy": 1, // 1 is the Credentials strategy in the enum.
-  "credentials": {
-    "email": "email@email.com",
-    "password": "password23423"
-  }
-}
-```
+See the `examples` package.
 
 ## Config
 
@@ -76,7 +31,6 @@ Run `make api` to build the api image and `make up` to compose up the applicatio
 
 
 ## Cleanup
-
 
 Run `make down` to nuke everything down.
 
@@ -92,16 +46,29 @@ Running `make test-db` will only run tests that require a db connection.
 
 
 ## Lint
+
 Run `make lint` to run the linter engine. Linters are described in the `.golangci.yaml` file.
 
 
 ## Endpoints
-This service serves gRPC requests. You can use GUI tools like **Insomnia** to test the endpoints.
 
+```proto
+service Identity {
+    // Exchange a valid refresh token for a new access token.
+    rpc Refresh (TokenRequest) returns (RefreshResponse){}
+    // Validate an access token.
+    rpc Validate(TokenRequest) returns (google.protobuf.Empty){}
+    // Register a user with the given strategy.
+    rpc Register (RegisterRequest) returns (RegisterResponse){}
+    // Verify a user that registered with the credentials strategy.
+    rpc VerifyEmail (TokenRequest) returns (google.protobuf.Empty){}
+    // Authenticate a user with the given strategy.
+    rpc Authenticate (AuthenticateRequest) returns (AuthenticateResponse){}
+}
+```
 
 ## TODO
-* Examples.
 * TLS setup.
-* Email sending implementation. For now a no-op stdout logger faker is used.
+* Email sending implementation. For now a no-op stdout logger is used.
 * Complete remaining unit tests.
-* more auth strategies.
+* More auth strategies.
