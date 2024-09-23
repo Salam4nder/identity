@@ -41,7 +41,7 @@ func Insert(ctx context.Context, db *sql.DB, id uint64) error {
 }
 
 func Get(ctx context.Context, db *sql.DB, id uint64) (uint64, error) {
-	ctx, span := tracer.Start(ctx, "Delete")
+	ctx, span := tracer.Start(ctx, "Get")
 	defer span.End()
 	span.SetAttributes(attribute.Int64("id", int64(id)))
 
@@ -50,7 +50,7 @@ func Get(ctx context.Context, db *sql.DB, id uint64) (uint64, error) {
 	}
 
 	query := `
-    SELECT id personal_numbers
+    SELECT id FROM personal_numbers
     WHERE id = $1
     `
 	span.SetAttributes(attribute.String("query", query))
