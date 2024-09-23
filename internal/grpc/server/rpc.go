@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/Salam4nder/identity/internal/auth/strategy/credentials"
 	"github.com/Salam4nder/identity/internal/auth/strategy/personalnumber"
@@ -197,12 +196,16 @@ func (x *Identity) Refresh(ctx context.Context, req *gen.TokenRequest) (*gen.Ref
 		return nil, internalServerError(ctx, err)
 	}
 
-	exp, err := t.GetExpiration()
-	if err != nil {
+	var tokenType string
+	if err = t.Get(token.PasetoTokenTypeKey, &tokenType); err != nil {
 		return nil, internalServerError(ctx, err)
 	}
-	if time.Now().After(exp) {
-		return nil, invalidArgumentError(ctx, errors.New("rpc: token is expired"), "token is expired")
+	if tokenType != token.PasetoTokenTypeRefresh {
+		return nil, invalidArgumentError(
+			ctx,
+			fmt.Errorf("rpc: token type is %s, expecting %s", tokenType, token.PasetoTokenTypeRefresh),
+			"incorrect token",
+		)
 	}
 
 	var strat gen.Strategy
@@ -236,4 +239,32 @@ func (x *Identity) Refresh(ctx context.Context, req *gen.TokenRequest) (*gen.Ref
 		Token:     string(accessToken),
 		ExpiresAt: timestamppb.New(x.tokenMaker.AccessTokenExpiration()),
 	}, nil
+}
+
+// Validate an access token.
+func (x *Identity) Validate(ctx context.Context, req *gen.TokenRequest) (*emptypb.Empty, error) {
+	ctx, span := tracer.Start(ctx, "Refresh")
+	defer span.End()
+
+	if req == nil {
+		return nil, requestIsNilError()
+	}
+
+	t, err := x.tokenMaker.Parse(req.GetToken())
+	if err != nil {
+		return nil, internalServerError(ctx, err)
+	}
+
+	var tokenType string
+	if err = t.Get(token.PasetoTokenTypeKey, &tokenType); err != nil {
+		return nil, internalServerError(ctx, err)
+	}
+	if tokenType != token.PasetoTokenTypeAccess {
+		return nil, invalidArgumentError(
+			ctx,
+			fmt.Errorf("rpc: token type is %s, expecting %s", tokenType, token.PasetoTokenTypeAccess),
+			"incorrect token",
+		)
+	}
+	return &emptypb.Empty{}, nil
 }
