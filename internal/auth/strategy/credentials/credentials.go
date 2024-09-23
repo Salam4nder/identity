@@ -235,6 +235,6 @@ func fromContext(ctx context.Context) (*Input, error) {
 	return c, nil
 }
 
-func newContext(ctx context.Context, c *Output) context.Context {
-	return context.WithValue(ctx, outputKey, c)
+func newContext(ctx context.Context, o *Output) context.Context {
+	return context.WithValue(ctx, outputKey, o)
 }
