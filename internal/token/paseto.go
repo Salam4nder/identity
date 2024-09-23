@@ -100,10 +100,18 @@ func (x *PasetoMaker) MakeRefreshToken(identifer any, strat gen.Strategy) (SafeS
 }
 
 // Parse will parse a Paseto token and return it if it is valid.
-func (x *PasetoMaker) Parse(s SafeString) (*paseto.Token, error) {
-	t, err := x.parser.ParseV4Local(x.symmetricKey, string(s), nil)
+func (x *PasetoMaker) Parse(t string) (*paseto.Token, error) {
+	parsed, err := x.parser.ParseV4Local(x.symmetricKey, t, nil)
 	if err != nil {
-		return nil, fmt.Errorf("token: verifying token, %w", err)
+		return nil, fmt.Errorf("token: parsing token, %w", err)
 	}
-	return t, nil
+	return parsed, nil
+}
+
+func (x *PasetoMaker) RefreshTokenExpiration() time.Time {
+	return time.Now().Add(x.refreshDur)
+}
+
+func (x *PasetoMaker) AccessTokenExpiration() time.Time {
+	return time.Now().Add(x.accessDur)
 }
