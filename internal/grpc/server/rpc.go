@@ -143,6 +143,33 @@ func (x *Identity) Authenticate(ctx context.Context, req *gen.AuthenticateReques
 			return nil, internalServerError(ctx, err)
 		}
 
+	case gen.Strategy_TypePersonalNumber:
+		ctx = personalnumber.NewContext(ctx, req.GetNumber().GetNumber())
+
+		if err = x.strategies[strategy].Authenticate(ctx); err != nil {
+			switch {
+			case errors.Is(err, personalnumber.ErrNumberNotFound):
+				return nil, invalidArgumentError(ctx, err, err.Error())
+			default:
+				return nil, internalServerError(ctx, err)
+			}
+		}
+
+		accessToken, err = x.tokenMaker.MakeAccessToken(
+			req.GetNumber().GetNumber(),
+			gen.Strategy_TypePersonalNumber,
+		)
+		if err != nil {
+			return nil, internalServerError(ctx, err)
+		}
+		refreshToken, err = x.tokenMaker.MakeRefreshToken(
+			req.GetNumber().GetNumber(),
+			gen.Strategy_TypePersonalNumber,
+		)
+		if err != nil {
+			return nil, internalServerError(ctx, err)
+		}
+
 	default:
 		return nil, internalServerError(ctx, fmt.Errorf("unsupported strategy %s", req.GetStrategy().String()))
 	}
