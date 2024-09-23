@@ -22,14 +22,14 @@ func internalServerError(ctx context.Context, err error) error {
 	return status.Error(codes.Internal, "internal server error, please provide the traceID to support")
 }
 
-// func invalidArgumentError(ctx context.Context, err error, msg string) error {
-// 	if err != nil {
-// 		span := trace.SpanFromContext(ctx)
-// 		span.SetStatus(otelCode.Error, err.Error())
-// 		span.RecordError(err)
-// 	}
-// 	return status.Error(codes.InvalidArgument, msg)
-// }
+func invalidArgumentError(ctx context.Context, err error, msg string) error {
+	if err != nil {
+		span := trace.SpanFromContext(ctx)
+		span.SetStatus(otelCode.Error, err.Error())
+		span.RecordError(err)
+	}
+	return status.Error(codes.InvalidArgument, msg)
+}
 
 // func alreadyExistsError(ctx context.Context, err error, msg string) error {
 // 	if err != nil {
@@ -49,11 +49,11 @@ func unauthenticatedError(ctx context.Context, err error, msg string) error {
 	return status.Error(codes.Unauthenticated, msg)
 }
 
-// func notFoundError(ctx context.Context, err error, msg string) error {
-// 	if err != nil {
-// 		span := trace.SpanFromContext(ctx)
-// 		span.SetStatus(otelCode.Error, err.Error())
-// 		span.RecordError(err)
-// 	}
-// 	return status.Error(codes.NotFound, msg)
-// }
+func notFoundError(ctx context.Context, err error, msg string) error {
+	if err != nil {
+		span := trace.SpanFromContext(ctx)
+		span.SetStatus(otelCode.Error, err.Error())
+		span.RecordError(err)
+	}
+	return status.Error(codes.NotFound, msg)
+}
